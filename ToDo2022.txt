@@ -1,0 +1,20 @@
+Tech App:
+
+Styling: 
+    -> Call Tech State/Status (Received->EnRoute->OnSite->LeftSite)
+    
+-> Biometric Login
+-> Identifier Roles (Ops Admin vs Tech Role)
+-> Data Search Box 
+
+
+
+
+-----------------------------
+Cronus 2.1:
+
+- Customer Store Address Management (try finish Customer module)
+- Job Card Draft
+- Exception Search & Link on live (add modal to inform user that changes were effective, but assigned user needs to refresh background resources to access exception reports)
+- 2.0 to 2.1 token hand-off (finish up)
+- 

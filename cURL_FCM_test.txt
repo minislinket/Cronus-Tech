@@ -1,0 +1,19 @@
+curl -X POST -H "Authorization: Bearer ya29.A0AVA9y1tBg_KbiBZiwQU6ek3rspdNvFjO5vHNKbo8mzaHOl54soZx0po8CR4j7zbDfuJAvrzY72qLUThLGQ_sMmPTZ4yHxhatUpfrwakSw4s8f5nHTfx7a-25ladP0uGrstZ6hI8XgM9ElY_dIKmTpAtQh2JcaCgYKATASATASFQE65dr81g0hoZGcPfzO7X339quOww0163" -H "Content-Type: application/json" -d '{
+"message":{
+   "notification":{
+     "title":"New Job",
+     "body":"A new client call is pending, please accept it under Pending Jobs.",
+   },
+   "data": {
+      "pending": "true",
+      "url": "/calls"
+   },
+   "token":"f_FfK8IjEZkRyWMOZzHt3j:APA91bGaYmDq-oPMEcXiRhAMPaG_W0dtlAv2nSXnydTRQI5v7TVNI8U3jq6XxnlTK4guBbJihKV8SYL3y5VOgzHnwOMCiCGtZkTUKreYx4nhXil-1qpmObJ8ZY2upayWf14DVqw20HfC",
+"webpush": {
+   "fcm_options": {
+      "link": "/calls",
+
+   }
+}
+}
+}' https://fcm.googleapis.com/v1/projects/cronus-tech/messages:send
