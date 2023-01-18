@@ -28,13 +28,19 @@ const state = () => ({
         {
             url: '/company/employees',
             name: 'employees'
+        },
+        {
+            url: '/company/branches',
+            name: 'branches'
         }
     ],
 
 
     online: true,
-    initBackgroundCallSync: false,
-    canReAuthenticate: false
+    canReAuthenticate: false,
+
+
+
 })
 
 
@@ -45,10 +51,6 @@ const state = () => ({
 const getters = {
     online: (state) => {
         return state.online;
-    },
-
-    initBackgroundCallSync: (state) => {
-        return state.initBackgroundCallSync;
     },
 
 
@@ -76,12 +78,15 @@ const actions = {
 
 
 
-    setOnline({ commit }, toggle) {
-        console.log('Changing online status: ', toggle);
-        commit('setOnline', toggle);
+    async setOnline({ commit, dispatch }, toggle) {
+        console.log('Changing online status to: ', toggle);
+        
 
         if(toggle === true)
         {
+
+            await dispatch('Calls/refreshTechnicianCalls', null, { root: true });
+
             var backupLog = localStorage.getItem('backup_error_log');
             var flag = false;
             if(backupLog)
@@ -107,31 +112,39 @@ const actions = {
             }
 
         }
+
+        commit('setOnline', toggle);
     },
 
 
 
 
-    initBackgroundCallSync({ commit }, toggle) {
-        commit('initBackgroundCallSync', toggle);
-    },
 
 
 
     // Load all static resources including the user info
-    async loadStaticResources({ dispatch }) {
-        dispatch('getCustomerStores');
-        dispatch('getCustomerAccounts');
+    async loadStaticResources({ dispatch, rootGetters }) {
+
+        var userType = rootGetters['UserRole/currentUserRole']
+
         await dispatch('getUser');
-        await dispatch('setBaseResources');
-        dispatch('Calls/refreshTechnicianCalls', true, {root: true});
-        // dispatch('initBackgroundCallSync', true);
+
+        var getCustomerStores = dispatch('getCustomerStores');
+        var getCustomerAccounts = dispatch('getCustomerAccounts');
+        var setBaseResources = dispatch('setBaseResources');
+        await Promise.all([getCustomerStores, getCustomerAccounts, setBaseResources]);
+        // console.log('User Type: ', userType);
+        userType === 1 ? dispatch('Calls/refreshTechnicianCalls', true, {root: true}) : null;
+
     },
 
 
 
     // Only load base static resources, leave user info intact
-    async loadBaseStaticResources({ dispatch }) {
+    async loadBaseStaticResources({ dispatch, rootGetters }) {
+
+        var userType = rootGetters['UserRole/currentUserRole']
+        
         dispatch('removeBaseResources');
         
         var getCustomerStores = dispatch('getCustomerStores');
@@ -139,9 +152,8 @@ const actions = {
         var setBaseResources = dispatch('setBaseResources');
         await Promise.all([getCustomerStores, getCustomerAccounts, setBaseResources]);
         
-        dispatch('Calls/refreshTechnicianCalls', false, {root: true});
-        
-        // dispatch('initBackgroundCallSync', true);
+        userType === 1 ? dispatch('Calls/refreshTechnicianCalls', false, {root: true}) : null;
+
     },
 
 
@@ -196,6 +208,13 @@ const actions = {
             .then(async resp => {
                 if(resp.status === 200 && resp.data)
                     localStorage.setItem(res.name, JSON.stringify(resp.data));
+
+
+                if(res.name === 'employees')
+                {
+                    var techs = resp.data.filter(emp => emp.technician === true && emp.active === true);
+                    localStorage.setItem('technicians', JSON.stringify(techs));
+                }
             })
             .catch(err => {
                 

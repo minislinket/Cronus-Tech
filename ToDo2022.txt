@@ -1,11 +1,21 @@
 Tech App:
 
-Styling: 
-    -> Call Tech State/Status (Received->EnRoute->OnSite->LeftSite)
-    
--> Biometric Login
--> Identifier Roles (Ops Admin vs Tech Role)
--> Data Search Box 
+
+INDEXED DB
+--->>>> See if we can use indexed DB as a solution to customer stores so we don't have to decompress them so many times.
+
+
+
+
+
+
+Call Operations ASAP:
+    DONE- Ops Admin Role (101 - local Ops Admin)
+    - Call Logging
+        - Check for and link Old Calls (at making new call)
+        - Check if tech in area (at allocate tech)
+    - Allocated Call
+        DONE - WARN if no tech
 
 
 
@@ -14,7 +24,6 @@ Styling:
 Cronus 2.1:
 
 - Customer Store Address Management (try finish Customer module)
-- Job Card Draft
-- Exception Search & Link on live (add modal to inform user that changes were effective, but assigned user needs to refresh background resources to access exception reports)
-- 2.0 to 2.1 token hand-off (finish up)
-- 
+x- Job Card Draft
+- 2.0 to 2.1 token hand-off (chrome update issue?)
+- tumbler arrow makes number run (vue issue i think..)

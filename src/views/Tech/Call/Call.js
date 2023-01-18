@@ -4,7 +4,11 @@ import router from "../../../router";
 // initial state
 const state = () => ({
     call: '',
-    loading: false
+    loading: false,
+
+
+    onHoldReasonModal: false,
+    linkJobCardModal: false
 })
 
 
@@ -20,7 +24,19 @@ const getters = {
 
     loading: (state) => {
         return state.loading;
+    },
+
+
+    onHoldReasonModal: (state) => {
+        return state.onHoldReasonModal;
+    },
+
+
+    linkJobCardModal: (state) => {
+        return state.linkJobCardModal;
     }
+
+    
     
 }
 
@@ -34,6 +50,16 @@ const actions = {
 
     loading({ commit }, toggle) {
         commit('loading', toggle);
+    },
+
+
+    onHoldReasonModal({ commit }, toggle) {
+        commit('onHoldReasonModal', toggle);
+    },
+
+
+    linkJobCardModal({ commit }, toggle) {
+        commit('linkJobCardModal', toggle);
     },
 
 
@@ -107,22 +133,57 @@ const actions = {
         var techStates = JSON.parse(localStorage.getItem('call_tech_states'));     
         var techState = techStates.filter(state => state.id === nextStatusId)[0];
         var calls = rootGetters['Calls/allCalls'];
-        var call = calls.filter(c => c.id === editCall.id)[0];
+        var call = '';
+        calls.map(c => {
+            if(c.id === editCall.id)
+            {
+                call = JSON.parse(JSON.stringify(c));
+            }
+        });
 
         call.techState = techState;
         call.techStateId = techState.id;
         call.techStateName = techState.name;
 
-        dispatch('Calls/updateLocalStorage', null, { root: true });
+        dispatch('Calls/updateLocalStorage', call, { root: true });
 
-        // If the Tech is done or putting the call/job on hold, take them to their other calls/jobs for a new selection
-        if(nextStatusId === 5) 
+        dispatch('loading', false);
+
+        // If the Tech is done, take them to their other calls/jobs for a new selection
+        if(nextStatusId === 8) 
         {
             router.push('/calls');
         }
 
-        dispatch('loading', false);
         
+        
+    },
+
+
+
+
+
+
+
+    linkJobCards({ state, dispatch, rootGetters }, jobCardArray) {
+
+        dispatch('loading', true);
+
+        var allCalls = rootGetters['Calls/allCalls'];
+
+        var editCall = '';
+        allCalls.map(c => {
+            if(c.id === state.call.id)
+            {
+                editCall = JSON.parse(JSON.stringify(c));
+            }
+        });
+
+        editCall.jobCards = jobCardArray;
+        dispatch('Calls/updateLocalStorage', editCall, { root: true });
+
+        dispatch('loading', false);
+
     }
 
 }
@@ -140,6 +201,17 @@ const mutations = {
     },
 
 
+    onHoldReasonModal(state, toggle) {
+        state.onHoldReasonModal = toggle;
+    },
+
+
+    linkJobCardModal(state, toggle) {
+        state.linkJobCardModal = toggle;
+    },
+
+
+    
 
     call(state, call) {
         call.customerStoreAddress = call.customerStore ? call.customerStore.address : '';

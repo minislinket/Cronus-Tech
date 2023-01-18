@@ -25,8 +25,11 @@ user ? user = JSON.parse(user) : user = 'N/A';
 
 axiosOffice.interceptors.response.use((response) => response, (error) => {
     // console.log('⛔ GLOBAL error catch: ', error);
-    var saveError = JSON.parse(JSON.stringify(error));
-    logError(saveError);
+    if(error.code != 'ERR_CANCELED')
+    {    
+        var saveError = JSON.parse(JSON.stringify(error));
+        logError(saveError);
+    }
 
     throw error;
 });
@@ -45,11 +48,7 @@ function logError(error) {
     if(user) { error.user = user }
 
     axiosMySQL.post('/errorLog/errorLog.php', error)
-    .catch(err => {
-        console.error('Axios SQL error: ', err);
-        console.error('Axios SQL error response: ', err.response);
-        backupLogInLocal(err);
-    })
+
 }
 
 
@@ -95,8 +94,8 @@ if (process.env.NODE_ENV === 'production')
     }
     else
     {
-        baseURLOffice = 'https://office.locksecure.co.za/cronus/api/'
-        baseURLMySQL = 'https://dev.locksecure.co.za/cronus-tech/api/';
+        baseURLOffice = 'https://office.locksecure.co.za/cronus/api/';
+        baseURLMySQL = 'https://dev.locksecure.co.za/tech-api/';
     }
 
 

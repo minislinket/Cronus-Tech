@@ -18,10 +18,10 @@
         <div class="login-input-wrap" :class="{ disabled : online === false }">
 
 
-            <input type="text" v-model="username" placeholder="Username" @input="username = username.toUpperCase()">
+            <input type="text" :disabled="!firebaseToken || online === false" v-model="username" placeholder="Username" @input="username = username.toUpperCase()">
 
             <div class="psw-wrap">
-                <input id="usr-psw" style="margin-bottom: 20px;" type="password" v-model="password" placeholder="Password" @keypress.enter="loginUser()">
+                <input id="usr-psw" :disabled="!firebaseToken || online === false" style="margin-bottom: 20px;" type="password" v-model="password" placeholder="Password" @keypress.enter="loginUser()">
                 <div class="psw-icon-wrap" v-if="online">
                     <font-awesome-icon v-if="!showPassword" @click="showPassword = true" class="show-hide-psw-icon" :icon="['fa', 'eye']" size="lg" />
                     <font-awesome-icon v-if="showPassword" @click="showPassword = false" class="show-hide-psw-icon" :icon="['fa', 'eye-slash']" size="lg" />
@@ -91,14 +91,7 @@ export default {
 
 
     mounted() {
-        // console.log('Are we online? ', this.online);
-
-        var sha = crypto.createHash('sha256').update('1234').digest('base64');
-        console.log(sha);
-        if(sha === '2bX1jws4GYKTlxhloUB09Z66PoJZW+y+hq5R8dnx9l4=')
-        {
-            console.log('⏰ Got IT!');
-        }
+        
     },
 
 

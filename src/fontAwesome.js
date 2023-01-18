@@ -39,12 +39,28 @@ import {
   faAngleLeft,
   faKey,
   faVoteYea,
+  faMinusSquare,
+  faPlusSquare,
+  faTimesCircle,
+  faUserPlus,
+  faSearch,
+  faTrash,
+  faUserMinus,
+  faList,
+  faPhoneSlash,
+  faSort,
+  faEdit,
+  faLink,
+  faStoreSlash,
+  faChevronUp,
+  faChevronDown,
 } from '@fortawesome/free-solid-svg-icons'
 
 
 
 import { 
   faCheckCircle as farCheckCircle,
+  faTimesCircle as farTimesCircle
 } from '@fortawesome/free-regular-svg-icons'
 
 
@@ -89,4 +105,20 @@ library.add(
   faAngleLeft,
   faKey,
   faVoteYea,
+  faMinusSquare,
+  faPlusSquare,
+  faTimesCircle,
+  faUserPlus,
+  faSearch,
+  faTrash,
+  faUserMinus,
+  faList,
+  faPhoneSlash,
+  faSort,
+  faEdit,
+  faLink,
+  faStoreSlash,
+  faChevronUp,
+  faChevronDown,
+  farTimesCircle
 )

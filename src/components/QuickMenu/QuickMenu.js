@@ -42,21 +42,40 @@ const state = () => ({
             icon: ['fa', 'home'],
             url: '/ops_dashboard',
             text: 'Home',
-            active: false
+            active: false,
+            iconFontSize: '26px'
         },
         {
             id: 1,
             icon: 'add_call',
             url: '/add_call',
             text: 'Log Call',
-            active: false
+            active: false,
+            iconFontSize: '30px'
+        },
+        {
+            id: 1,
+            icon: ['fa', 'user-plus'],
+            url: '/allocate_tech',
+            text: 'Allocate Tech',
+            active: false,
+            iconFontSize: '26px'
         },
         {
             id: 2,
             icon: 'contact_phone',
             url: '/technician_calls',
-            text: 'Tech\'s & Calls',
-            active: false
+            text: 'Technicians',
+            active: false,
+            iconFontSize: '32px'
+        },
+        {
+            id: 2,
+            icon: 'phone_callback',
+            url: '/open_calls',
+            text: 'Open Calls',
+            active: false,
+            iconFontSize: '30px'
         }
     ]
 })
@@ -83,7 +102,8 @@ const getters = {
 const actions = {
 
     activateMenuItem({ state }) {
-        state.menuItems.map(item => { item.url === router.currentRoute.value.path ? item.active = true : item.active = false });        
+        state.menuItems.map(item => { item.url === router.currentRoute.value.path ? item.active = true : item.active = false });
+        state.opsMenuItems.map(item => { item.url === router.currentRoute.value.path ? item.active = true : item.active = false });
     }
 
 }

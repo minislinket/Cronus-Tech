@@ -67,7 +67,7 @@ const actions = {
     },
 
 
-    checkLogin({ commit, dispatch }) {
+    checkLogin({ commit, dispatch, rootGetters }) {
 
         const signature = JSON.parse(localStorage.getItem('signature'));
         const time_stamp = JSON.parse(localStorage.getItem('time_stamp'));
@@ -75,12 +75,33 @@ const actions = {
         if(signature && time_stamp) {
 
             var data = JSON.parse(Buffer.from(signature.split('.')[1], 'base64').toString());
+
+            // Set available user roles in store
             var roles = data['cronus-roles'];
             if(roles && roles.length >= 1)
             {
-                if(roles.includes(100))
-                    dispatch('UserRole/setUserRole', 100, { root: true });
+                if(roles.includes(100) && !roles.includes(101))
+                {
+                    dispatch('UserRole/setAvailableRoles', [1, 2], { root: true });
+                }
+                else
+                {
+                    dispatch('UserRole/checkCurrentRole', null, { root: true });
+                }
+
+
+                if(roles.includes(101))
+                {
+                    dispatch('UserRole/setAvailableRoles', [1, 2, 3], { root: true });
+                }
+                else
+                {
+                    dispatch('UserRole/checkCurrentRole', null, { root: true });
+                }
             }
+
+            
+
 
             var now = new Date();
             var time = new Date(time_stamp); 
@@ -90,11 +111,19 @@ const actions = {
 
             // console.log('Now: ', now, 'dif: ', dif, 'last login: ', last_login);
 
-            if(dif >= 14) {
+            if(dif >= 14 && dif <= 168) {
 
                 dispatch('logout')
 
-            } else {
+            } 
+            
+            else if(dif > 168)
+            {
+                dispatch('resetApp');
+            } 
+            
+            else if(dif < 14) 
+            {
 
                 commit('isAuth', true);
                 commit('signature', signature);
@@ -115,7 +144,7 @@ const actions = {
 
 
 
-    async loginUser({ commit, dispatch, state }, payload) {
+    async loginUser({ commit, dispatch, state, rootGetters }, payload) {
 
 
 
@@ -184,11 +213,33 @@ const actions = {
 
 
                     var roles = data['cronus-roles'];
+                    // console.log(roles);
                     if(roles && roles.length >= 1)
                     {
-                        if(roles.includes(100))
-                            dispatch('UserRole/setUserRole', 100, { root: true });
+                        if(roles.includes(100) && !roles.includes(101))
+                        {
+                            // console.log('Roles only include 100')
+                            dispatch('UserRole/setAvailableRoles', [1, 2], { root: true });
+                        }
+                        else
+                        {
+                            dispatch('UserRole/checkCurrentRole', null, { root: true });
+                        }
+
+
+                        if(roles.includes(101))
+                        {
+                            // console.log('Yay we have role 101')
+                            dispatch('UserRole/setAvailableRoles', [1, 2, 3], { root: true });
+                        }
+                        else
+                        {
+                            dispatch('UserRole/checkCurrentRole', null, { root: true });
+                        }
                     }
+
+                    
+                    
 
 
                     localStorage.setItem('signature', JSON.stringify(resp.data.signature));
@@ -269,12 +320,23 @@ const actions = {
 
     logout({ commit, dispatch }) {
 
-        var clearThese = ['signature', 'user', 'time_stamp', 'user_calls'];
+        var clearThese = ['signature', 'user', 'time_stamp', 'calls', 'employees'];
         clearThese.map(item => {
             localStorage.removeItem(item);
         });
         commit('isAuth', false);
         router.push('/')
+
+    },
+
+
+
+
+    resetApp({ commit }) {
+
+        localStorage.clear();
+        commit('isAuth', false);
+        router.push('/');
 
     }
 

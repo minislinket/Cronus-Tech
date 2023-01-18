@@ -15,6 +15,9 @@ import Call from '../views/Tech/Call/Call.vue'
 // Technician Operation Manager Application Routes
 import OpsDashboard from '../views/OpsAdmin/OpsDashboard/OpsDashboard.vue'
 import AddCall from '../views/OpsAdmin/AddCall/AddCall.vue'
+import AllocateTech from '../views/OpsAdmin/AllocateTech/AllocateTech.vue'
+import TechnicianCalls from '../views/OpsAdmin/TechDashboard/TechnicianCalls.vue'
+import OpenCalls from '../views/OpsAdmin/OpenCalls/OpenCalls.vue'
 
 
 
@@ -84,6 +87,33 @@ const routes = [
 		meta: {
 			title: 'Add Call',
 			icon: 'add_call'
+		}
+	},
+	{
+		path: '/allocate_tech',
+		name: 'Allocate Tech',
+		component: AllocateTech,
+		meta: {
+			title: 'Allocate Tech',
+			icon: ['fa', 'user-plus']
+		}
+	},
+	{
+		path: '/technician_calls',
+		name: 'Tech Dashboard',
+		component: TechnicianCalls,
+		meta: {
+			title: 'Tech Dashboard',
+			icon: 'contact_phone'
+		}
+	},
+	{
+		path: '/open_calls',
+		name: 'Open Calls Dashboard',
+		component: OpenCalls,
+		meta: {
+			title: 'Open Calls Dashboard',
+			icon: 'phone_callback'
 		}
 	},
 	

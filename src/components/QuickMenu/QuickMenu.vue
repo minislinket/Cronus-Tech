@@ -1,9 +1,9 @@
 <template>
-    <div class="quick-menu-wrap">
-        <div class="quick-menu-items" v-for="item in userType === 1 ? menuItems : opsMenuItems" @click="navigate(item)" :key="item.id" :class="{ active  :item.active }">
+    <div class="quick-menu-wrap" :class="{ hide : hideMenu }">
+        <div class="quick-menu-items" v-for="item in showItems" @click="navigate(item)" :key="item.id" :class="{ active  :item.active }">
             <div class="qmenu-icon-wrap">
-                <font-awesome-icon v-if="(typeof item.icon === 'object')" @click="navigate(item)" class="qmenu-icon" :icon="item.icon" size="lg" />
-                <span v-else class="material-symbols-outlined icon-font-size">{{ item.icon }}</span>
+                <font-awesome-icon v-if="(typeof item.icon === 'object')" @click="navigate(item)" class="qmenu-icon" :icon="item.icon" :style="{ fontSize: item.iconFontSize }" size="lg" />
+                <span v-else class="material-symbols-outlined icon-font-size" :style="{ fontSize: item.iconFontSize }">{{ item.icon }}</span>
                 <p v-if="item.text" v-html="item.text"></p>
             </div>
         </div>
@@ -22,7 +22,8 @@ export default {
 
     data() {
         return {
-            
+            hideMenu: false,
+            showItems: []
         }
     },
 
@@ -40,10 +41,49 @@ export default {
 
 
 
+
+
+    watch: {
+        userType: {
+            handler: function() {
+            
+                if(this.userType === 1)
+                    this.showItems = this.menuItems;
+                else if(this.userType === 2 || this.userType === 3)
+                    this.showItems = this.opsMenuItems;
+                    
+            },
+            deep:true,
+            immediate: true
+        }
+    },
+
+
+
+
+
+
+    mounted() {
+        if(this.userType === 1)
+            this.showItems = this.menuItems;
+        else if(this.userType === 2 || this.userType === 3)
+            this.showItems = this.opsMenuItems;
+
+
+        this.$store.dispatch('QuickMenu/activateMenuItem');
+    },
+
+
+
+
+
+
+
     methods: {
 
         navigate: function(item) {
             if(item.url === this.$router.currentRoute._value.path) { return }
+            this.$store.dispatch('QuickMenu/activateMenuItem');
             this.$router.push(item.url);
         }
 
@@ -64,15 +104,23 @@ export default {
     bottom: 0;
     left: 0;
     width: 100vw;
-    height: 65px;
+    height: 60px;
 
     background: var(--GunMetal);
 
     display: flex;
     align-items: center;
     justify-content: space-evenly;
-    padding: 0 20px;
+    
     z-index: 800;
+    transition: bottom 250ms ease;
+}
+
+
+
+.quick-menu-wrap.hide {
+    transition: bottom 250ms ease;
+    bottom: -80px;
 }
 
 
@@ -86,6 +134,7 @@ export default {
     border-right: 1px solid white;
     display: flex;
     justify-content: center;
+    transition: color 250ms ease;
 }
 
 
@@ -99,7 +148,8 @@ export default {
 
 
 .quick-menu-items.active {
-    color: var(--BlueMid);
+    color: var(--BlueLight);
+    transition: color 250ms ease;
 }
 
 
@@ -119,7 +169,7 @@ export default {
 
 
 .qmenu-icon {
-    font-size: 32px;
+    font-size: 28px;
     margin-bottom: 3px;
 }
 
@@ -128,7 +178,7 @@ export default {
 
 
 .icon-font-size {
-    font-size: 34px;
+    font-size: 30px;
 }
 
 

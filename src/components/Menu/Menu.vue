@@ -3,7 +3,7 @@
 
         <div class="page-heading-wrap">
             <font-awesome-icon v-if="(titleIcon && titleIcon.length === 2 && typeof titleIcon === 'object')" class="page-heading-icon" :icon="$route.meta.icon" size="lg" />
-            <span v-else-if="(typeof titleIcon === 'string')" class="material-symbols-outlined page-heading-icon">{{ $route.meta.icon }}</span>
+            <span v-else-if="(typeof titleIcon === 'string')" class="material-symbols-outlined page-heading-icon material">{{ $route.meta.icon }}</span>
             <h2>{{ titleText }}</h2>
         </div>
 
@@ -156,7 +156,9 @@ export default {
     font-size: 24px;
 }
 
-
+.page-heading-icon.material {
+    font-size: 32px;
+}
 
 
 

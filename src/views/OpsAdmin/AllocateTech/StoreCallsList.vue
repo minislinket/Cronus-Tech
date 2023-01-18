@@ -1,24 +1,15 @@
 <template>
-    <div class="ops-admin-dashboard-wrap">
+    <div class="allocate-tech-store-calls-wrap" v-if="(calls && calls.length >= 1)">
 
-        <div class="loading-lightbox-wrap" v-if="loading">
-            <font-awesome-icon class="loading-lightbox-icon" :icon="['fa','circle-notch']" size="lg" spin />
-        </div>
+        <div id="InfoBox" class="store-calls-scroll-section">
 
-
-
-        <h2>Recent Calls <span>{{ getBranchName(user.branchId) }}</span></h2>
-
-
-        <div id="RecentCalls" class="recent-calls-scroll-section">
-
-            <div @click="loadCall(call)" class="recent-call-card" v-for="call in recentCalls" :key="call.id" >
+            <div @click="loadCall(call)" class="store-call-card" v-for="call in calls" :key="call.id" >
             
                 
-                <div class="recent-call-card-header" :class="{ 'open' : call.callStatusId == 1, 'allocated' : call.callStatusId == 2, 'no-tech' : call.callStatusId == 2 && !call.technicians || call.callStatusId == 2 && call.technicians.length <= 0 }">
-                    <h4>{{ call.id }}</h4>
+                <div class="store-call-card-header" :class="{ 'open' : call.callStatusId == 1, 'allocated' : call.callStatusId == 2, 'no-tech' : call.callStatusId == 2 && !call.technicians || call.callStatusId == 2 && call.technicians.length <= 0 }">
+                    <h4 style="text-align: left;">{{ call.id }}</h4>
                     <h4 v-if="call.callStatusId == 2 && !call.technicians || call.callStatusId == 2 && call.technicians.length <= 0" class="no-tech-warning"><font-awesome-icon class="no-tech-warning-icon" :icon="['fa','exclamation-triangle']" size="lg" />  No Tech!</h4>
-                    <p class="recent-calls-call-status">{{ getCallStatusId(call.callStatusId) }}</p>
+                    <p class="store-calls-call-status">{{ getCallStatusId(call.callStatusId) }}</p>
                 </div>
 
 
@@ -26,18 +17,21 @@
                 <span class="bold">{{ call.openTime }}</span>
                 <p>Operator</p>
                 <span class="bold">{{ getCallOperator(call.operatorEmployeeCode) }} <span class="small-text">({{ call.operatorEmployeeCode }})</span></span>
-                <p>Store</p>
-                <span class="bold">{{ call.customerStoreName }}</span>
-                <p>Branch Code</p>
-                <span class="bold">{{ call.customerStoreBranchCode }}</span>
+                <p>Call Type</p>
+                <span class="bold">{{ getCallTypeName(call.callTypeId) }}</span>
+                <p>Order Number</p>
+                <span class="bold">{{ call.orderNumber }}</span>
+                <p>Contact Person</p>
+                <span class="bold">{{ call.callerName }}</span>
                 <p>Account</p>
-                <span class="bold">{{ call.customerAccountName }}</span>
+                <span class="bold">{{ call.customerAccountName }}</span> 
+                
                 <p>Details</p>
                 <span class="bold" v-html="processCallDetails(call.callDetails)"></span>
 
-                <div class="recent-calls-techs-grid-wrap" v-if="call.technicians && call.technicians.length >= 1">
+                <div class="store-calls-techs-grid-wrap" v-if="call.technicians && call.technicians.length >= 1">
                     <h4>Technicians</h4>
-                    <div class="recent-calls-techs-grid" v-for="tech in call.technicians" :key="tech.id"
+                    <div class="store-calls-techs-grid" v-for="tech in call.technicians" :key="tech.id"
                     :class="{ 
                             'pending' : tech.technicianCallStatusId == 1,
                             'received': tech.technicianCallStatusId == 2,
@@ -51,13 +45,13 @@
                         <p class="technician-name">{{ getTechName(tech.technicianEmployeeCode) }} <span class="smaller-text">({{ tech.technicianEmployeeCode }})</span></p>
 
 
-                        <p  class="recent-calls-tech-state">
-                            <span v-if="tech.technicianCallStatusId === 1" class="material-symbols-outlined rc-tech-state-icon pending material" >pending_actions</span>
-                            <font-awesome-icon v-if="tech.technicianCallStatusId === 2" class="rc-tech-state-icon received" :icon="['fa', 'user-check']" size="lg" />
-                            <font-awesome-icon v-if="tech.technicianCallStatusId === 3" class="rc-tech-state-icon en-route" :icon="['fa', 'route']" size="lg" />
-                            <font-awesome-icon v-if="tech.technicianCallStatusId === 4" class="rc-tech-state-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" />
-                            <font-awesome-icon v-if="tech.technicianCallStatusId === 5" class="rc-tech-state-icon left-site" :icon="['fa', 'road']" size="lg" />
-                            <font-awesome-icon v-if="tech.technicianCallStatusId === 6" class="rc-tech-state-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" />
+                        <p class="store-calls-tech-state">
+                            <span v-if="tech.technicianCallStatusId === 1" class="material-symbols-outlined sc-tech-state-icon pending material" >pending_actions</span>
+                            <font-awesome-icon v-if="tech.technicianCallStatusId === 2" class="sc-tech-state-icon received" :icon="['fa', 'user-check']" size="lg" />
+                            <font-awesome-icon v-if="tech.technicianCallStatusId === 3" class="sc-tech-state-icon en-route" :icon="['fa', 'route']" size="lg" />
+                            <font-awesome-icon v-if="tech.technicianCallStatusId === 4" class="sc-tech-state-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" />
+                            <font-awesome-icon v-if="tech.technicianCallStatusId === 5" class="sc-tech-state-icon left-site" :icon="['fa', 'road']" size="lg" />
+                            <font-awesome-icon v-if="tech.technicianCallStatusId === 6" class="sc-tech-state-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" />
                             {{ getTechStatus(tech.technicianCallStatusId) }}
                         </p>
 
@@ -70,31 +64,37 @@
             </div>
 
         </div>
-        
-
-        <button class="switch-user-type-btn" @click="switchProfile()"><font-awesome-icon :icon="['fa', 'retweet']" size="lg" /> Switch to Tech</button>
 
 
-        <button class="refresh-recent-calls-btn"><font-awesome-icon @click="refreshRecentCalls()" class="refresh-recent-calls" :icon="['fa','sync-alt']" size="lg" /></button>
+        <button @click="addCall()" class="store-calls-add-call-btn"><span class="material-symbols-outlined">add_call</span></button>
 
+
+        <div class="allocate-tech-store-calls-customer-info-wrap">          
+            <p>Address</p>
+            <span class="bold">{{ calls[0].customerStoreAddress }}</span>
+        </div>
+
+
+    </div>
+    <div v-else>
+        <button v-if="this.selectedStore" @click="addCall()" class="store-calls-add-call-btn no-calls"><span class="material-symbols-outlined">add_call</span> Add Call</button>
     </div>
 </template>
 
 
 
-
 <script>
-import { mapGetters } from 'vuex';
+import { mapGetters } from 'vuex'
 
 export default {
 
     data() {
         return {
-            user: JSON.parse(localStorage.getItem('user')),
             branches: JSON.parse(localStorage.getItem('branches')),
             employees: JSON.parse(localStorage.getItem('employees')),
             call_statuses: JSON.parse(localStorage.getItem('call_statuses')),
             tech_statuses: JSON.parse(localStorage.getItem('call_tech_states')),
+            call_types: JSON.parse(localStorage.getItem('call_types'))
         }
     },
 
@@ -103,27 +103,30 @@ export default {
 
     computed: {
         ...mapGetters({
-            loading: ['RecentCalls/loading'],
-            userType: ['UserRole/currentUserRole'],
-            availableUserRoles: ['UserRole/availableRoles'],
-            recentCalls: ['RecentCalls/recentCalls']
+            calls: ['AllocateTech/customerStoreCalls'],
+            selectedStore: ['AllocateTech/customerStore']
         })
     },
 
 
 
 
-    mounted() {
-        this.$store.dispatch('Menu/setTitle', { title: 'Home', icon: ['fa', 'home'] });
+    watch: {
+        calls: {
+            handler: function() {
 
-        setTimeout(() => {
-            var recentCalls = document.getElementById('RecentCalls');
-            if(recentCalls)
-            {
-                var viewPortHeight = window.innerHeight;
-                recentCalls.style.height = (viewPortHeight - 260) + 'px';
-            }
-        }, 50);
+            },
+            deep: true,
+            immediate: true
+        }
+    },
+
+
+
+
+
+    mounted() {
+        
     },
 
 
@@ -132,19 +135,22 @@ export default {
     methods: {
 
 
-        loadCall: function(call) {
-            this.$store.dispatch('AllocateTech/processCall', call);
-            this.$router.push('/allocate_tech');
+
+
+        addCall: function() {
+            // console.log(this.selectedStore);
+            
+            this.$store.dispatch('AddCall/selectCustomerStore', this.selectedStore);
+            this.$router.push('/add_call');
         },
 
 
 
-        refreshRecentCalls: function() {
-            this.$store.dispatch('RecentCalls/getRecentCalls', this.user);
+
+
+        getCallTypeName: function(callTypeId) {
+            return this.call_types.filter(callType => callType.id === callTypeId)[0].name;
         },
-
-
-
 
         getBranchName: function(branchId) {
             return this.branches.filter(branch => branch.id === branchId)[0].name;
@@ -184,15 +190,13 @@ export default {
 
 
 
-        switchProfile: function() {
-            this.$store.dispatch('UserRole/setUserRole', 1);
-            this.$router.push('/dashboard');
-            // console.log('Switching to: TECH');
+
+
+        loadCall: function(call) {
+            this.$store.dispatch('AllocateTech/setCall', call);
+            this.$emit('showingCall');
         },
 
-
-
-        
 
     }
 
@@ -202,41 +206,29 @@ export default {
 
 
 
-
 <style>
 
-
-.ops-admin-dashboard-wrap {
+.allocate-tech-store-calls-wrap {
+    text-align: left;
+    transition: all 250ms ease;
+    animation: fade-in-add-call 600ms ease-out;
+    
+    position: relative;
     
 }
 
 
 
-.ops-admin-dashboard-wrap h2 {
-    display: flex;
-    flex-direction: column;
-    padding-top: 5px;
-}
-
-.ops-admin-dashboard-wrap h2 span {
-
-}
 
 
 
-
-
-
-
-
-
-.recent-calls-scroll-section {
+.store-calls-scroll-section {
     position: fixed;
-    top: 125px;
+    top: 190px;
     left: 0;
     right: 0;
     width: 100vw;
-    height: 75vh;
+    /* height: 75vh; */
 
     background: var(--GunMetal);
     box-shadow: inset 0px -8px 6px -6px rgba(0,0,0,0.4);
@@ -255,7 +247,7 @@ export default {
 
 
 
-.recent-call-card {
+.store-call-card {
     padding-left: 10px;
     padding-right: 10px;
     border-radius: 5px;
@@ -275,26 +267,25 @@ export default {
 
 
 
-.recent-call-card-header {
+.store-call-card-header {
     height: 30px;
     background: var(--OpenCall);
     color: var(--TextBlack);
     grid-column: 1 / span 2;
     display: flex;
     align-items: center;
-    justify-content: space-between;
     
     padding: 0 10px;
     margin: 0 -10px;
     margin-bottom: 5px; 
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
-    
+    position: relative;
 }
 
 
 
-.recent-call-card-header h4 {
+.store-call-card-header h4 {
     font-size: 16px;
 }
 
@@ -302,26 +293,26 @@ export default {
 
 
 
-.recent-call-card-header.open {
+.store-call-card-header.open {
     background: var(--OpenCall);
     color: var(--TextBlack);
 }
 
 
-.recent-call-card-header.allocated {
+.store-call-card-header.allocated {
     background: var(--AllocatedCall);
     color: var(--TextBlack);
 }
 
 
-.recent-call-card-header.no-tech,
-.recent-call-card-header.allocated.no-tech {
+.store-call-card-header.no-tech,
+.store-call-card-header.allocated.no-tech {
     background: var(--WarningRed);
     color: white;
 }
 
 
-.recent-call-card-header .no-tech-warning {
+.store-call-card-header .no-tech-warning {
     color: white;
     position: absolute;
     left: 0;
@@ -331,13 +322,15 @@ export default {
     justify-content: center;
 }
 
-.recent-call-card-header .no-tech-warning-icon {
+.store-call-card-header .no-tech-warning-icon {
     color: var(--Spunk);
 }
 
 
 
-.recent-calls-techs-grid-wrap {
+
+
+.store-calls-techs-grid-wrap {
     margin: 0 -10px;
     padding: 0 10px;
     margin-top: 10px;
@@ -345,7 +338,7 @@ export default {
 }
 
 
-.recent-calls-techs-grid {
+.store-calls-techs-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
     align-items: center;
@@ -360,7 +353,7 @@ export default {
 
 
 
-.recent-calls-techs-grid::before {
+.store-calls-techs-grid::before {
     content: '';
     position: absolute;
     right: 0;
@@ -371,7 +364,7 @@ export default {
 }
 
 
-.recent-calls-techs-grid:last-child {
+.store-calls-techs-grid:last-child {
     margin-right: -10px;
     padding-right: 10px;
     margin-left: -7px;
@@ -383,12 +376,7 @@ export default {
 
 
 
-
-
-
-
-
-.rc-tech-state-icon {
+.sc-tech-state-icon {
     font-size: 12px;
     margin-right: 5px;
 }
@@ -396,74 +384,74 @@ export default {
 
 
 
-.rc-tech-state-icon.pending {
+.sc-tech-state-icon.pending {
     font-size: 14px;
     color: var(--PendingLight);
 }
-.recent-calls-techs-grid.pending::before {
+.store-calls-techs-grid.pending::before {
     background: var(--Pending);
 }
-.recent-calls-techs-grid.pending {
+.store-calls-techs-grid.pending {
     border-color: var(--Pending);
 }
 
 
 
-.rc-tech-state-icon.received {
+.sc-tech-state-icon.received {
     color: var(--ReceivedLight);
 }
-.recent-calls-techs-grid.received::before {
+.store-calls-techs-grid.received::before {
     background: var(--Received);
 }
-.recent-calls-techs-grid.received {
+.store-calls-techs-grid.received {
     border-color: var(--Received);
 }
 
 
 
-.rc-tech-state-icon.en-route {
+.sc-tech-state-icon.en-route {
     color: var(--EnRouteLight);
 }
-.recent-calls-techs-grid.en-route::before {
+.store-calls-techs-grid.en-route::before {
     background: var(--EnRoute);
 }
-.recent-calls-techs-grid.en-route {
+.store-calls-techs-grid.en-route {
     border-color: var(--EnRoute);
 }
 
 
 
-.rc-tech-state-icon.on-site {
+.sc-tech-state-icon.on-site {
     color: var(--OnSiteLight);
 }
-.recent-calls-techs-grid.on-site::before {
+.store-calls-techs-grid.on-site::before {
     background: var(--OnSite);
 }
-.recent-calls-techs-grid.on-site {
+.store-calls-techs-grid.on-site {
     border-color: var(--OnSite);
 }
 
 
 
-.rc-tech-state-icon.left-site {
+.sc-tech-state-icon.left-site {
     color: var(--LeftSiteLight);
 }
-.recent-calls-techs-grid.left-site::before {
+.store-calls-techs-grid.left-site::before {
     background: var(--LeftSite);
 }
-.recent-calls-techs-grid.left-site {
+.store-calls-techs-grid.left-site {
     border-color: var(--LeftSite);
 }
 
 
 
-.rc-tech-state-icon.on-hold {
+.sc-tech-state-icon.on-hold {
     color: var(--OnHoldLight);
 }
-.recent-calls-techs-grid.on-hold::before {
+.store-calls-techs-grid.on-hold::before {
     background: var(--OnHold);
 }
-.recent-calls-techs-grid.on-hold {
+.store-calls-techs-grid.on-hold {
     border-color: var(--OnHold);
 }
 
@@ -476,7 +464,7 @@ export default {
 
 
 
-.recent-calls-call-status {
+.store-calls-call-status {
     position: absolute;
     top: 5px;
     right: 8px;
@@ -486,7 +474,7 @@ export default {
 
 
 
-.recent-calls-tech-state {
+.store-calls-tech-state {
     border-radius: 3px;
     text-align: center;
     width: max-content;
@@ -502,16 +490,37 @@ export default {
 
 
 
-.refresh-recent-calls-btn {
+.allocate-tech-store-calls-customer-info-wrap {
     position: fixed;
-    top: 68px;
-    right: 20px;
-    font-size: 16px;
+    bottom: 70px;
+    left: 0;
+    margin: 0 auto;
+    text-align: left;
+    padding: 10px;
+    max-height: 150px;
+    max-width: 88%;
+    overflow-y: scroll;
 }
 
 
-.refresh-recent-calls {
-    
+
+
+.store-calls-add-call-btn {
+    position: fixed;
+    right: 7px;
+    bottom: 121px;
+    display: flex;
+    padding: 10px;
+}
+
+
+.store-calls-add-call-btn.no-calls {
+    left: 0;
+    right: 0;
+    top: 250px;
+    bottom: unset;
+    margin: 0 auto;
+    width: max-content;
 }
 
 </style>

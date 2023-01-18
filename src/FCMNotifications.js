@@ -3,6 +3,7 @@ import router from './router'
 import firebase from "firebase/app";
 import "firebase/firebase-messaging";
 import RouteFCM from './store/Modules/RouteFCM';
+import StaticResources from './store/Modules/StaticResources';
 
 
 
@@ -13,6 +14,12 @@ async function catchAndRouteMessage(title, body, data) {
 	// console.log('Title: ', title);
 	// console.log('Body: ', body);
 	// console.log('Data: ', data);
+
+
+	// Ignore auto-routing when Ops Admin
+	if(store.getters['UserRole/currentUserRole'] === 2) { return }
+
+
 
 	// Do not redirect "Call Update:" notifications...
 	if(title && title.indexOf('Call Update:') !== -1) { return }
@@ -31,10 +38,10 @@ async function catchAndRouteMessage(title, body, data) {
 	console.log('We think we want to go to: ', route);
 	if(route) 
 	{
+		store.dispatch('Calls/refreshTechnicianCalls');
 		// console.log(router.currentRoute._value.path, route);
 		if(route === router.currentRoute._value.path)
 		{
-			store.dispatch('Calls/refreshTechnicianCalls');
 			store.dispatch('Loading/setLoading', false);
 			return
 		}
@@ -87,6 +94,16 @@ if (process.env.NODE_ENV === 'production') {
 			if (event.data && event.data.type && event.data.type === 'FCM') 
 			{
 				await catchAndRouteMessage(event.data.title, event.data.body, event.data.data);
+			}
+
+
+
+			// Intercept SW message to Backup callSynStore during App Updates
+			if(event.data && event.data.type && event.data.type === 'callSyncStoreBackup')
+			{
+				var callSyncStoreBackup = event.data.data;
+				localStorage.setItem('callSyncStoreBackup', JSON.stringify(callSyncStoreBackup));
+				return
 			}
 
 

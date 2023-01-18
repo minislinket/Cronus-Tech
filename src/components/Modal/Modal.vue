@@ -27,8 +27,8 @@
 
             <div class="modal-button-wrap">
                 <button v-if="modal.confirmAction === undefined" class="modal-okay-btn" @click="closeModal()">Okay</button>
-                <button style="margin: 0 12px;" v-if="modal.confirmAction" class="modal-okay-btn" @click="modalResolve()">{{ modal.resolveText }}</button>
-                <button style="margin: 0 12px;" v-if="modal.confirmAction" class="modal-okay-btn" @click="modalReject()">{{ modal.rejectText }}</button>
+                <button style="margin: 0 12px;" v-if="modal.confirmAction" class="modal-yes-btn" @click="modalResolve()">{{ modal.resolveText }}</button>
+                <button style="margin: 0 12px;" v-if="modal.confirmAction" class="modal-no-btn" @click="modalReject()">{{ modal.rejectText }}</button>
             </div>
 
         </div>
@@ -326,12 +326,25 @@ export default {
     justify-content: center;
     height: 12%;
     background: rgba(45,45,45,1);
+    padding: 25px 0;
 }
 
 .modal-okay-btn {
     margin-bottom: 1px;
     /* color: white;
     background: var(--BlueDark); */
+}
+
+
+
+
+.modal-yes-btn {
+    color: var(--OkayGreen);
+}
+
+
+.modal-no-btn {
+    color: var(--WarningRed);
 }
 
 

@@ -15,7 +15,7 @@ const router = createRouter({
 // Check if user is authorized
 router.beforeEach((to, from, next) => {
 	// console.log('Coming from path: ', from);
-	console.log('Going to path: ', to);
+	// console.log('Going to path: ', to);
 	if (to.path !== '/' && to.path !== '/psw-reset' && !store.getters['Login/isAuth']) next({ path: '/' });
 	else if (to.path === '/' && store.getters['Login/isAuth']) next({ path: '/dashboard' });
 	else if(to.path === '/dashboard' && store.getters['UserRole/currentUserRole'] === 2) next({ path: '/ops_dashboard' })

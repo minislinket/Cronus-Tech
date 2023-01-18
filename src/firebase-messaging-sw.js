@@ -24,30 +24,159 @@ workbox.routing.registerNavigationRoute(
 
 // SW Sync Store for Call update data
 let callSyncStore = [];
+let callJobCardLinkStore = [];
+let backgroundSyncActive = false;
 
 // Listen for messages from the App
 self.addEventListener('message', function (event) {
-	// console.log('Message from app: ', event);
+	console.log('Message from app: ', event);
+
+
+
+	// Check background sync happened
+	if(event.data.type === 'checkBackgroundSyncNetworkErrors')
+	{
+
+		if(callSyncStore.length >= 1)
+		{
+			// console.log('Checking callSyncStore for call updates...');
+			callSyncStore.map(callData => {
+				event.waitUntil(updateCall(callData.call.id));
+			})
+		}
+
+		if(callJobCardLinkStore.length >= 1)
+		{
+			// console.log('Checking callJobCardLinkStore for job card links...');
+			callJobCardLinkStore.map(jobCardData => {
+				event.waitUntil(linkJobCard(jobCardData.call.id));
+			})
+		}
+	}
+
+
+
+
+
+	if(event.data.type === 'linkJobCard')
+	{
+		var data = JSON.parse(event.data.data);
+		var existingData = '';
+
+		callJobCardLinkStore.map(exData => {
+			if(exData.call.id.toString() === data.call.id.toString())
+			{
+				existingData = exData;
+			}
+		});
+
+
+		if(existingData)
+		{
+			data.jobCards.map(jobCard => {
+				existingData.jobCardLinks.push({jobCard, sending: false, sent: false});
+			})
+			
+			console.log('SW callJobCardLinkStore JC Link updated: ', callJobCardLinkStore);
+
+			event.waitUntil(linkJobCard(data.call.id));
+			
+		}
+		else
+		{
+			// If no existing data is in the callSyncStore, add this data.
+			data['jobCardLinks'] = [];
+			data.jobCards.map(jobCard => {
+				data.jobCardLinks.push({jobCard, sending: false, sent: false});
+			})
+			
+
+			delete data.jobCards;
+			callJobCardLinkStore.push(data);
+			console.log('SW callJobCardLinkStore JC Link added: ', callJobCardLinkStore);
+			
+			
+
+			event.waitUntil(linkJobCard(data.call.id));
+			
+			// var syncId = 'updateCall_' + data.call.id;
+			// event.waitUntil(self.registration.sync.register(syncId));
+		}
+	}
+
+
+
+
 
 
 
 	// Call update event msgs show here
-	if (event.data.type === 'updateCall') {
+	if (event.data.type === 'updateCall') 
+	{
 		var data = JSON.parse(event.data.data);
-		var existingData = callSyncStore.filter(exData => exData.call.id.toString() === data.call.id.toString())[0];
+		var existingData = '';
+
+		// console.log('update Call---Background Syncing? ', backgroundSyncActive);
+		
+		// Check if the call already exists in the Sync Store
+		callSyncStore.map(exData => {
+			if(exData.call.id.toString() === data.call.id.toString())
+			{
+				existingData = exData;
+			}
+		});
+
 		if(existingData)
 		{
-			existingData.nextStatusId = data.nextStatusId;
-			// console.log('CallSyncStore data updated: ', callSyncStore);
-			var syncId = 'updateCall_' + data.call.id;
-			event.waitUntil(self.registration.sync.register(syncId));
-			return 
+			if(existingData.statusUpdates.length >= 1)
+			{
+				existingData.statusUpdates.map(exUpdate => {
+					if(exUpdate.timeStamp === data.time_stamp)
+					{ return }
+				})
+			}
+			var updates = 
+			{
+				nextStatusId: data.nextStatusId, 
+				timeStamp: data.time_stamp,
+				sending: false,
+				sent: false
+			}
+			// data.ETT ? updates['ETT'] = data.ETT : null;
+			existingData.statusUpdates.push(updates);
+			
+			// console.log('SW callSyncStore Call updated: ', callSyncStore);
+
+			
+			event.waitUntil(updateCall(data.call.id));
+			
 		}
-		callSyncStore.push(data);
-		// console.log('Data added to callSyncStore: ', callSyncStore);
-		var syncId = 'updateCall_' + data.call.id;
-		event.waitUntil(self.registration.sync.register(syncId));
+		else
+		{
+			// If no existing data is in the callSyncStore, add this data.
+			data['statusUpdates'] = [{nextStatusId: data.nextStatusId, timeStamp: data.time_stamp, sending: false, sent: false}];
+			// if(data.ETT)
+			// {
+			// 	console.log('Data.statusUpdates: ', data.statusUpdates);
+			// 	data.statusUpdates[0]['ETT'] = data.ETT;
+			// 	delete data.ETT;
+			// }
+			delete data.nextStatusId;
+			delete data.time_stamp;
+			callSyncStore.push(data);
+			// console.log('SW callSyncStore Call added: ', callSyncStore);
+			
+			
+
+			event.waitUntil(updateCall(data.call.id));
+			
+			// var syncId = 'updateCall_' + data.call.id;
+			// event.waitUntil(self.registration.sync.register(syncId));
+		}
 	}
+
+
+
 
 
 
@@ -59,77 +188,97 @@ self.addEventListener('message', function (event) {
 
 
 
+
+	// Save the callSyncStore in localStorage in case of App Update
+	if(event.data.type === 'getCallSyncStore') { 
+		if(callSyncStore.length >= 1)
+		{
+			// console.log('Sending callSyncStore to App: ', callSyncStore);
+			messageToApp(event, 'callSyncStoreBackup', 'callSyncStoreBackup', '', callSyncStore)
+		}
+	}
+
+	
+	// Restore the callSyncStore from localStorage in case of App Update
+	if(event.data.type === 'restoreCallSyncStore')
+	{
+		var callSyncStoreBackup = JSON.parse(event.data.data);
+		if(callSyncStoreBackup && callSyncStoreBackup.length >= 1)
+		{
+			callSyncStore = callSyncStoreBackup;
+		}
+	}
+
 	
 });
 
 
 
 
-self.addEventListener('sync', function(event) {
-	// console.log('Background sync event: ', event);
-	if(event.tag.indexOf('updateCall_') !== -1)
-	{
-		var callId = event.tag.split('_')[1];
-		var data = callSyncStore.filter(data => data.call.id.toString() === callId.toString())[0];
-		event.waitUntil(updateCall(data)
-		.then((resp) => {
-			console.log('Call done updating, result: ', resp);
+// self.addEventListener('sync', function(event) {
+// 	console.log('Background sync event: ', event);
+// 	if(event.tag.indexOf('updateCall_') !== -1)
+// 	{
+// 		var callId = event.tag.split('_')[1];
+		
+// 		backgroundSyncActive = true;
+// 		event.waitUntil(updateCall(callId));
+// 	}
 
-			// If the update succeeded remove the call from callSyncStore
-			if(resp === true)
+
+// })
+
+
+
+async function linkJobCard(callId) {
+
+
+	var jcData = callJobCardLinkStore.filter(exData => exData.call.id.toString() === callId.toString())[0];
+	console.log('Link JC to call with: ', jcData);
+
+
+
+	var flag = false;
+
+	await Promise.all(jcData.jobCardLinks.map(async jobCardData => {
+
+		console.log('Processing job card link: ', jobCardData);
+
+		if(!jobCardData.sending) 
+		{ 
+
+			jobCardData.sending = true;
+
+			var method = 'PUT';
+			var query = 'job_cards/' + jobCardData.jobCard.id + '/call_link';
+			var body = jobCardData.jobCard;
+			var signature = jcData.signature;
+			
+			var SQLData = 
 			{
-				var index = callSyncStore.findIndex(exData => exData.call.id.toString() === data.call.id.toString());
-				if(index)
-				{
-					callSyncStore.splice(index, 1);
-				}
+				call: jcData.call, 
+				jobCardId: jobCardData.jobCard.id, 
+				user: jcData.user,
 			}
-			// Still deciding if we need to let the app know the call succeeded...
-			// event.waitUntil(returnBackgroundSyncToApp(event, 'updateCall', 'Call ' + callSyncStore.call.id + ' Updated', '', {callSyncStore}));
-		}));
-	}
+			var SQLQuery = 'techUpdates/linkJobCard.php';
 
-
-})
-
-
-
-
-async function updateCall(data) {
-
-	
-	// console.log('Update call with: ', data);
-
-	console.log('ServiceWorker Origin: ',self.location.origin);
-
-	var queryBase = '';
-
-	if(self.location.origin.indexOf('localhost') !== -1)
-		queryBase = 'http://129.232.180.146/cronus/api/calls/';
-	else
-		queryBase = 'https://office.locksecure.co.za/cronus/api/calls/';
-
-	
-
-	return fetch(queryBase + data.call.id + '/techs?tech_status_id=' + data.nextStatusId + '&employee_code=' + data.user.employeeCode + '&call_id=' + data.call.id, {
-		method: 'PUT',
-		headers: {
-			'Content-Type': 'application/json',
-			'Authorization': 'Bearer: ' + data.signature
-		} 
-	})
-	.then(function(resp) {
-		if(resp.status === 200)
-		{
-			// console.log('Server seems to think we\'re good...');
-			return true;
+			flag = await doFetch(method, query, body, signature, jcData, SQLData, SQLQuery);
 		}
-		// console.log(resp);
-	})
-	.catch(function(err) {
-		console.error('SW Fetch Error: ', err);
-		console.error('SW Fetch error response: ', err.response);
-	})
+
+	}))
+	
+	
+	if(!flag) 
+	{
+		jcData.jobCardLinks = jcData.jobCardLinks.filter(jcLink => jcLink.sent != true); 
+		
+		if(jcData.jobCardLinks.length <= 0)
+		{
+			callJobCardLinkStore = callJobCardLinkStore.filter(exData => exData.call.id.toString() !== data.call.id.toString());
+		}
+	}
+	console.log('JC_Call Store filtered after data sent: ', callJobCardLinkStore);
+
 }
 
 
@@ -139,34 +288,141 @@ async function updateCall(data) {
 
 
 
-// async function fetchTechCalls(params, signature) {
-// 	// console.log('At least this works...', params, signature);
+async function updateCall(callId) {
 
-// 	return fetch('https://office.locksecure.co.za/cronus/api/calls', {
-// 		method: 'GET',
-// 		params: params,
-// 		headers: {
-// 			'Content-Type': 'application/json',
-// 			'Authorization': 'Bearer: ' + signature
-// 		}
-// 	})
-// 	.then(function(resp) {
-// 		if(resp.status === 200)
-// 		{
-// 			return resp.data;
-// 		}
-// 		else
-// 		{
-// 			return [];
-// 		}
-// 	})
-// 	.catch(function(err) {
-// 		console.error('SW Fetch Error: ', err);
-// 		console.error('SW Fetch error response: ', err.response);
-// 	})
+	var callData = callSyncStore.filter(exData => exData.call.id.toString() === callId.toString())[0];
+	// console.log('Update call with: ', data);
 	
-// }
 
+	var flag = false;
+
+	await Promise.all(callData.statusUpdates.map(async update => {
+
+		if(!update.sending) 
+		{ 
+
+			update.sending = true;
+
+			var method = 'PUT';
+			var query = 'calls/' + callData.call.id + '/techs?tech_status_id=' + update.nextStatusId + '&employee_code=' + callData.user.employeeCode + '&call_id=' + callData.call.id + '&event_time=' + update.timeStamp;
+			var body = null;
+			var signature = callData.signature;
+			var data = update;
+			var SQLData = 
+			{
+				call: callData.call, 
+				nextStatusId: update.nextStatusId, 
+				user: callData.user, 
+				signature: callData.signature, 
+				time_stamp: update.timeStamp
+			}
+			var SQLQuery = 'techUpdates/postUpdate.php';
+
+
+			flag = await doFetch(method, query, body, signature, data, SQLData, SQLQuery);
+			
+		}
+
+	}))
+	
+	
+	if(!flag) 
+	{
+		callData.statusUpdates = callData.statusUpdates.filter(ud => ud.sent != true); 
+		
+		if(callData.statusUpdates.length <= 0)
+		{
+			callSyncStore = callSyncStore.filter(exData => exData.call.id.toString() !== callData.call.id.toString());
+		}
+	}
+	// console.log('Sync Store filtered after data send to update: ', callSyncStore);
+
+	// backgroundSyncActive = false;
+ 
+}
+
+
+
+
+
+
+
+
+async function doFetch(method, query, body, signature, sendData, SQLData, SQLQuery) {
+
+	var flag = false;
+	
+	var queryBase = '';
+	var SQLBase = '';
+
+	if(self.location.origin.indexOf('localhost') !== -1)
+	{
+		queryBase = 'http://129.232.180.146/cronus/api/';
+		SQLBase = 'http://localhost/cronus-tech/src/api/'
+	}
+	else
+	{
+		queryBase = 'https://office.locksecure.co.za/cronus/api/';
+		SQLBase = 'https://dev.locksecure.co.za/tech-api/';
+	}
+
+	
+
+
+	return fetch(queryBase + query, {
+		method,
+		headers: {
+			'Content-Type': 'application/json',
+			'Authorization': 'Bearer: ' + signature
+		},
+		body: body ? JSON.stringify(body) : '' 
+	})
+	.then(async resp => {
+
+		// resp.json().then(data => console.log(data));
+		// console.log(resp.status + ' - ' + JSON.stringify(sendData));
+
+		if(resp.status != 200)
+		{
+			flag = true;
+			sendData.sending = false;
+			sendData.sent = false;
+			return flag;
+		}
+		else
+		{
+
+			//Save a log of all tech call updates
+			await fetch(SQLBase + SQLQuery, {
+				body: JSON.stringify(SQLData),
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				}
+			})
+			.catch(function(err) {
+				console.error('SW SQL Fetch Error: ', err);
+				console.error('SW SQL Fetch error response: ', err.response);
+			})
+
+			sendData.sending = false;
+			sendData.sent = true;
+			return flag;
+		}
+
+		
+
+	})
+	.catch(function(err) {
+		console.error('SW Fetch Error: ', err);
+		console.error('SW Fetch error response: ', err.response);
+		flag = true;
+		sendData.sending = false;
+		sendData.sent = false;
+		return flag;
+	})
+
+}
 
 
 
@@ -177,7 +433,7 @@ async function updateCall(data) {
 self.addEventListener('notificationclick', function (event) {
 
 	const notification = event.notification;
-	console.log('Notification: ', notification);
+	// console.log('Notification: ', notification);
 
 	// FCM Message - Catch FCM Message Clicks, open/focus the App and pass data with postMessage() 
 	if (notification.data.FCM_MSG) {
@@ -206,7 +462,7 @@ self.addEventListener('notificationclick', function (event) {
 
 
 
-function returnBackgroundSyncToApp(event, type, title, body, data) {
+function messageToApp(event, type, title, body, data) {
 	// Get the browser windowClient
 	event.waitUntil(clients.claim());
 	event.waitUntil(clients.matchAll({

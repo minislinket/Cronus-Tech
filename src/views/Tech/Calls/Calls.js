@@ -4,10 +4,9 @@ import { axiosOffice } from "../../../axios/axios";
 // initial state
 const state = () => ({
     activeCalls: [],
-    incomingCalls: [],
+    pendingCalls: [],
     loading: false,
     showActiveCalls: true,
-    callSyncTimeMin: 30
 })
 
 
@@ -20,12 +19,12 @@ const getters = {
         return state.activeCalls;
     },
 
-    incomingCalls: (state) => {
-        return state.incomingCalls;
+    pendingCalls: (state) => {
+        return state.pendingCalls;
     },
 
     allCalls: (state) => {
-        var allCalls = state.activeCalls.concat(state.incomingCalls);
+        var allCalls = state.activeCalls.concat(state.pendingCalls);
         return allCalls;
     },
 
@@ -37,10 +36,6 @@ const getters = {
         return state.showActiveCalls;
     },
 
-
-    callSyncTimeMin: (state) => {
-        return state.callSyncTimeMin;
-    }
 }
 
 
@@ -54,29 +49,24 @@ const actions = {
 
     async getTechnicianCalls({ commit, dispatch }) {
         
-        commit('loading', true);
         commit('resetActiveCalls');
-        commit('resetIncomingCalls');
+        commit('resetPendingCalls');
 
-        var calls = JSON.parse(localStorage.getItem('calls'));
-
-        if(calls)
-            await dispatch('processCalls', calls);
-        else
-            await dispatch('refreshTechnicianCalls');
+        await dispatch('loadLocalStorageCalls');
+        
     },
 
 
 
 
 
-    async refreshTechnicianCalls({ dispatch, commit }, freshStart) {
+    async refreshTechnicianCalls({ dispatch, commit, rootGetters }) {
+
+        var online = rootGetters['StaticResources/online'];
+        if(!online) { return }
+
 
         commit('loading', true);
-
-        localStorage.removeItem('calls');
-        commit('resetActiveCalls');
-        commit('resetIncomingCalls');
 
         var user = JSON.parse(localStorage.getItem('user'));
 
@@ -91,10 +81,18 @@ const actions = {
         // En Route Calls
         var enRouteParams = {technician_employee_code: user.employeeCode, call_status_id: 2, tech_call_status_id: 3};
         var getEnRouteCalls = dispatch('loadTechnicianCallsFromServer', enRouteParams);
+
+        // Rerouted Calls
+        var reroutedParams = {technician_employee_code: user.employeeCode, call_status_id: 2, tech_call_status_id: 7};
+        var getReroutedCalls = dispatch('loadTechnicianCallsFromServer', reroutedParams);
         
         // On Site Calls
         var onSiteParams = {technician_employee_code: user.employeeCode, call_status_id: 2, tech_call_status_id: 4};
         var getOnSiteCalls = dispatch('loadTechnicianCallsFromServer', onSiteParams);
+
+        // Left Site Calls
+        var leftSiteParams = {technician_employee_code: user.employeeCode, call_status_id: 2, tech_call_status_id: 5};
+        var getLeftSiteCalls = dispatch('loadTechnicianCallsFromServer', leftSiteParams);
         
         // On Hold Calls
         var onHoldParams = {technician_employee_code: user.employeeCode, call_status_id: 2, tech_call_status_id: 6};
@@ -102,15 +100,9 @@ const actions = {
 
         
         // Get all technician calls simultaneously
-        var [pendingCalls, receivedCalls, enRouteCalls, onSiteCalls, onHoldCalls] = await Promise.all([getPendingCalls, getReceivedCalls, getEnRouteCalls, getOnSiteCalls, getOnHoldCalls]);
-
-
-        if(pendingCalls.length >= 1) await dispatch('assignCustomerStore', pendingCalls); 
-        if(receivedCalls.length >= 1) await dispatch('assignCustomerStore', receivedCalls); 
-        if(enRouteCalls.length >= 1) await dispatch('assignCustomerStore', enRouteCalls); 
-        if(onSiteCalls.length >= 1) await dispatch('assignCustomerStore', onSiteCalls); 
-        if(onHoldCalls.length >= 1) await dispatch('assignCustomerStore', onHoldCalls); 
-
+        var [pendingCalls, receivedCalls, enRouteCalls, reroutedCalls, onSiteCalls, leftSiteCalls, onHoldCalls] 
+        = 
+        await Promise.all([getPendingCalls, getReceivedCalls, getEnRouteCalls, getReroutedCalls, getOnSiteCalls, getLeftSiteCalls, getOnHoldCalls]);
 
         // console.log('Pending Calls: ', pendingCalls);
         // console.log('Received Calls: ', receivedCalls);
@@ -119,55 +111,37 @@ const actions = {
         // console.log('On Hold Calls: ', onHoldCalls);
 
 
-        var allCalls = pendingCalls.concat(receivedCalls, enRouteCalls, onSiteCalls, onHoldCalls);
+        var allCalls = pendingCalls.concat(receivedCalls, enRouteCalls, reroutedCalls, onSiteCalls, leftSiteCalls, onHoldCalls);
         console.log('All Calls: ', allCalls);
 
-        // If the user just logged in, check calls and set status 3 / 4 to on-hold(6)
-        // if(freshStart === true) 
-        // {
-        //     allCalls = await dispatch('setTechStates', allCalls);
-        // }
+        var flag = false;
+        allCalls.map(call => call === false ? flag = true : null);
 
+        if(!flag)
+        {
+            await dispatch('compareLocalStorageWithServer', allCalls);
+        }
+        else
+        {   
+            var toast = {
+				shown: false,
+				type: 'warning', // ['info', 'warning', 'error', 'okay']
+				heading: 'Server Error', // (Optional)
+				body: 'Error while retrieving jobs from server, please try again later', 
+				time: 5000, // in milliseconds
+				icon: ['fa', 'fingerprint'] // leave blank for default toast type icon
+			}
 
-        await dispatch('processCalls', allCalls);
-
-    },
-
-
-
-
-
-    async setTechStates({ dispatch }, calls) {
-
-        var tech_states = JSON.parse(localStorage.getItem('call_tech_states'));
-
-        await Promise.all(calls.map(call => {
-
-            if(call.techStateId === 3 || call.techStateId === 4)
-            {
-                call.techStateId = 6;
-                call.techState = tech_states.filter(state => state.id === call.techStateId)[0];
-                call.techStateName = call.techState.name;
-                navigator.serviceWorker.getRegistration().then(reg => {
-                    // console.log('We have a registration: ', reg);
-                    var user = JSON.parse(localStorage.getItem('user'));
-                    var signature = JSON.parse(localStorage.getItem('signature'));
-                    var data = JSON.stringify({call: call, nextStatusId: call.techStateId, user, signature });
-                    reg.active.postMessage({type: 'updateCall', data: data});
-                })
-            }
-
-        }))
-
-        return calls;
-
-        // setTimeout(() => {
-        //     console.log('Dispatching refresh tech calls from set tech state....');
-        //     dispatch('refreshTechnicianCalls', false);
-        // }, 150);
-        
+            dispatch('Toast/toast', toast, { root: true });
+        }
 
     },
+
+
+
+
+
+
 
 
 
@@ -181,13 +155,15 @@ const actions = {
         return axiosOffice.get('/calls', {
             params: params
         })
-        .then(resp => {
+        .then(async resp => {
             // console.log(resp);
             if(resp.status === 200)
             {
                 var techState = tech_states.filter(state => state.id === params.tech_call_status_id)[0];
-                resp.data.map(call => {
+                resp.data.map(async call => {
+                    call['jobCards'] = [];
                     call.techState = techState;
+
                     if(call.techState)
                     {
                         call.techStateId = call.techState.id;
@@ -207,7 +183,7 @@ const actions = {
         .catch(err => {
             console.error('Axios_Office Error: ', err);
             console.error('Axios_Office Error Response: ', err.response);
-            return [];
+            return false;
         })
 
     },
@@ -217,57 +193,7 @@ const actions = {
 
 
 
-
-
-
-    async assignCustomerStore({}, calls) {
-        var customerStores = localStorage.getItem('customer_stores');
-        var customerAccounts = JSON.parse(localStorage.getItem('customer_accounts'));
-        customerStores ? customerStores = JSON.parse(LZString.decompress(customerStores)) : customerStores = [];
-
-        await Promise.all(calls.map(call => {
-
-            var store = customerStores.filter(str => str.id === call.customerStoreId)[0];
-            if(store)
-            {
-                call.customerStore = store;
-                call.customerStoreBranchCode = store.branchCode
-                call.customerStoreName = store.name;
-
-                var account = customerAccounts.filter(acc => acc.id === store.customerAccountId)[0];
-                if(account)
-                {
-                    call.customerAccount = account;
-                    call.customerAccountName = account.name;
-                }
-                else
-                {
-                    call.customerAccount = '';
-                    call.customerAccountName = '';
-                }
-            }
-            else
-            {
-                call.customerStore = '';
-                call.customerStoreBranchCode = '';
-                call.customerStoreName = '';
-                call.customerAccount = '';
-                call.customerAccountName = '';
-            }
-
-
-            
-
-        }))
-    },
-
-
-
-
-
-
-
-
+    
 
 
     async processCalls({ commit, dispatch }, calls) {
@@ -283,17 +209,36 @@ const actions = {
         var customerAccounts = JSON.parse(localStorage.getItem('customer_accounts'));
         var employees = JSON.parse(localStorage.getItem('employees'));
 
-        calls.map(call => call.customerStore ? null : hasCustomerStore = false);
+        calls.map(call => {
+            call.customerStore ? null : hasCustomerStore = false;
+
+            if(call.customerStore && !call.customerStoreName || call.customerStore && !call.customerStoreBranchCode)
+            {
+                call.customerStoreBranchCode = call.customerStore.branchCode
+                call.customerStoreName = call.customerStore.name;
+            }
+            if(call.customerAccount && !call.customerAccountName)
+            {
+                call.customerAccountName = call.customerAccount.name;
+            }
+            if(call.operator && !call.operatorName)
+            {
+                call.operatorName = call.operator.displayName;
+            }
+        });
 
         if(!hasCustomerStore)
         {
             customerStores = localStorage.getItem('customer_stores');
             customerStores ? customerStores = JSON.parse(LZString.decompress(customerStores)) : customerStores = [];
         }
+        
 
 
 
         await Promise.all(calls.map(async call => {
+
+            
 
             if(!call.customerStore)
             {
@@ -324,9 +269,6 @@ const actions = {
                     call.customerAccount = '';
                     call.customerAccountName = '';
                 }
-
-
-                
             }
 
 
@@ -345,27 +287,12 @@ const actions = {
                     call.operatorName = '';
                 }
             }
-            
-            var activeCalls = calls.filter(call => call.techStateId >= 2 && call.techStateId <= 4 || call.techStateId === 6);
-            activeCalls.sort((a,b) => {
-                return b.techStateId - a.techStateId;
-            })
-            var incomingCalls = calls.filter(call => call.techStateId === 1);
-            incomingCalls.sort((a,b) => {
-                return a.techStateId - b.techStateId;
-            })
-            // activeCalls.map(c => { c.techStateId = 5 })
-            commit('setActiveCalls', activeCalls);
-            commit('setIncomingCalls', incomingCalls);
-
-            incomingCalls.length >= 1 ? dispatch('Calls/showActiveCalls', false, { root: true }) : dispatch('Calls/showActiveCalls', true, { root: true });
-            // localStorage.setItem('calls', JSON.stringify(calls));
-            dispatch('updateLocalStorage');
-            commit('loading', false);
-            return 
 
         }))
               
+        
+        commit('loading', false);
+        return
 
     },
 
@@ -373,24 +300,258 @@ const actions = {
 
 
 
-    updateLocalStorage({ state }) {
 
+    async getCallJobCards({}, call) {
+        var user = JSON.parse(localStorage.getItem('user'));
+        // console.log('Getting JC\'s for call: ', call.id)
+        return axiosOffice.get('job_cards?allocatedEmployeeCode='+ user.employeeCode +'&customerCallId='+ call.id)
+        .then(resp => {
+            // console.log('call JC resp: ', resp);
+            if(resp.status === 200)
+            {
+                call.jobCards = resp.data;
+            }
+        })
+        .catch(err => {
+            console.error('Axios_Office Error: ', err);
+            console.error('Axios_Office Error Response: ', err.response);
+            call.jobCards = [];
+        })
+    },
+
+
+
+
+
+
+    updateLocalStorage({ dispatch }, call) {
+
+        // console.log('Updating call in local storage: ', call);
+
+        var localCalls = JSON.parse(localStorage.getItem('calls'));
         localStorage.removeItem('calls');
-        var allCalls = state.activeCalls.concat(state.incomingCalls);
-        localStorage.setItem('calls', JSON.stringify(allCalls));
+        localCalls.map(c => {
+            if(c.id === call.id)
+            {
+                c.techState = call.techState;
+                c.techStateId = call.techStateId;
+                c.techStateName = call.techStateName;
+                c.jobCards = call.jobCards;
+            }
+        });
+        // console.log('Call Updated in localStorage...', localCalls);
+        localStorage.setItem('calls', JSON.stringify(localCalls));
+        dispatch('splitAndCommitActivePendingCalls', localCalls);
 
     },
 
 
 
 
+
+    async compareLocalStorageWithServer({ dispatch }, serverCalls) {
+
+        // if(serverCalls.length <= 0) { return }
+
+
+        var localCalls = JSON.parse(localStorage.getItem('calls'));
+        localStorage.removeItem('calls');
+
+        var serverCallIds = [];
+        var localCallIds = [];
+
+        var newCalls = [];
+        var existingCalls = [];
+
+        // console.log('Local Calls before processing: ', JSON.parse(JSON.stringify(localCalls)));
+
+        !localCalls ? localCalls = [] : null;
+
+        // Grab the id's from both local and server calls and push each to it's own array
+        await Promise.all(serverCalls.map(async serverCall => {
+            if(serverCall.techStateId >= 4 && serverCall.techStateId <= 6)
+            {
+                await dispatch('getCallJobCards', serverCall);
+            }
+            serverCallIds.push(serverCall.id);
+        }));
+        // console.log('Server call ID\'s: ', serverCallIds);
+
+        localCalls ? localCalls.map(localCall => localCallIds.push(localCall.id)) : null;
+        // console.log('Local call ID\'s: ', localCallIds);
+
+        
+        if(serverCallIds.length >= 1)
+        {
+            serverCallIds.map(async callId => {
+                if(localCallIds.length >= 1)
+                {
+                    if(localCallIds.includes(callId))
+                        existingCalls.push(serverCalls.filter(serverCall => serverCall.id === callId)[0])
+                    else
+                        newCalls.push(serverCalls.filter(serverCall => serverCall.id === callId)[0]);
+                }
+                else
+                {
+                    localCalls = serverCalls;
+                    await dispatch('processCalls', localCalls);
+                }
+                
+            })
+        }
+        else
+        {
+            localCalls = [];
+        }
+
+
+        var removedCallIds = [];
+
+        if(localCallIds.length >= 1)
+        {
+            localCallIds.map(localCallId => !serverCallIds.includes(localCallId) ? removedCallIds.push(localCallId) : null);
+            // console.log('Remove call id\'s: ', removedCallIds);
+            if(removedCallIds.length >= 1)
+            {
+                removedCallIds.map(callId => {
+                    var index = localCalls.findIndex(call => call.id === callId);
+                    // console.log('Found index for call: ', index);
+                    if(typeof index === 'number')
+                        localCalls.splice(index, 1);
+                })
+                
+            }
+        }
+
+
+
+
+
+        // console.log('New Calls from server: ', newCalls);
+        // console.log('Existing Calls from server: ', existingCalls);
+        // console.log('Local Calls: ', JSON.parse(JSON.stringify(localCalls)));
+
+        
+
+        if(newCalls.length >= 1)
+        {
+            await dispatch('processCalls', newCalls);
+            newCalls.map(newCall => {
+                localCalls.push(newCall);
+            })
+            
+        }
+
+
+        
+
+        if(existingCalls.length >= 1)
+        {
+            localCalls.map(localCall => {
+
+                var serverCall = existingCalls.filter(call => call.id === localCall.id)[0];
+                var ignoreKeys = 
+                [
+                    'customerAccount', 'customerAccountName', 'customerStore', 'customerStoreBranchCode ', 'customerStoreName', 
+                    'operator', 'operatorName', 
+                    'techState', 'techStateId', 'techStateName'
+                ];
+
+                if(serverCall)
+                {
+                    for(var [key, val] of Object.entries(localCall)) {
+                        if(!ignoreKeys.includes(key))
+                        {
+                            // console.log('local call key: ',key, localCall[key]);
+                            // console.log('Server call key: ',key, serverCall[key])
+                            localCall[key] !== serverCall[key] ? localCall[key] = serverCall[key] : null;
+                        }
+                    }
+                }
+
+
+            })
+        }
+
+
+
+        // if(localCalls.length >= 1)
+        // {
+        //     localCalls.map(async call => {
+                
+        //     });
+        // }
+
+        // console.log('Local Calls after Server compare: ', JSON.parse(JSON.stringify(localCalls)));
+
+        /* var flag = false;
+        localCalls.length >= 1 ? localCalls.map(call => !call.customerStoreName ? flag = true : null) : null;
+        if(flag == true) 
+        { */
+            await dispatch('processCalls', localCalls);
+        /* } */
+
+
+        // console.log('Local Calls after updates: ', JSON.parse(JSON.stringify(localCalls)));
+        localStorage.setItem('calls', JSON.stringify(localCalls));
+        dispatch('splitAndCommitActivePendingCalls', localCalls);
+
+    },
+
+
+
+
+
+
+
+    loadLocalStorageCalls({ dispatch }, calls) {
+
+        var calls = JSON.parse(localStorage.getItem('calls'));
+
+        if(calls)
+        {
+            dispatch('splitAndCommitActivePendingCalls', calls);
+        }
+    },
+
+
+
+
+
+
+    splitAndCommitActivePendingCalls({ commit, dispatch }, calls) {
+
+        var activeCalls = calls.filter(call => {
+            // console.log(call.techStateId);
+            return call.techStateId >= 2 && call.techStateId <= 5 || call.techStateId >= 6 && call.techStateId <= 7;
+        });
+        activeCalls.sort((a,b) => {
+            return b.techStateId - a.techStateId;
+        })
+        console.log('Active calls: ', activeCalls);
+
+        var pendingCalls = calls.filter(call => call.techStateId == 1);
+        pendingCalls.sort((a,b) => {
+            return a.techStateId - b.techStateId;
+        })
+        console.log('Pending calls: ', pendingCalls);
+
+        commit('setActiveCalls', activeCalls);
+        commit('setPendingCalls', pendingCalls);
+
+        pendingCalls.length >= 1 ? dispatch('Calls/showActiveCalls', false, { root: true }) : dispatch('Calls/showActiveCalls', true, { root: true });
+        console.log('--------calls done loading--------');
+        commit('loading', false);
+    },
+
+
+
+
+    
 
     showActiveCalls({ commit }, toggle) {
         commit('showActiveCalls', toggle);
     },
-
-
-
 
     toggleActiveCalls({ commit }) {
         commit('toggleActiveCalls');
@@ -418,13 +579,13 @@ const mutations = {
 
 
 
-    setIncomingCalls(state, calls) {
-        state.incomingCalls = calls;
+
+    setPendingCalls(state, calls) {
+        state.pendingCalls = calls;
     },
 
-
-    resetIncomingCalls(state) {
-        state.incomingCalls = [];
+    resetPendingCalls(state) {
+        state.pendingCalls = [];
     },
 
 
@@ -433,8 +594,6 @@ const mutations = {
     showActiveCalls(state, toggle) {
         state.showActiveCalls = toggle;
     },
-
-
 
     toggleActiveCalls(state) {
         state.showActiveCalls = !state.showActiveCalls;
@@ -446,7 +605,6 @@ const mutations = {
 
     loading(state, toggle) {
         state.loading = toggle;
-        // console.log('Are we loading calls? ', toggle);
     }
 
 }

@@ -7,6 +7,11 @@
         
         <div class="call-info-wrap">
 
+            <div class="link-job-card-wrap" v-if="call.techStateId >= 4 && call.techStateId != 7">
+                <button :class="{ 'no-jc' : call.jobCards.length <= 0, 'linked' : call.jobCards.length >= 1 }" @click="openLinkJobCard()"><font-awesome-icon class="link-job-card-icon" :icon="['fa','link']" size="lg" /> </button>
+                <span>Link Job Card</span>
+            </div>
+
             <div class="call-info-wrapper call-details-wrap">
                 <h4>Call Detail</h4>
                 <p class="call-details" v-html="processCallDetails(call.callDetails)"></p>
@@ -21,14 +26,17 @@
             </div>
 
             
-            <div class="call-info-wrapper">
+            <div class="call-info-wrapper last">
                 <div class="call-info-grid">
+
+                    <h4>Opened On</h4>
+                    <p>{{ call.openTime }}</p>
 
                     <h4>Operator</h4>
                     <p>{{ call.operatorName }}</p>
 
-                    <!-- <h4>Branch Code</h4>
-                    <p>{{ call.customerStoreBranchCode }}</p> -->
+                    <h4>Managing Branch</h4>
+                    <p>{{ returnManagingBranch(call.managingBranchId) }}</p>
                     
                     <h4 v-if="call.siteReady">Site Ready Date</h4>
                     <p v-if="call.siteReady">{{ call.siteReadyDate }}</p>
@@ -39,39 +47,75 @@
                     <h4>Caller Phone</h4>
                     <p>{{ call.contactNumber }}</p>
 
-                    <h4>Call Type</h4>
+                    <h4>Job Type</h4>
                     <p>{{ returnCallType(call.callTypeId) }}</p>
 
-                    <h4>Call Sub Type</h4>
+                    <h4>Job Sub Type</h4>
                     <p>{{ returnCallSubType(call.callSubTypeId) }}</p>
 
+                    <h4>Order Number</h4>
+                    <p>{{ call.orderNumber }}</p>
+
                 </div>
             </div>
 
-            <div class="current-tech-state-wrap" :class="{ pending : call.techStateId === 1, received : call.techStateId === 2, 'en-route' : call.techStateId === 3, 'at-site' : call.techStateId === 4, 'left-site' : call.techStateId === 5, 'on-hold' : call.techStateId === 6 }">
-                <p class="call-info-store" :class="{ 'small-text' : call.customerStoreName && call.customerStoreName.length >= 26 }">{{ call.customerStoreName }} <span v-if="call.customerStoreName">({{ call.customerStoreBranchCode }})</span></p>
+            <div class="current-tech-state-wrap" :class="{ pending : call.techStateId === 1, received : call.techStateId === 2, 'en-route' : call.techStateId === 3, 'on-site' : call.techStateId === 4, 'left-site' : call.techStateId === 5, 'on-hold' : call.techStateId === 6, 'rerouted' : call.techStateId == 7 }">
+                <p class="call-info-store" :class="{ 'small-text' : call.customerStoreName && call.customerStoreName.length >= 18 }">{{ call.customerStoreName }} <span v-if="call.customerStoreName">({{ call.customerStoreBranchCode }})</span></p>
                 <div class="job-status-wrap">
-                    <p class="current-job-status-heading-text">Job Status</p>
-                    <p class="call-current-tech-state" v-if="call.techStateId === 1"><span class="material-symbols-outlined call-current-tech-state-icon material" >pending_actions</span> Pending</p>
-                    <p class="call-current-tech-state" v-else-if="call.techStateId === 2"><font-awesome-icon class="call-current-tech-state-icon" :icon="['fa', 'user-check']" size="lg" /> Received</p>
-                    <p class="call-current-tech-state" v-else-if="call.techStateId === 3"><font-awesome-icon class="call-current-tech-state-icon" :icon="['fa', 'route']" size="lg" /> En-Route</p>
-                    <p class="call-current-tech-state" v-else-if="call.techStateId === 4"><font-awesome-icon class="call-current-tech-state-icon" :icon="['fa', 'map-marker-alt']" size="lg" /> At-Site</p>
-                    <p class="call-current-tech-state" v-else-if="call.techStateId === 6"><font-awesome-icon class="call-current-tech-state-icon" :icon="['fa', 'pause-circle']" size="lg" /> On-Hold</p>
+                    <h6 class="current-job-status-heading-text">Job Status</h6>
+                    <div class="job-icon-wrap">
+                        
+
+                        <!-- Pending -->
+                        <div class="call-current-tech-state pending" :class="{ 'inactive'  : call.techStateId !== 1 }">
+                            <span style="padding-top: 2px;" class="material-symbols-outlined call-current-tech-state-icon material" >pending_actions</span>
+                        </div>
+                        <span class="material-symbols-outlined material-arrow-right">chevron_right</span>
+
+                        <!-- Received -->
+                        <div class="call-current-tech-state received" :class="{ 'inactive'  : call.techStateId !== 2 }">
+                            <font-awesome-icon class="call-current-tech-state-icon" :icon="['fa', 'user-check']" size="lg" />
+                        </div>
+                        <span class="material-symbols-outlined material-arrow-right">chevron_right</span>
+
+
+                        <!-- En-Route / Rerouted -->
+                        <div class="call-current-tech-state" :class="{ 'inactive'  : call.techStateId !== 3 && call.techStateId !== 7, 'en-route' : call.techStateId == 3, 'rerouted' : call.techStateId == 7 }">
+                            <span class="material-symbols-outlined call-current-tech-state-icon material rerouted" >alt_route</span>
+                            <font-awesome-icon class="call-current-tech-state-icon en-route" :icon="['fa', 'route']" size="lg" />
+                        </div>
+                        <span class="material-symbols-outlined material-arrow-right">chevron_right</span>
+
+                        <!-- On-Site / Left-Site -->
+                        <div class="call-current-tech-state" :class="{ 'inactive'  : call.techStateId !== 4 && call.techStateId !== 5, 'on-site' : call.techStateId == 4, 'left-site' : call.techStateId == 5 }">
+                            <font-awesome-icon class="call-current-tech-state-icon floating left-site" :icon="['fa', 'road']" size="lg" />
+                            <font-awesome-icon class="call-current-tech-state-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" />
+                        </div>
+
+                        <!-- On-Hold / Completed -->
+                        <div class="call-current-tech-state completed" :class="{ 'inactive'  : call.techStateId !== 8 && call.techStateId !== 6, 'on-hold' : call.techStateId == 6, 'completed' : call.techStateId == 8 }">
+                            <font-awesome-icon class="call-current-tech-state-icon floating on-hold" :icon="['fa', 'pause-circle']" size="lg" />
+                            <font-awesome-icon class="call-current-tech-state-icon completed" :icon="['fa', 'clipboard-check']" size="lg" />
+                        </div>
+                    </div>
                 </div>
             </div>
-
+            
 
         </div>
 
         
-        
+        <ETTModal :active="ETTModalActive" @closeETT="ETTModalActive = false" @submitETT="submitETT($event)"/>
+        <OnHoldReasonModal @submitReason="submitOnHoldReason($event)" />
+        <LinkJobCardModal @linkJobCards="linkJobCards($event)" />
         
         <div class="call-button-wrap">
-            <button v-if="call.techStateId === 1" @click="canUpdateCall(2)" class="update-call-btn received"><font-awesome-icon class="update-call-icon accept" :icon="['fa', 'user-check']" size="lg" /> Accept Call</button>
-            <button v-if="call.techStateId === 2 || call.techStateId === 6" @click="canUpdateCall(3)" class="update-call-btn en-route"><font-awesome-icon class="update-call-icon en-route" :icon="['fa', 'route']" size="lg" /> En Route</button>
-            <button v-if="call.techStateId === 3" @click="canUpdateCall(4)" class="update-call-btn at-site"><font-awesome-icon class="update-call-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" /> On Site</button>
-            <button v-if="call.techStateId === 4" @click="canUpdateCall(6)" class="update-call-btn on-hold"><font-awesome-icon class="update-call-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" /> On Hold</button>
-            <button v-if="call.techStateId === 4 || call.techStateId === 6" @click="canUpdateCall(5)" class="update-call-btn left-site"><font-awesome-icon class="update-call-icon left-site" :icon="['fa', 'road']" size="lg" /> Left Site</button>
+            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 1" @click="canUpdateCall(2)" class="update-call-btn received"><font-awesome-icon class="update-call-icon accept" :icon="['fa', 'user-check']" size="lg" :class="{ disabled : !canUpdateStatus }" /> Accept Call</button>
+            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 2 || call.techStateId >= 5 && call.techStateId <= 7" @click="canUpdateCall(3)" class="update-call-btn en-route"><font-awesome-icon class="update-call-icon en-route" :icon="['fa', 'route']" size="lg" :class="{ disabled : !canUpdateStatus }" /> En Route</button>
+            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 3" @click="canUpdateCall(4)" class="update-call-btn on-site"><font-awesome-icon class="update-call-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" :class="{ disabled : !canUpdateStatus }" /> On Site</button>
+            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 4" @click="canUpdateCall(6)" class="update-call-btn on-hold"><font-awesome-icon class="update-call-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" :class="{ disabled : !canUpdateStatus }" /> On Hold</button>
+            <!-- <button :disabled="!canUpdateStatus" v-if="call.techStateId === 4 || call.techStateId === 6" @click="canUpdateCall(5)" class="update-call-btn left-site"><font-awesome-icon class="update-call-icon left-site" :icon="['fa', 'road']" size="lg" :class="{ disabled : !canUpdateStatus }" /> Left Site</button> -->
+            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0" v-if="call.techStateId === 4 || call.techStateId === 6 || call.techStateId === 5" @click="canUpdateCall(8)" class="update-call-btn completed"><font-awesome-icon class="update-call-icon completed" :icon="['fa', 'clipboard-check']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 && user.employeeCode !== 'TES001' }" /> Complete</button>
         </div>
     </div>
 </template>
@@ -80,14 +124,31 @@
 
 <script>
 
+import ETTModal from './ETTModal.vue';
+import OnHoldReasonModal from './OnHoldReasonModal.vue';
+import LinkJobCardModal from './LinkJobCardModal.vue';
+
 import { mapGetters } from 'vuex'
+import { axiosMySQL } from '../../../axios/axios';
 export default {
+
+
+    components: {
+        ETTModal, OnHoldReasonModal, LinkJobCardModal
+    },
+
+
 
     data() {
         return {
-            call_types: '',
-            call_sub_types: '',
-            serviceWorker: null
+            call_types: JSON.parse(localStorage.getItem('call_types')),
+            call_sub_types: JSON.parse(localStorage.getItem('call_sub_types')),
+            branches: JSON.parse(localStorage.getItem('branches')),
+            serviceWorker: null,
+            user: JSON.parse(localStorage.getItem('user')),
+            ETTModalActive: false,
+            ETT: '',
+            canUpdateStatus: true
         }
     },
 
@@ -99,7 +160,9 @@ export default {
             call: ['Call/call'],
             loading: ['Call/loading'],
             activeCalls: ['Calls/activeCalls'],
-            modal: ['Modal/modal']
+            allCalls: ['Calls/allCalls'],
+            modal: ['Modal/modal'],
+            online: ['StaticResources/online']
         })
     },
 
@@ -134,9 +197,12 @@ export default {
             immediate: true
         },
 
+
+
+
         call: {
             handler: function() {
-                if(this.call && this.call.techStateId === 5)
+                if(this.call && this.call.techStateId === 8)
                 {
                     this.$router.push('/calls');
                 }
@@ -144,6 +210,21 @@ export default {
             deep: true,
             immediate: true
         },
+
+
+
+
+
+        allCalls: {
+            handler: function() {
+                if(this.call)
+                    this.$store.dispatch('Call/loadCall', this.call.id);
+            },
+            deep: true,
+            immediate: true
+        },
+
+
 
 
 
@@ -156,13 +237,13 @@ export default {
                     this.updateCall(6, holdCall);
                     this.checkForSameStoreCalls(6, holdCall);
 
-                    console.log('Call placed on hold: ', holdCall);
+                    // console.log('Call placed on hold: ', holdCall);
 
 
-                    var nextStatusId = this.call.techStateId === 6 ? 3 : this.call.techStateId + 1;
+                    var nextStatusId = this.call.techStateId === 6 ? 3 : this.call.techStateId + 1;  
                     this.updateCall(nextStatusId, this.call);
-                    this.checkForSameStoreCalls(nextStatusId, this.call);
-                    console.log('Call updated: ', this.call);
+                    // this.checkForSameStoreCalls(nextStatusId, this.call);
+                    // console.log('Call updated: ', this.call);
                     
                 }
                 
@@ -179,10 +260,6 @@ export default {
 
 
     mounted() {
-
-        this.call_types = JSON.parse(localStorage.getItem('call_types'));
-        this.call_sub_types = JSON.parse(localStorage.getItem('call_sub_types'));
-
         this.$route.params.callId ? this.$store.dispatch('Call/loadCall', this.$route.params.callId) : null;
     },
 
@@ -192,29 +269,145 @@ export default {
 
     methods: {
 
+
+
+
+
+        openLinkJobCard: function() {
+            this.$store.dispatch('Call/linkJobCardModal', true);
+        },
+
+
+
+
+
+
+        linkJobCards: async function(jobCardArray) {
+
+            // console.log('Please link these JC\'s: ', jobCardArray);
+            var user = JSON.parse(localStorage.getItem('user'));
+            var signature = JSON.parse(localStorage.getItem('signature'));
+
+            var data =
+            {
+                call: this.call,
+                jobCards: jobCardArray,
+                signature,
+                user
+            }
+
+            await this.sendToServiceWorker(data, 'linkJobCard');
+
+            // Update the call on the users device
+            this.$store.dispatch('Call/linkJobCards', jobCardArray);
+
+        },
+
+
+
+
+
+
+
+
+
         updateCall: async function(nextStatusId, call) {
 
-                if('serviceWorker' in navigator)
-                {
+            var user = JSON.parse(localStorage.getItem('user'));
+            var signature = JSON.parse(localStorage.getItem('signature'));
 
-                    navigator.serviceWorker.getRegistration().then(reg => {
-                        // console.log('We have a registration: ', reg);
-                        var user = JSON.parse(localStorage.getItem('user'));
-                        var signature = JSON.parse(localStorage.getItem('signature'));
-                        var data = JSON.stringify({call: call, nextStatusId, user, signature });
-                        reg.active.postMessage({type: 'updateCall', data: data});
-                    })
-                    .catch(err => {
-                        console.log(err);
-                        console.log('Service worker registration not found, uhm....');
-                        // do something if the service worker is not found...
-                        // Probably log out the user, refresh the app and have them log in again (notify first)
-                    })
+            // Build the time_stamp
+            var now = new Date();
+            var date = now.getFullYear().toString() +'-'+ (now.getMonth() + 1).toString() +'-'+ now.getDate().toString();
+            var time = (now.getHours() <= 9 ? '0' + now.getHours().toString() : now.getHours().toString()) +':'+ (now.getMinutes() <= 9 ? '0' + now.getMinutes().toString() : now.getMinutes().toString()) +':'+ (now.getSeconds() <= 9 ? '0' + now.getSeconds().toString() : now.getSeconds().toString()) +'.'+ now.getMilliseconds().toString() +'+02';
+            var time_stamp = date + ' ' + time;
+            // console.log('Build a time_stamp: ', time_stamp);
 
-                }
+            // Data to be sent
+            var data = {call: call, nextStatusId, user, signature, time_stamp };
 
+            await this.sendToServiceWorker(data, 'updateCall');
+
+            // Update the call on the users device
             var payload = { nextStatusId, call }
             this.$store.dispatch('Call/updateCall', payload);
+
+        },
+
+
+
+
+
+
+        sendToServiceWorker: async function(data, type) {
+
+            if('serviceWorker' in navigator)
+            {
+                return navigator.serviceWorker.getRegistration()
+                .then(async reg => {
+
+                    // Post the data to the SW
+                    data = JSON.stringify(data);
+                    reg.active.postMessage({type, data});
+                })
+                .catch(err => {
+                    console.log(err);
+                    this.$store.dispatch('ErrorLog/logError', err);
+                })
+            }
+            else
+            {
+                // No SW found, log error
+                var err = {
+                    user,
+                    data: 'No SW found when updating call ' + call.id
+                }
+                console.log('SW not in navigator...')
+
+                this.$store.dispatch('ErrorLog/logError', err);
+            }
+        },
+
+
+
+
+
+        recordOnHoldReason: function() {
+            this.$store.dispatch('Call/onHoldReasonModal', true);
+        },
+
+
+
+
+
+        submitOnHoldReason: function() {
+
+        },
+
+
+
+
+
+
+        getETT: function() {
+            this.ETTModalActive = true;
+        },
+
+
+
+
+
+
+        submitETT: function(data) {
+            var hour = data.hour ? data.hour : '00';
+            hour.length === 1 ? hour = '0' + hour : null;
+            var minute = data.minute ? data.minute : '00';
+            minute.length === 1 ? minute = '0' + minute : null;
+
+            this.ETT = hour+':'+minute;
+
+            this.canUpdateCall(3);
+            this.ETTModalActive = false;
         },
 
 
@@ -225,46 +418,69 @@ export default {
         canUpdateCall: function(nextStatusId) {
 
 
-            if(nextStatusId <= 2 )
+            if(nextStatusId <= 2)
             {
                 this.updateCall(nextStatusId, this.call);
                 return
-            }
-            
+            }            
 
+            // var modal = 
+            // {
+            //     active: true, // true to show modal
+            //     type: 'info', // ['info', 'warning', 'error', 'okay']
+            //     icon: ['fa', 'exclamation-triangle'], // Leave blank for no icon
+            //     heading: 'Put Current Job on Hold?',
+            //     body: '<p>Your Current Job will be placed on hold if you continue.</p>',
+            //     confirmAction: 'init',
+            //     actionFrom: 'holdCall_'+call.id+'_canUpdateCall_'+this.call.id,
+            //     resolveText: 'Okay',
+            //     rejectText: 'Cancel'
+            // }
 
-            var flag = false;
+            // var flag = false;
+
+            this.updateCall(nextStatusId, this.call);
                 
+
+
             this.activeCalls.map(call => {
 
                 if(call.id !== this.call.id && call.customerStoreId !== this.call.customerStoreId)
                 {
-                    if(call.techStateId >= 3 && call.techStateId !== 6)
-                    {
-                        flag = true;
-                        var modal = {
-                            active: true, // true to show modal
-                            type: 'warning', // ['info', 'warning', 'error', 'okay']
-                            icon: ['fa', 'exclamation-triangle'], // Leave blank for no icon
-                            heading: 'Put Current Job on Hold?',
-                            body: '<p>Your Current Job will be placed on hold if you continue.</p>',
-                            confirmAction: 'init',
-                            actionFrom: 'holdCall_'+call.id+'_canUpdateCall_'+this.call.id,
-                            resolveText: 'Okay',
-                            rejectText: 'Cancel'
-                        }
 
-                        this.$store.dispatch('Modal/modal', modal);
-                        
+                    // Rerouted (activated while "En-Route" (3))
+                    // auto-activated status (no prompt)
+                    if(call.techStateId == 3)
+                    {
+                        this.updateCall(7, call);
                     }
+
+                    // Left-Site (activated while "On-Site" (4))
+                    // auto-activated status (no prompt)
+                    if(call.techStateId == 4)
+                    {
+                        this.updateCall(5, call);
+                    }
+
+
+                    // if(call.techStateId >= 5 && call.techStateId !== 6)
+                    // {
+                    //     flag = true;
+                        
+
+                    //     this.$store.dispatch('Modal/modal', modal);
+                        
+                    // }
                 }
             })
 
-            if(!flag)
-            {
-                this.updateCall(nextStatusId, this.call);
-                this.checkForSameStoreCalls(nextStatusId, this.call);
-            }
+            
+
+            // if(!flag)
+            // {
+            //     this.updateCall(nextStatusId, this.call);
+            //     // this.checkForSameStoreCalls(nextStatusId, this.call);
+            // }
 
             
 
@@ -280,7 +496,7 @@ export default {
             this.activeCalls.map(call => {
                 if(call.id !== currentCall.id && call.customerStoreId === currentCall.customerStoreId)
                 {
-                    this.updateCall(nextStatusId, call);
+                    nextStatusId !== call.techStateId ? this.updateCall(nextStatusId, call) : null;
                 }
             });
         },
@@ -313,6 +529,16 @@ export default {
             callSubType ? callSubTypeName = callSubType.name : null;
 
             return callSubTypeName;
+        },
+
+
+
+
+        returnManagingBranch: function(branchId) {
+            var branch = this.branches.filter(branch => branch.id === branchId)[0];
+            var branchName = '';
+            branch ? branchName = branch.name : null;
+            return branchName; 
         },
 
 
@@ -384,8 +610,8 @@ export default {
     color: var(--EnRouteLight);
 }
 
-.update-call-btn.at-site {
-    color: var(--AtSiteLight);
+.update-call-btn.on-site {
+    color: var(--OnSiteLight);
 }
 
 .update-call-btn.left-site {
@@ -404,7 +630,28 @@ export default {
     color: var(--OnHold);
 }
 
+.update-call-btn.completed {
+    color: var(--CompletedLight);
+}
 
+.update-call-icon.completed {
+    color: var(--CompletedLight);
+}
+
+.update-call-icon.on-hold.disabled,
+.update-call-icon.left-site.disabled,
+.update-call-icon.on-site.disabled,
+.update-call-icon.en-route.disabled,
+.update-call-icon.received.disabled,
+.update-call-icon.pending.disabled,
+.update-call-icon.completed.disabled 
+{
+    color: var(--TextOnLightGrey);
+}
+
+.update-call-btn:disabled {
+    color: var(--TextOnLightGrey);
+}
 
 
 
@@ -426,7 +673,7 @@ export default {
 
 .call-info-wrapper {
     padding: 10px 7px;
-    border: 2px solid rgba(255,255,255,0.4);
+    border: 2px solid var(--BlockBorder);
     border-radius: 3px;
     margin-bottom: 25px;
     background: var(--BlueAlt);
@@ -475,6 +722,11 @@ export default {
 }
 
 
+.call-info-wrapper.last {
+    margin-bottom: 50px;
+}
+
+
 
 
 
@@ -483,8 +735,73 @@ export default {
     display: flex;
     align-items: center;
     text-align: right;
-    font-size: 18px;
+    font-size: 14px;
     width: max-content;
+    position: relative;
+}
+
+
+.call-current-tech-state.inactive {
+    color: var(--TransparentGrey);
+}
+
+
+.current-tech-state-wrap.pending .call-current-tech-state.inactive,
+.current-tech-state-wrap.received .call-current-tech-state.inactive,
+.current-tech-state-wrap.rerouted .call-current-tech-state.inactive
+{
+    color: var(--TransparentBlack);
+}
+
+
+
+
+
+.call-current-tech-state.en-route {
+    /* background: var(--); */
+}
+
+
+
+
+.call-current-tech-state.completed {
+    margin-left: 13px;
+}
+
+
+
+
+
+
+
+.current-tech-state-wrap.en-route .call-current-tech-state.en-route .call-current-tech-state-icon.rerouted {
+    color: var(--TransparentGrey);
+}
+
+.current-tech-state-wrap.rerouted .call-current-tech-state.rerouted .call-current-tech-state-icon.en-route {
+    color: var(--TransparentBlack);
+}
+
+
+
+
+.current-tech-state-wrap.on-site .call-current-tech-state.on-site .call-current-tech-state-icon.left-site {
+    color: var(--TransparentGrey);
+}
+
+.current-tech-state-wrap.left-site .call-current-tech-state.left-site .call-current-tech-state-icon.on-site {
+    color: var(--TransparentGrey);
+}
+
+
+
+
+.current-tech-state-wrap.on-hold .call-current-tech-state.on-hold .call-current-tech-state-icon.completed {
+    color: var(--TransparentGrey);
+}
+
+.current-tech-state-wrap.completed .call-current-tech-state.completed .call-current-tech-state-icon.on-hold {
+    color: var(--TransparentGrey);
 }
 
 
@@ -494,17 +811,48 @@ export default {
 
 
 .job-status-wrap {
+
+}
+
+
+
+.job-icon-wrap {
     display: flex;
-    align-items: flex-end;
-    flex-direction: column;
+    align-items: center;
+    font-size: 12px;
+    transition: color 800ms ease-out;
+    margin-top: 8px;
 }
 
 
 
 .call-current-tech-state-icon,
 .call-current-tech-state-icon.material {
-    margin-right: 4px;
+    /* margin-right: 4px; */
 }
+
+.call-current-tech-state-icon.material {
+    font-size: 21px;
+}
+
+
+.call-current-tech-state-icon.material.rerouted {
+    position: absolute;
+    top: -26px;
+}
+
+
+.call-current-tech-state-icon.floating {
+    position: absolute;
+    top: -25px;
+    font-size: 22px;
+    margin-left: -3px;
+    height: 100%;
+}
+
+
+
+
 
 
 
@@ -512,8 +860,8 @@ export default {
 .current-job-status-heading-text {
     color: white; 
     font-size: 10px; 
-    margin-bottom: 5px;
-    text-align: right;
+    margin-bottom: 3px;
+    text-align: left;
 }
 
 
@@ -521,14 +869,14 @@ export default {
 .current-tech-state-wrap .call-info-store {
     font-weight: 700;
     font-size: 20px;
-    padding-right: 100px;
+    padding-right: 30px;
     padding-left: 5px;
     color: white;
 }
 
 
 .current-tech-state-wrap .call-info-store.small-text {
-    font-size: 15px;
+    font-size: 13px;
 }
 
 
@@ -538,8 +886,8 @@ export default {
 }
 
 .current-tech-state-wrap {
-    position: absolute;
-    top: 0;
+    position: fixed;
+    top: 50px;
     left: 0;
     width: 100%;
     height: 65px;
@@ -551,6 +899,7 @@ export default {
     justify-content: space-between;
     align-items: center;
     /* z-index: 800; */
+    transition: background 300ms ease-in;
 }
 
 
@@ -564,19 +913,34 @@ export default {
     color: var(--ReceivedDark);
 }
 
+.current-tech-state-wrap.rerouted {
+    background: var(--Rerouted);
+    color: var(--ReroutedDark);
+}
+
 .current-tech-state-wrap.en-route {
     background: var(--EnRouteDark);
     color: var(--EnRouteLight);
 }
 
-.current-tech-state-wrap.at-site {
-    background: var(--AtSiteDark);
-    color: var(--AtSiteLight);
+.current-tech-state-wrap.on-site {
+    background: var(--OnSiteDark);
+    color: var(--OnSiteLight);
+}
+
+.current-tech-state-wrap.left-site {
+    background: var(--LeftSiteDark);
+    color: var(--LeftSite);
 }
 
 .current-tech-state-wrap.on-hold {
     background: var(--OnHoldDark);
     color: var(--OnHold);
+}
+
+.current-tech-state-wrap.completed {
+    background: var(--CompletedDark);
+    color: var(--Completed);
 }
 
 
@@ -611,7 +975,44 @@ export default {
 
 .distance-x2 {
     color: rgba(255,255,255,0.75);
-;}
+}
+
+
+
+
+.material-arrow-right {
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    margin: 0 2px;
+}
+
+
+
+
+.link-job-card-wrap {
+    margin-bottom: 10px;
+}
+
+
+
+.link-job-card-wrap button {
+    padding: 5px 4px;
+    margin-right: 10px;
+    color: var(--TextBlack);
+}
+
+.link-job-card-wrap button.no-jc {
+    background: var(--WarningOrange);
+}
+
+.link-job-card-wrap button.linked {
+    background: var(--ReceivedLight);
+}
+
+
+.link-job-card-icon {
+
+}
 
 
 </style>

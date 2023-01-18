@@ -17,7 +17,7 @@
                 </div>
 
                 <div class="job-amount-circle">
-                    <span class="job-amount">{{ incomingCalls.length }}</span>
+                    <span class="job-amount">{{ pendingCalls.length }}</span>
                 </div>
 
             </div>
@@ -53,26 +53,10 @@
             </div>
         </div>
 
-        <!-- <div class="test-toast-btn-wrap">
-            <button @click="testModal('okay')">Modal Okay</button>
-            <button @click="testModal('info')">Modal Info</button>
-            <button @click="testModal('warning')">Modal Warning</button>
-            <button @click="testModal('error')">Modal Error</button>
-        </div>
 
 
-        <div class="test-toast-btn-wrap">
-            <h3>Test App Toast</h3>
-            <button style="background: rgba(32, 209, 56, 0.98);" @click="testToast('okay')">Okay Toast</button>
-            <button style="background: rgba(240,240,240,0.98);" @click="testToast('info')">Info Toast</button>
-            <button style="background: rgba(255, 180, 19, 0.98);" @click="testToast('warning')">Warning Toast</button>
-            <button style="background: rgba(180,0,0,0.98);" @click="testToast('error')">Error Toast</button>
-            <button style="background: rgba(32, 209, 56, 0.98);" @click="testToast('nokay')">Okay Toast,<br>No Heading</button>
-        </div> -->
 
-        <!-- <br>
-
-        <p class="fb-token">{{ firebaseToken || '' }}</p> -->
+        <button class="switch-user-type-btn" v-if="availableUserRoles.includes(2)" @click="switchProfile()"><font-awesome-icon :icon="['fa', 'retweet']" size="lg" /> Switch to Ops-Admin</button>
 
         
         
@@ -105,8 +89,10 @@ export default {
     computed: {
         ...mapGetters({
             firebaseToken: ['Login/firebaseToken'],
-            incomingCalls: ['Calls/incomingCalls'],
-            activeCalls: ['Calls/activeCalls']
+            pendingCalls: ['Calls/pendingCalls'],
+            activeCalls: ['Calls/activeCalls'],
+            userType: ['UserRole/currentUserRole'],
+            availableUserRoles: ['UserRole/availableRoles']
         })
     },
 
@@ -156,9 +142,32 @@ export default {
     methods: {
 
 
+        switchProfile: function() {
+            // console.log(this.availableUserRoles);
+
+            if(this.availableUserRoles.includes(3)) 
+            {
+                this.$store.dispatch('UserRole/setUserRole', 3);
+                this.$router.push('/ops_dashboard');
+                return
+            }
+
+            this.$store.dispatch('UserRole/setUserRole', 2);
+            this.$router.push('/ops_dashboard');
+            console.log('Switching to: OPS-ADMIN');
+        },
+
+
+
+
+
         splitCalls: function() {
             this.onHoldCalls = this.activeCalls.filter(call => call.techStateId === 6);
-            this.busyActiveCalls = this.activeCalls.filter(call => call.techStateId >= 2 && call.techStateId <= 4);
+            this.busyActiveCalls = this.activeCalls.filter(call => {
+                if(call.techStateId >= 2 && call.techStateId <= 4) { return call } 
+                if(call.techStateId == 5) {return call } 
+                if(call.techStateId == 7) { return call }
+            });
         },
 
 

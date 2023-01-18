@@ -2,12 +2,11 @@
     <div :id="randomID+'ArrayInputSearch'" class="array-input-search-wrap">
         <h4 v-if="heading">{{ heading }}</h4>
         <div class="search-input-wrap">
-            <input type="text" v-model="searchInput" placeholder="start typing to search..." @keydown.native.esc="showDropDown = false" @keydown.native.down="selectKeyboardNavList($event)" @input="filterGroup()" @click="showDropDown ? showDropDown = false : null"  />
-            <font-awesome-icon style="margin-right: 35px;" class="drop-down-icon" :class="{ rotate : showDropDown }" :icon="['fa', 'sort-down']" size="lg" />
+            <input type="text" v-model="searchInput" :placeholder=" placeHolder ? placeHolder : 'start typing to search...'" @keydown.native.esc="showDropDown = false" @input="(filterGroup(), checkForBackSpace($event))" @click="showDropDown ? showDropDown = false : null"  />
         </div>
 
         <div class="search-results-drop-down-wrap" v-if="showDropDown">
-            <div class="search-results-grid" v-for="(result, index) in filteredResults.splice(0,20)" :key="result.id" :id="randomID + index" :tabindex="index" @click="selectItem(result)" @keydown.enter.prevent="selectItem(result)" @keydown.native.esc="showDropDown = false" @keydown.native.down="keyboardNavListDown($event, index)" @keydown.native.up="keyboardNavListUp($event, index)">
+            <div class="search-results-grid" v-for="(result, index) in filteredResults.splice(0,20)" :key="result.id" :id="randomID + index" :tabindex="index" @click="selectItem(result)" @keydown.enter.prevent="selectItem(result)" @keydown.native.esc="showDropDown = false">
                 <p v-if="result.code">{{ result.code }}</p>
                 <p v-if="result.code"> - </p>
                 <p :class="{ 'fill-all-columns' : !result.code }">{{ result.name }}</p>
@@ -24,7 +23,7 @@
 export default {
 
     
-    props: ['searchArray', 'heading', 'displayText'],
+    props: ['searchArray', 'heading', 'displayText', 'placeHolder'],
     
     
     data(){
@@ -61,10 +60,7 @@ export default {
 
         displayText: {
             handler: function() {
-                if(this.displayText)
-                {
-                    this.searchInput = this.displayText;
-                }
+                this.searchInput = this.displayText;
             },
             deep: true,
             immediate: true
@@ -82,6 +78,13 @@ export default {
     methods: {
 
 
+
+        checkForBackSpace: function(event) {
+            if(event && event.inputType === 'deleteContentBackward')
+                this.$emit('backspace');
+        },
+
+
         checkClickedOnThisModule: function(e) {
             setTimeout(() => {            
                 var module = document.getElementById(this.randomID+'ArrayInputSearch');
@@ -96,9 +99,10 @@ export default {
 
 
         selectItem: function(item) {
+            console.log('Search Select has selected an item... ', item);
             this.showDropDown = false;
-            this.$emit('select', item);
             this.searchInput = item.name;
+            this.$emit('select', item);
         },
 
 
@@ -138,59 +142,7 @@ export default {
             });
             
         },
-
-
-
-
-
-
-        selectKeyboardNavList: function(e) {
-
-            e.preventDefault();
-
-            this.showDropDown = true;
-
-            setTimeout(() => {
-                document.getElementById(this.randomID + '0').focus();
-            }, 100);
-
-        },
-
-        keyboardNavListDown: function(e, index) {
-
-            var newIndex = index + 1;
-            //console.log('Nav down: ',e, newIndex);
-            
-            e.preventDefault();
-
-
-            if(index <= this.filteredResults.length - 2)
-            {
-                document.getElementById(this.randomID + newIndex).focus();
-            }
-            else
-            {
-                document.getElementById(this.randomID + '0').focus();
-            }
-            
-        },
-
-        keyboardNavListUp: function(e, index) {
-
-            var newIndex = index - 1;
-            //console.log('Nav up: ',e);
-            e.preventDefault(); 
-            if(index >= 1)
-            {
-                document.getElementById(this.randomID + newIndex).focus();
-            }
-            else
-            {
-                var lastIndex = 0;
-                lastIndex = this.filteredResults.length - 1;
-                document.getElementById(this.randomID + lastIndex).focus();
-            }
-        },
+ 
 
     }
 
@@ -220,8 +172,7 @@ export default {
 
 
 .search-input-wrap input{
-    width: 350px;
-    margin-right: 10px;
+    width: 90vw;
     padding-left: 10px;
 }
 
@@ -247,10 +198,10 @@ export default {
 
 .search-results-drop-down-wrap {
     position: absolute;
-    width: calc(100% - 10px);
+    width: 90vw;
     max-height: 400px;
     overflow-y: scroll;
-    z-index: 1200;
+    z-index: 700;
 }
 
 

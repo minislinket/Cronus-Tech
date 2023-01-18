@@ -1,6 +1,6 @@
 <template>
 
-    <div class="toast-wrap" :class="currentToast.type, { active : showingToast }">
+    <div class="toast-wrap" :class="currentToast.type, { active : showingToast }" @click="hideToast()">
 
         <div class="icon-wrap">
             <font-awesome-icon v-if="currentToast.icon && currentToast.type" class="toast-icon" :icon="currentToast.icon" size="lg" />
@@ -101,6 +101,15 @@ export default {
 
 
     methods: {
+
+
+
+        hideToast: function() {
+            this.showingToast = false;
+        },
+
+
+
 
         showToasts: async function() {
             this.toastQueueRunning = true;

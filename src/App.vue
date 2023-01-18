@@ -45,7 +45,6 @@ export default {
 		return {
 			isMobile: false,
 			isPortrait: false,
-			backgroundSyncInterval: ''
 		}
 	},
 
@@ -55,9 +54,8 @@ export default {
 		...mapGetters({
 			isAuth: ['Login/isAuth'],
 			callSyncTimeMin: ['Calls/callSyncTimeMin'],
-            initBackgroundCallSync: ['StaticResources/initBackgroundCallSync'],
 			modal: ['Modal/modal'],
-			pendingCalls: ['Calls/incomingCalls'],
+			pendingCalls: ['Calls/pendingCalls'],
 			online: ['StaticResources/online'],
 			userType: ['UserRole/currentUserRole']
 		})
@@ -67,17 +65,12 @@ export default {
 
 
 	watch: {
-		initBackgroundCallSync: function() {
-			// if(this.initBackgroundCallSync)
-				// this.initBackgroundSync();
-                
-        },
+		
 
 
 
 		isAuth: function() {
-            if(!this.isAuth)
-                this.clearBackgroundSync();
+            
         },
 
 
@@ -88,7 +81,16 @@ export default {
                     this.refreshServiceWorker();                
             },
             deep: true
-        }
+        },
+
+
+		online: {
+			handler: function() {
+				if(this.online === true)
+					this.checkSWBackgroundSyncStore()
+			},
+			deep: true,
+		}
 	},
 
 
@@ -100,8 +102,6 @@ export default {
 		navigator.serviceWorker.getRegistration().then(reg => { this.listenForWaitingServiceWorker(reg, this.promptUserToRefresh), this.createUserCredential(reg) });
 		navigator.serviceWorker.addEventListener('controllerchange', function() { window.location.reload() });
 
-		
-
 	},
 
 
@@ -109,6 +109,14 @@ export default {
 
 
 	mounted() {
+
+		this.checkCallSyncStoreBackup();
+
+		// var user_type = localStorage.getItem('user_type');
+		// if(user_type)
+		// {
+		// 	this.$store.dispatch('UserRole/setUserRole', user_type);
+		// }
 
 
 		// console.log('🍱: ' , window.location);
@@ -124,7 +132,8 @@ export default {
 		window.addEventListener('focus', async () => {
 			if(this.isAuth && this.online && this.userType === 1)
 			{
-				console.log(this.$router.currentRoute._value.path);
+				this.checkSWBackgroundSyncStore()
+				// console.log(this.$router.currentRoute._value.path);
 				if(this.$router.currentRoute._value.path.indexOf('/call/') === -1)
 				{
 					await this.$store.dispatch('Calls/refreshTechnicianCalls');
@@ -147,7 +156,6 @@ export default {
 		});
 
 
-		// console.log('Mobile? ', this.isMobile, '  - is Portrait? ', this.isPortrait);
 
 
 		// Check user is logged in on refresh/page load
@@ -170,10 +178,6 @@ export default {
 			});
 		}, 150);
 		
-
-		// Check if backgroundSyncInterval is running when user refreshes and is still logged in -> if not, turn it on
-		// if(!this.backgroundSyncInterval && this.isAuth)
-		// 	this.$store.dispatch('StaticResources/initBackgroundCallSync', true);
 
 	},
 
@@ -222,6 +226,30 @@ export default {
 
 
 
+
+
+
+		checkCallSyncStoreBackup: function() {
+
+			navigator.serviceWorker.getRegistration().then(reg => {
+
+				// Check localStorage for a callSyncStore Backup and send it to the new SW if exists
+				var callSyncStoreBackup = localStorage.getItem('callSyncStoreBackup');
+				
+				if(callSyncStoreBackup)
+				{
+					reg.active.postMessage({ type: 'restoreCallSyncStore', data: callSyncStoreBackup });
+					localStorage.removeItem('callSyncStoreBackup');
+				}
+				
+			})
+		},
+
+
+
+
+
+
 		listenForWaitingServiceWorker: function (reg, callback) {
 
 			function awaitStateChange() {
@@ -260,6 +288,12 @@ export default {
 			}
 			this.$store.dispatch('Modal/modal', modal);
 
+			// Backup the current SW callSyncStore in localStorage as it will be wiped when new SW loads
+			// Restore event triggers in Mounted Hook here in App
+			console.log('Attempting to get SW callSyncStore...');
+			
+			reg.active.postMessage({ type: 'getCallSyncStore' });
+
 		},
 
 
@@ -275,59 +309,13 @@ export default {
 
 
 
+		checkSWBackgroundSyncStore: function() {
+			navigator.serviceWorker.getRegistration().then(reg => {
+				reg.active.postMessage({type: 'checkBackgroundSyncNetworkErrors'});
+			})
+		}
 
 
-
-
-
-		initBackgroundSync: function() {
-            // console.log('Background Sync Program running...');
-            // if(!this.backgroundSyncInterval)
-            // {
-			// 	// Check login is still within a valid use time
-            //     var time_stamp = JSON.parse(localStorage.getItem('time_stamp'));
-            //     var loginTime = new Date(time_stamp);
-            //     var now = new Date();
-            //     var dif = (now.getTime() - loginTime.getTime()) / 1000;
-            //     dif /= (60 * 60);
-
-				
-            //     if(dif <= 13)
-            //     {
-            //         // console.log('Registering background sync Interval...');
-            //         this.backgroundSyncInterval = setInterval(() => {
-			// 			this.checkBackgroundSyncHours();
-            //             this.$store.dispatch('Calls/refreshTechnicianCalls', false);
-            //         }, this.callSyncTimeMin * 60 * 1000);
-            //     }
-            // }
-        },
-
-
-
-
-
-		checkBackgroundSyncHours: function() {
-			// console.log('Checking background sync time of day...');
-			var now = new Date();
-			var hour = now.getHours();
-
-			if(hour <= 5 || hour >= 21)
-			{
-				// console.log('Cancelling background sync because of time of day...')
-				this.clearBackgroundSync();
-			}
-		},
-
-
-
-
-        clearBackgroundSync: function() {
-            // console.log('No longer running Background Sync...');
-            // clearInterval(this.backgroundSyncInterval);
-            // this.backgroundSyncInterval = '';
-            // this.$store.dispatch('StaticResources/initBackgroundCallSync', false);
-        }
 		
 
 	},
@@ -356,13 +344,13 @@ export default {
 z-index table:
 
 under 100: standard app level components as assigned by html (usually no more than 10-20 levels) from parent to child (child is always higher than parent)
-100   -   
-200   - toggle switches
+100   	-   
+200   	- 	toggle switches
 300
 400
-500     
+500     - 	Component Modals
 600
-700
+700		- 	Drop Downs
 800     -   Menus
 900     -   Lightbox
 1000    -   
@@ -386,24 +374,30 @@ under 100: standard app level components as assigned by html (usually no more th
 	--PendingLight: rgb(255, 139, 30);
 	--Pending: rgb(196, 99, 9);
 	--PendingDark: rgb(94, 41, 17);
-	--ReceivedLight: rgb(25, 255, 25);
-	--Received: rgb(16, 141, 16);
-	--ReceivedDark: rgb(11, 83, 11);
-	--EnRouteLight: rgb(44, 255, 227);
+	--ReceivedLight: rgb(176, 255, 17);
+	--Received: rgb(114, 167, 62);
+	--ReceivedDark: rgb(52, 62, 26);
+	--EnRouteLight: rgb(98, 255, 195);
 	--EnRoute: rgb(25, 141, 126);
-	--EnRouteDark: rgb(15, 85, 76);
-	--AtSiteLight: rgb(101, 219, 255);
-	--AtSite: rgb(36, 121, 173);
-	--AtSiteDark: rgb(20, 68, 99);
-	--LeftSiteLight: rgb(180, 180, 180);
-	--LeftSite: rgb(70, 70, 70);
-	--LeftSiteDark: rgb(20, 20, 20);
-	--OnHoldLight: rgb(255, 103, 65);
-	--OnHold: rgb(146, 57, 41);
-	--OnHoldDark: rgb(71, 33, 24);
+	--EnRouteDark: rgb(13, 81, 83);
+	--ReroutedLight: rgb(16, 181, 231);
+	--Rerouted: rgb(25, 127, 141);
+	--ReroutedDark: rgb(13, 58, 70);
+	--OnSiteLight: rgb(101, 219, 255);
+	--OnSite: rgb(36, 121, 173);
+	--OnSiteDark: rgb(20, 68, 99);
+	--LeftSiteLight: rgb(75, 168, 255);
+	--LeftSite: rgb(36, 86, 161);
+	--LeftSiteDark: rgb(9, 32, 66);
+	--OnHoldLight: rgb(255, 40, 40);
+	--OnHold: rgb(135, 30, 30);
+	--OnHoldDark: rgb(70, 10, 10);
+	--CompletedLight: rgb(85, 255, 127);
+	--Completed: rgb(29, 117, 55);
+	--CompletedDark: rgb(5, 66, 25);
 
 
-	/* Cronus v2.1 Blues */
+	/* Cronus v2.1 Colors */
 	--MainBlue: rgb(32, 73, 102);
 	--AppBG: rgb(41, 124, 179);
 	--MidBlue: rgb(38, 78, 110);
@@ -412,15 +406,77 @@ under 100: standard app level components as assigned by html (usually no more th
 	--XLightBlue: rgb(83, 183, 255);
 	--DarkBlue: rgb(12, 64, 97);
 	--AltBlue: rgb(0, 110, 255);
+	--OpenCall: rgb(241, 186, 65);
+	--AllocatedCall: rgb(0, 220, 255);
+	--CancelledCall: rgb(200, 0, 0);
+	--ClosedCall: rgb(58, 58, 58);
+	--CompletedCall: rgb(23, 179, 23);
 
 
 	/* Standard Usage Colors */
+	--TextBlack: rgb(12, 13, 15);
 	--OffWhite: rgb(240, 240, 240);
 	--DarkGrey: rgb(50, 50, 50);
 	--MidGrey: rgb(90, 90, 90);
 	--LightGrey: rgb(210, 210, 210);
+	--TextOnLightGrey: rgba(180, 180, 180, 0.8);
+	--TransparentGrey: rgba(140,140,140,0.2);
+	--TransparentBlack: rgba(5,5,5,0.1);
+	--WarningRed: rgb(220,0,0);
+	--WarningOrange: rgb(221, 137, 65);
+	--OkayGreen: rgb(10, 160, 50);
+	--BlockBorder: rgba(255,255,255,0.75);
+
+
+	/* Color Changing Wheel */
+	--One: rgb(103, 184, 209);
+	--Two: rgb(100, 250, 212);
+	--Three: rgb(136, 211, 255);
+	--Four: rgb(100, 250, 212);
+	--Five: rgb(95, 188, 250);
+	--Six: rgb(100, 250, 212);
 
 }
+
+
+
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+@keyframes color-change {
+    0%{
+        color: var(--One);
+    }
+    20%{
+        color: var(--Two);
+    }
+    40%{
+        color: var(--Three);
+    }
+    60%{
+        color: var(--Four);
+    }
+    80%{
+        color: var(--Five);
+    }
+    100%{
+        color: var(--Six);
+    }
+}
+
+
+
+
+
+
 
 
 /* Orientation Rule */
@@ -463,11 +519,22 @@ body {
 
 
 
+input {
+	padding-left: 10px;
+}
+
+
 input, select {
 	height: 35px;
 	border: none;
 	border-radius: 3px;
-	background: rgba(255, 255, 255, 0.95);
+	background: rgba(245, 245, 245, 0.95);
+}
+
+input:disabled, 
+select:disabled {
+	background: var(--LightGrey);
+	color: var(--TextOnLightGrey);
 }
 
 
@@ -483,14 +550,61 @@ button {
 	color: var(--BlueMid);
 	font-weight: bold;
 	font-size: 16px;
+	transition: all 250ms ease;
 }
 
 
 
 button:disabled {
 	background: var(--LightGrey);
-	color: rgba(180, 180, 180, 0.8);
+	color: var(--TextOnLightGrey);
+	transition: all 250ms ease;
 }
+
+
+
+
+.material-btn {
+	display: flex;
+	align-items: center;
+}
+
+
+.material-btn span {
+	margin-right: 5px;
+}
+
+
+
+
+
+
+.close-info-modal-btn {
+	position: absolute;
+	bottom: 15px;
+	left: 0;
+	right: 0;
+	margin: 0 auto;
+	width: max-content;
+}
+
+
+
+
+
+
+
+
+.heading-sort {
+	display: flex;
+	align-items: center;
+}
+
+.heading-sort-icon {
+	margin-left: 5px;
+	font-size: 12px;
+}
+
 
 
 
@@ -531,10 +645,37 @@ button:disabled {
 	color: rgb(230,0,0);
 }
 
+.warning-orange {
+	color: rgb(230, 111, 0);
+}
+
 
 
 .small-text {
 	font-size: 12px;
+}
+
+.smaller-text {
+	font-size: 10px;
+}
+
+.tiny-text {
+	font-size: 8px;
+}
+
+
+
+
+
+
+
+.switch-user-type-btn {
+	position: fixed;
+	bottom: 80px;
+	left: 0;
+	right: 0;
+	margin: 0 auto;
+	width: max-content;
 }
 
 
@@ -550,7 +691,7 @@ button:disabled {
 	position: fixed;
 	top: 0;
 	left: 0;
-	height: calc(100vh - 65px);
+	height: calc(100vh - 60px);
 	width: 100vw;
 	background: rgba(0, 0, 0, 0.65);
 
@@ -561,10 +702,27 @@ button:disabled {
 }
 
 
+.loading-lightbox-wrap.with-cancel {
+	flex-direction: column;
+}
+
+
 .loading-lightbox-icon {
 	font-size: 70px;
 	color: rgb(12, 172, 221);
 	transition: color 400ms;
+	animation: color-change 8000ms ease alternate-reverse infinite, rotate 2s linear infinite;
+}
+
+
+.loading-lightbox-wrap.with-cancel .loading-lightbox-icon {
+	margin-bottom: 20px;
+}
+
+
+
+.loading-lightbox-wrap.with-cancel button {
+	color: var(--WarningRed);
 }
 
 
@@ -573,7 +731,9 @@ button:disabled {
 
 
 
-.app-blocking-lightbox {
+
+.app-blocking-lightbox,
+.app-modal-lightbox {
 	z-index: 900;
 	position: fixed;
 	top: -120vh;
@@ -586,10 +746,32 @@ button:disabled {
 
 
 
-.app-blocking-lightbox.active {
+.app-blocking-lightbox.active,
+.app-modal-lightbox.active {
 	top: 0;
 	background: rgba(0, 0, 0, 0.65);
 	transition: background 350ms ease;
+}
+
+
+
+
+
+
+.app-modal-content {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	margin: auto;
+	height: max-content;
+	max-height: 60vh;
+	width: 70vw;
+	padding: 8px;
+	border: 2px solid var(--BlockBorder);
+	border-radius: 3px;
+	background: var(--BlueAlt);
 }
 
 

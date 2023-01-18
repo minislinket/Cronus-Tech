@@ -1,6 +1,10 @@
 <template>
     <div class="calls-wrap">
 
+
+        <button :disabled="!online" class="refresh-jobs-btn calls" @click="refreshJobs()" ><font-awesome-icon style="margin-right: 5px;" :icon="['fa', 'sync-alt']" size="lg" /> Refresh Jobs</button>
+
+
         <div class="toggle-selector-wrap calls">
             <h4>Show Jobs</h4>
             <div class="selection-toggle-switch" @click="$store.dispatch('Calls/toggleActiveCalls')"> 
@@ -9,8 +13,8 @@
                     <span :class="{ active : showActiveCalls }" class="active-calls num-of-calls-subscript">{{ numActiveCalls }}</span>
                     <span :class="{ active : showActiveCalls }"><font-awesome-icon class="selector-icon active-calls" :icon="['fa', 'clipboard-check']" size="lg" /> Active</span>
                 </div>
-                <div class="span-wrap pending" :class="{ 'nothing-pending' : showActiveCalls && incomingCalls.length <= 0 }">
-                    <span :class="{ active : !showActiveCalls, bounce : incomingCalls.length >= 1 }" class="pending num-of-calls-subscript">{{ numPendingCalls }}</span>
+                <div class="span-wrap pending" :class="{ 'nothing-pending' : showActiveCalls && pendingCalls.length <= 0 }">
+                    <span :class="{ active : !showActiveCalls, bounce : pendingCalls.length >= 1 }" class="pending num-of-calls-subscript">{{ numPendingCalls }}</span>
                     <span :class="{ active : !showActiveCalls }"><span class="material-symbols-outlined selector-icon material pending-calls" >pending_actions</span> Pending</span>
                 </div>
             </div>
@@ -18,21 +22,23 @@
 
 
 
-        <div class="active-calls-scroll-section" :class="{ 'custom-scroller' : showActiveCalls ? activeCalls.length >= 4 : incomingCalls.length >= 4 }">
+        <div class="active-calls-scroll-section" :class="{ 'custom-scroller' : showActiveCalls ? activeCalls.length >= 4 : pendingCalls.length >= 4 }">
 
-            <SectionLoading v-if="loading" />
+            <SectionLoading v-if="(loading || refreshing)" />
 
             <br>
             
-            <div class="active-calls-card" v-for="call in showActiveCalls ? activeCalls : incomingCalls" :key="call.id" @click="loadCall(call)">
+            <div class="active-calls-card" v-for="call in showActiveCalls ? activeCalls : pendingCalls" :key="call.id" @click="loadCall(call)">
                 <!-- <p>Call ID:</p>
                 <span class="bold">{{ call.id }}</span> -->
-                <font-awesome-icon v-if="call.customerStoreName" class="call-store-icon" :icon="['fa', 'store-alt']" size="lg" />
-                <font-awesome-icon v-else class="call-store-icon" :icon="['fa', 'toolbox']" size="lg" />
-                <span class="bold call-info">{{ call.customerStoreName ? call.customerStoreName : 'Client Call #' + call.id }}</span>
+                <font-awesome-icon class="call-store-icon" :icon="['fa', 'store-alt']" size="lg" />
+                <span class="bold call-info" v-if="call.customerStoreName">{{ call.customerStoreName + ' (' + call.customerStoreBranchCode + ')' }}</span>
+                <span v-else></span>
+                <font-awesome-icon class="call-store-icon" :icon="['fa', 'toolbox']" size="lg" />
+                <span class="bold call-info">Client Call # {{ call.id }}</span>
                 <font-awesome-icon class="call-store-icon" :icon="['fa', 'info-circle']" size="lg" />
                 <span class="call-info call-detail bold">{{ call.callDetails.length <= 30 ? call.callDetails : call.callDetails.substring(0,30) + '...' }}</span>
-                <div class="tech-state-icon-wrap" :class="{ pending : call.techStateId === 1, received : call.techStateId === 2, 'en-route' : call.techStateId === 3, 'at-site' : call.techStateId === 4, 'left-site' : call.techStateId === 5, 'on-hold' : call.techStateId === 6 }">
+                <div class="tech-state-icon-wrap" :class="{ pending : call.techStateId === 1, received : call.techStateId === 2, 'en-route' : call.techStateId === 3, 'at-site' : call.techStateId === 4, 'left-site' : call.techStateId === 5, 'on-hold' : call.techStateId === 6, 'rerouted' : call.techStateId == 7 }">
                     <div>
                         <span v-if="call.techStateId === 1" class="material-symbols-outlined tech-state-icon pending material" >pending_actions</span>
                         <!-- <font-awesome-icon v-if="call.techStateId === 1" class="tech-state-icon pending" :icon="['fa', 'phone-alt']" size="lg" /> -->
@@ -41,7 +47,8 @@
                         <font-awesome-icon v-if="call.techStateId === 4" class="tech-state-icon at-site" :icon="['fa', 'map-marker-alt']" size="lg" />
                         <font-awesome-icon v-if="call.techStateId === 5" class="tech-state-icon left-site" :icon="['fa', 'road']" size="lg" />
                         <font-awesome-icon v-if="call.techStateId === 6" class="tech-state-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" />
-                        <span>{{ call.techStateName }}</span>
+                        <span v-if="call.techStateId === 7" class="material-symbols-outlined tech-state-icon rerouted material" >alt_route</span>
+                        <span class="tech-state-name">{{ call.techStateName }}</span>
                     </div>
 
                 </div>
@@ -75,7 +82,7 @@ export default {
 
     data(){
         return {
-            
+            refreshing: false
         }
     },
 
@@ -85,7 +92,7 @@ export default {
     computed: {
         ...mapGetters({
             activeCalls: ['Calls/activeCalls'],
-            incomingCalls: ['Calls/incomingCalls'],
+            pendingCalls: ['Calls/pendingCalls'],
             loading: ['Calls/loading'],
             showActiveCalls: ['Calls/showActiveCalls'],
             online: ['StaticResources/online']
@@ -95,7 +102,7 @@ export default {
             return this.activeCalls.length;
         },
         numPendingCalls: function() {
-            return this.incomingCalls.length;
+            return this.pendingCalls.length;
         }
     },
 
@@ -141,7 +148,12 @@ export default {
         },
 
 
-
+        refreshJobs: async function() {
+            this.refreshing = true;
+            await this.$store.dispatch('Calls/refreshTechnicianCalls');
+            this.refreshing = false;
+            // this.$router.push('/calls');
+        }
         
 
     }
@@ -201,14 +213,14 @@ export default {
     background: linear-gradient(to left, rgba(0,0,0,0.35), rgba(0,0,0,0.5)70%);
     padding: 7px 10px;
     border-radius: 3px;
-    width: 80vw;
+    width: 85vw;
     box-shadow: -3px 4px 8px 0 rgba(0,0,0,0.3);
     margin-bottom: 20px;
     animation: fade-in 200ms ease;
     position: relative;
-    height: 90px;
-    min-height: 90px;
     max-width: 400px;
+    height: 110px;
+    min-height: 110px;
 }
 
 
@@ -242,36 +254,66 @@ export default {
 
 .tech-state-icon-wrap.pending {
     background: var(--Pending);
-    color: var(--PendingDark);
+    color: var(--PendingLight);
 }
+/* .tech-state-icon-wrap.pending .tech-state-name {
+    color: var(--PendingLight);
+} */
+
 
 .tech-state-icon-wrap.received {
     background: var(--Received);
-    color: var(--ReceivedDark);
+    color: var(--ReceivedLight);
 }
+/* .tech-state-icon-wrap.received .tech-state-name {
+    color: var(--ReceivedLight);
+} */
+
 
 .tech-state-icon-wrap.en-route {
     background: var(--EnRoute);
-    color: var(--EnRouteDark);
+    color: var(--EnRouteLight);
 }
+/* .tech-state-icon-wrap.en-route .tech-state-name {
+    color: var(--EnRouteLight);
+} */
+
+
+.tech-state-icon-wrap.rerouted {
+    background: var(--Rerouted);
+    color: var(--ReroutedLight);
+}
+/* .tech-state-icon-wrap.rerouted .tech-state-name {
+    color: var(--ReroutedLight);
+} */
+
 
 .tech-state-icon-wrap.at-site {
-    background: var(--AtSite);
-    color: var(--AtSiteDark);
+    background: var(--OnSite);
+    color: var(--OnSiteLight);
     
 }
+/* .tech-state-icon-wrap.at-site .tech-state-name {
+    color: var(--OnSiteLight);
+} */
+
 
 .tech-state-icon-wrap.left-site {
     background: var(--LeftSite);
-    color: var(--LeftSiteDark);
+    color: var(--LeftSiteLight);
 }
+/* .tech-state-icon-wrap.left-site .tech-state-name {
+    color: var(--LeftSiteLight);
+} */
+
 
 .tech-state-icon-wrap.on-hold {
     background: var(--OnHold);
-    color: var(--OnHoldDark);
+    color: var(--OnHoldLight);
 }
-
-
+/* .tech-state-icon-wrap.on-hold .tech-state-name {
+    color: var(--OnHoldLight);
+} */
 
 
 
@@ -284,7 +326,7 @@ export default {
     bottom: 0;
     left: 0;
     bottom: 0;
-    width: 90px;
+    width: 110px;
     height: 30px;
 
     display: flex;
@@ -292,6 +334,10 @@ export default {
     justify-content: center;
 }
 
+
+.tech-state-icon-wrap .tech-state-name {
+    color: var(--BlockBorder);
+}
 
 
 .tech-state-icon {
@@ -301,8 +347,9 @@ export default {
 
 
 
-.tech-state-icon.pending {
-    font-size: 20px;
+.tech-state-icon.pending,
+.tech-state-icon.rerouted {
+    font-size: 16px;
     margin-right: 2px;
     margin-left: -3px;
     /* transform: rotate(90deg); */
@@ -339,10 +386,23 @@ export default {
 
 
 
+.refresh-jobs-btn.calls {
+    position: absolute;
+    bottom: 180px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: max-content;
+    color: var(--BlueMid);
+}
+
+
+
+
 
 
 .toggle-selector-wrap.calls {
-    bottom: 120px;
+    bottom: 100px;
     left: 0;
     right: 0;
     margin: 0 auto;
@@ -355,18 +415,6 @@ export default {
 }
 
 
-
-
-
-
-/* .span-wrap.pending {
-    padding-right: 27px;
-} */
-
-
-/* .span-wrap.active {
-    padding-left: 20px;
-} */
 
 
 .selection-toggle-switch .span-wrap.active {
