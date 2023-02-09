@@ -25,6 +25,8 @@ workbox.routing.registerNavigationRoute(
 // SW Sync Store for Call update data
 let callSyncStore = [];
 let callJobCardLinkStore = [];
+let callCommentStore = [];
+let CallOrderNumberStore = [];
 let backgroundSyncActive = false;
 
 // Listen for messages from the App
@@ -52,7 +54,128 @@ self.addEventListener('message', function (event) {
 				event.waitUntil(linkJobCard(jobCardData.call.id));
 			})
 		}
+
+		if(callCommentStore.length >= 1)
+		{
+			// console.log('Checking callJobCardLinkStore for job card links...');
+			callCommentStore.map(commentData => {
+				event.waitUntil(addCallComment(commentData.call.id));
+			})
+		}
 	}
+
+
+
+
+	if(event.data.type === 'linkOrderNumber')
+	{
+		var data = JSON.parse(event.data.data);
+		var existingData = '';
+
+		CallOrderNumberStore.map(exData => {
+			if(exData.call.id.toString() === data.call.id.toString())
+			{
+				existingData = exData;
+			}
+		});
+
+
+		if(existingData)
+		{
+
+			existingData.orderNumbers.push({orderNumber: data.orderNumber, sending: false, sent: false});
+			
+			console.log('SW CallOrderNumberStore comment updated: ', CallOrderNumberStore);
+
+			event.waitUntil(linkOrderNumber(data.call.id));
+
+			
+		}
+		else
+		{
+			// If no existing data is in the callSyncStore, add this data.
+			data['orderNumbers'] = [];
+			data.orderNumbers.push({orderNumber: data.orderNumber, sending: false, sent: false});
+			
+
+			delete data.orderNumber;
+			data.call.callDetails ? delete data.call.callDetails : null;
+			data.call.customerAccount ? delete data.call.customerAccount : null;
+			data.call.customerAccountName ? delete data.call.customerAccountName : null;
+			data.call.customerStore ? delete data.call.customerStore : null;
+			data.call.customerStoreName ? delete data.call.customerStoreName : null;
+			data.call.customerStoreBranchCode ? delete data.call.customerStoreBranchCode : null;
+			data.call.customerStoreAddress ? delete data.call.customerStoreAddress : null;
+			data.call.jobCards ? delete data.call.jobCards : null;
+			data.call.operator ? delete data.call.operator : null;
+			data.call.operatorName ? delete data.call.operatorName : null;
+			data.call.techState ? delete data.call.techState : null;
+			data.call.techStateId ? delete data.call.techStateId : null;
+			data.call.techStateName ? delete data.call.techStateName : null;
+
+			CallOrderNumberStore.push(data);
+			console.log('SW CallOrderNumberStore comment added: ', CallOrderNumberStore);
+			
+
+			event.waitUntil(linkOrderNumber(data.call.id));
+			
+			// var syncId = 'updateCall_' + data.call.id;
+			// event.waitUntil(self.registration.sync.register(syncId));
+		}
+	}
+
+
+
+
+
+
+	if(event.data.type === 'addCallComment')
+	{
+		var data = JSON.parse(event.data.data);
+		var existingData = '';
+
+		callCommentStore.map(exData => {
+			if(exData.call.id.toString() === data.call.id.toString())
+			{
+				existingData = exData;
+			}
+		});
+
+
+		if(existingData)
+		{
+
+			existingData.callComments.push({comment: data.comment, sending: false, sent: false});
+			
+			console.log('SW callCommentStore comment updated: ', callCommentStore);
+
+			event.waitUntil(addCallComment(data.call.id));
+
+			
+		}
+		else
+		{
+			// If no existing data is in the callSyncStore, add this data.
+			data['callComments'] = [];
+			data.callComments.push({comment: data.comment, sending: false, sent: false});
+			
+
+			delete data.comments;
+			callCommentStore.push(data);
+			console.log('SW callCommentStore comment added: ', callCommentStore);
+			
+
+			event.waitUntil(addCallComment(data.call.id));
+			
+			// var syncId = 'updateCall_' + data.call.id;
+			// event.waitUntil(self.registration.sync.register(syncId));
+		}
+	}
+
+
+
+
+
 
 
 
@@ -115,7 +238,7 @@ self.addEventListener('message', function (event) {
 	{
 		var data = JSON.parse(event.data.data);
 		var existingData = '';
-
+		var flag = false;
 		// console.log('update Call---Background Syncing? ', backgroundSyncActive);
 		
 		// Check if the call already exists in the Sync Store
@@ -126,52 +249,82 @@ self.addEventListener('message', function (event) {
 			}
 		});
 
+
+
+
+		var updates = 
+		{
+			nextStatusId: data.nextStatusId, 
+			timeStamp: data.time_stamp,
+			sending: false,
+			sent: false
+		}
+
+
+
+
 		if(existingData)
 		{
 			if(existingData.statusUpdates.length >= 1)
 			{
 				existingData.statusUpdates.map(exUpdate => {
-					if(exUpdate.timeStamp === data.time_stamp)
-					{ return }
+					
+					if(exUpdate.nextStatusId == data.nextStatusId)
+					{
+						var exDate = new Date(exUpdate.timeStamp);
+						var newDate = new Date(data.time_stamp);
+
+						var exDay = exDate.getDate();
+						var newDay = newDate.getDate();
+						// console.log('Day: ', exDay, newDay);
+
+						var exHour = exDate.getHours();
+						var newHour = newDate.getHours();
+						// console.log('Hour: ', exHour, newHour);
+
+						var exMinute = exDate.getMinutes();
+						var newMinute = newDate.getMinutes();
+						// console.log('Minute: ', exMinute, newMinute);
+
+						var exSecond = exDate.getSeconds();
+						var newSecond = newDate.getSeconds();
+						// console.log('Second: ', exSecond, newSecond);
+
+						if(exDay == newDay && exHour == newHour && exMinute == newMinute && exSecond == newSecond)
+						{
+							flag = true;
+							// console.log('Popping out: ', data);
+						}
+					}
+					
+
 				})
 			}
-			var updates = 
-			{
-				nextStatusId: data.nextStatusId, 
-				timeStamp: data.time_stamp,
-				sending: false,
-				sent: false
-			}
-			// data.ETT ? updates['ETT'] = data.ETT : null;
-			existingData.statusUpdates.push(updates);
-			
-			// console.log('SW callSyncStore Call updated: ', callSyncStore);
 
-			
-			event.waitUntil(updateCall(data.call.id));
+
+
+			if(!flag)
+			{
+				existingData.statusUpdates.push(updates);
+				// console.log('SW callSyncStore Call updated: ', callSyncStore);
+				
+				event.waitUntil(updateCall(data.call.id));
+			}
+
 			
 		}
 		else
 		{
 			// If no existing data is in the callSyncStore, add this data.
 			data['statusUpdates'] = [{nextStatusId: data.nextStatusId, timeStamp: data.time_stamp, sending: false, sent: false}];
-			// if(data.ETT)
-			// {
-			// 	console.log('Data.statusUpdates: ', data.statusUpdates);
-			// 	data.statusUpdates[0]['ETT'] = data.ETT;
-			// 	delete data.ETT;
-			// }
+
 			delete data.nextStatusId;
 			delete data.time_stamp;
 			callSyncStore.push(data);
 			// console.log('SW callSyncStore Call added: ', callSyncStore);
 			
-			
-
 			event.waitUntil(updateCall(data.call.id));
-			
-			// var syncId = 'updateCall_' + data.call.id;
-			// event.waitUntil(self.registration.sync.register(syncId));
+
 		}
 	}
 
@@ -227,6 +380,120 @@ self.addEventListener('message', function (event) {
 
 
 // })
+async function linkOrderNumber(callId) {
+	var orderNumberData = CallOrderNumberStore.filter(exData => exData.call.id.toString() === callId.toString())[0];
+	console.log('Link Order Number: ', orderNumberData);
+
+
+
+	var flag = false;
+
+	await Promise.all(orderNumberData.orderNumbers.map(async orderNumber => {
+
+		console.log('Processing call Order Number: ', orderNumber);
+
+		if(!orderNumber.sending) 
+		{ 
+
+			orderNumber.sending = true;
+
+			var method = 'PUT';
+			var query = 'calls/' + orderNumberData.call.id;
+			var body = orderNumberData.call;
+			var signature = orderNumberData.signature;
+			
+			var SQLData = 
+			{
+				call: orderNumberData.call, 
+				orderNumber: orderNumber.orderNumber, 
+				user: orderNumberData.user,
+			}
+			var SQLQuery = 'techUpdates/callOrderNumber.php';
+
+			flag = await doFetch(method, query, body, signature, orderNumber, SQLData, SQLQuery);
+		}
+
+	}))
+	
+	
+	if(!flag) 
+	{
+		orderNumberData.orderNumbers = orderNumberData.orderNumbers.filter(comment => comment.sent != true); 
+		
+		if(orderNumberData.orderNumbers.length <= 0)
+		{
+			callCommentStore = callCommentStore.filter(exData => exData.call.id.toString() !== orderNumberData.call.id.toString());
+		}
+	}
+	console.log('Comments Store filtered after data sent: ', callCommentStore);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+async function addCallComment(callId) {
+	var commentData = callCommentStore.filter(exData => exData.call.id.toString() === callId.toString())[0];
+	console.log('Add call comment: ', commentData);
+
+
+
+	var flag = false;
+
+	await Promise.all(commentData.callComments.map(async comment => {
+
+		console.log('Processing call comment: ', comment);
+
+		if(!comment.sending) 
+		{ 
+
+			comment.sending = true;
+
+			var method = 'POST';
+			var query = 'calls/comments';
+			var body = comment.comment;
+			var signature = commentData.signature;
+			
+			var SQLData = 
+			{
+				call: commentData.call, 
+				comment: comment.comment, 
+				user: commentData.user,
+			}
+			var SQLQuery = 'techUpdates/callComment.php';
+
+			flag = await doFetch(method, query, body, signature, comment, SQLData, SQLQuery);
+		}
+
+	}))
+	
+	
+	if(!flag) 
+	{
+		commentData.callComments = commentData.callComments.filter(comment => comment.sent != true); 
+		
+		if(commentData.callComments.length <= 0)
+		{
+			callCommentStore = callCommentStore.filter(exData => exData.call.id.toString() !== commentData.call.id.toString());
+		}
+	}
+	console.log('Comments Store filtered after data sent: ', callCommentStore);
+}
+
+
+
+
+
+
 
 
 
@@ -240,29 +507,29 @@ async function linkJobCard(callId) {
 
 	var flag = false;
 
-	await Promise.all(jcData.jobCardLinks.map(async jobCardData => {
+	await Promise.all(jcData.jobCardLinks.map(async update => {
 
-		console.log('Processing job card link: ', jobCardData);
+		console.log('Processing job card link: ', update);
 
-		if(!jobCardData.sending) 
+		if(!update.sending) 
 		{ 
 
-			jobCardData.sending = true;
+			update.sending = true;
 
 			var method = 'PUT';
-			var query = 'job_cards/' + jobCardData.jobCard.id + '/call_link';
-			var body = jobCardData.jobCard;
+			var query = 'job_cards/' + update.jobCard.id + '/call_link';
+			var body = update.jobCard;
 			var signature = jcData.signature;
 			
 			var SQLData = 
 			{
 				call: jcData.call, 
-				jobCardId: jobCardData.jobCard.id, 
+				jobCardId: update.jobCard.id, 
 				user: jcData.user,
 			}
 			var SQLQuery = 'techUpdates/linkJobCard.php';
 
-			flag = await doFetch(method, query, body, signature, jcData, SQLData, SQLQuery);
+			flag = await doFetch(method, query, body, signature, update, SQLData, SQLQuery);
 		}
 
 	}))
@@ -274,7 +541,7 @@ async function linkJobCard(callId) {
 		
 		if(jcData.jobCardLinks.length <= 0)
 		{
-			callJobCardLinkStore = callJobCardLinkStore.filter(exData => exData.call.id.toString() !== data.call.id.toString());
+			callJobCardLinkStore = callJobCardLinkStore.filter(exData => exData.call.id.toString() !== jcData.call.id.toString());
 		}
 	}
 	console.log('JC_Call Store filtered after data sent: ', callJobCardLinkStore);
@@ -288,10 +555,13 @@ async function linkJobCard(callId) {
 
 
 
+
+
+
 async function updateCall(callId) {
 
 	var callData = callSyncStore.filter(exData => exData.call.id.toString() === callId.toString())[0];
-	// console.log('Update call with: ', data);
+	console.log('Update call with: ', callData);
 	
 
 	var flag = false;
@@ -335,7 +605,7 @@ async function updateCall(callId) {
 			callSyncStore = callSyncStore.filter(exData => exData.call.id.toString() !== callData.call.id.toString());
 		}
 	}
-	// console.log('Sync Store filtered after data send to update: ', callSyncStore);
+	console.log('Sync Store filtered after data send to update: ', callSyncStore);
 
 	// backgroundSyncActive = false;
  
@@ -380,7 +650,7 @@ async function doFetch(method, query, body, signature, sendData, SQLData, SQLQue
 	.then(async resp => {
 
 		// resp.json().then(data => console.log(data));
-		// console.log(resp.status + ' - ' + JSON.stringify(sendData));
+		console.log(resp.status + ' - ' + JSON.stringify(sendData));
 
 		if(resp.status != 200)
 		{

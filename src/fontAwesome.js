@@ -54,6 +54,8 @@ import {
   faStoreSlash,
   faChevronUp,
   faChevronDown,
+  faComment,
+  faComments,
 } from '@fortawesome/free-solid-svg-icons'
 
 
@@ -120,5 +122,7 @@ library.add(
   faStoreSlash,
   faChevronUp,
   faChevronDown,
-  farTimesCircle
+  farTimesCircle,
+  faComment,
+  faComments
 )

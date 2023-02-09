@@ -3,65 +3,80 @@
 
         <div id="InfoBox" class="store-calls-scroll-section">
 
-            <div @click="loadCall(call)" class="store-call-card" v-for="call in calls" :key="call.id" >
-            
+            <template v-if="(calls && calls.length >= 1)">
+
+                <div @click="loadCall(call)" class="store-call-card" v-for="call in calls" :key="call.id" >
                 
-                <div class="store-call-card-header" :class="{ 'open' : call.callStatusId == 1, 'allocated' : call.callStatusId == 2, 'no-tech' : call.callStatusId == 2 && !call.technicians || call.callStatusId == 2 && call.technicians.length <= 0 }">
-                    <h4 style="text-align: left;">{{ call.id }}</h4>
-                    <h4 v-if="call.callStatusId == 2 && !call.technicians || call.callStatusId == 2 && call.technicians.length <= 0" class="no-tech-warning"><font-awesome-icon class="no-tech-warning-icon" :icon="['fa','exclamation-triangle']" size="lg" />  No Tech!</h4>
-                    <p class="store-calls-call-status">{{ getCallStatusId(call.callStatusId) }}</p>
-                </div>
+                    
+                    <div class="store-call-card-header" :class="{ 'open' : call.callStatusId == 1, 'allocated' : call.callStatusId == 2, 'no-tech' : call.callStatusId == 2 && !call.technicians || call.callStatusId == 2 && call.technicians.length <= 0 }">
+                        <h4 style="text-align: left;">{{ call.id }}</h4>
+                        <h4 v-if="call.callStatusId == 2 && !call.technicians || call.callStatusId == 2 && call.technicians.length <= 0" class="no-tech-warning"><font-awesome-icon class="no-tech-warning-icon" :icon="['fa','exclamation-triangle']" size="lg" />  No Tech!</h4>
+                        <p class="store-calls-call-status">{{ getCallStatusId(call.callStatusId) }}</p>
+                    </div>
 
 
-                <p>Call Logged</p>
-                <span class="bold">{{ call.openTime }}</span>
-                <p>Operator</p>
-                <span class="bold">{{ getCallOperator(call.operatorEmployeeCode) }} <span class="small-text">({{ call.operatorEmployeeCode }})</span></span>
-                <p>Call Type</p>
-                <span class="bold">{{ getCallTypeName(call.callTypeId) }}</span>
-                <p>Order Number</p>
-                <span class="bold">{{ call.orderNumber }}</span>
-                <p>Contact Person</p>
-                <span class="bold">{{ call.callerName }}</span>
-                <p>Account</p>
-                <span class="bold">{{ call.customerAccountName }}</span> 
-                
-                <p>Details</p>
-                <span class="bold" v-html="processCallDetails(call.callDetails)"></span>
+                    <p>Call Logged</p>
+                    <span class="bold">{{ call.openTime }}</span>
+                    <p>Operator</p>
+                    <span class="bold">{{ getCallOperator(call.operatorEmployeeCode) }} <span class="small-text">({{ call.operatorEmployeeCode }})</span></span>
+                    <p>Call Type</p>
+                    <span class="bold">{{ getCallTypeName(call.callTypeId) }}</span>
+                    <p>Order Number</p>
+                    <span class="bold">{{ call.orderNumber }}</span>
+                    <p>Contact Person</p>
+                    <span class="bold">{{ call.callerName }}</span>
+                    <p>Account</p>
+                    <span class="bold">{{ call.customerAccountName }}</span> 
+                    
+                    <p>Details</p>
+                    <span class="bold" v-html="processCallDetails(call.callDetails)"></span>
 
-                <div class="store-calls-techs-grid-wrap" v-if="call.technicians && call.technicians.length >= 1">
-                    <h4>Technicians</h4>
-                    <div class="store-calls-techs-grid" v-for="tech in call.technicians" :key="tech.id"
-                    :class="{ 
-                            'pending' : tech.technicianCallStatusId == 1,
+                    <div class="store-calls-techs-grid-wrap" v-if="call.technicians && call.technicians.length >= 1">
+                        <h4>Technicians</h4>
+                        <div class="store-calls-techs-grid" v-for="tech in call.technicians" :key="tech.id"
+                        :class="{ 
+                            'pending': tech.technicianCallStatusId == 1,
                             'received': tech.technicianCallStatusId == 2,
                             'en-route': tech.technicianCallStatusId == 3,
+                            'rerouted': tech.technicianCallStatusId == 7,
                             'on-site': tech.technicianCallStatusId == 4,
                             'left-site': tech.technicianCallStatusId == 5,
-                            'on-hold': tech.technicianCallStatusId == 6
+                            'on-hold': tech.technicianCallStatusId == 6,
+                            'completed': tech.technicianCallStatusId == 8
                         }">
 
 
-                        <p class="technician-name">{{ getTechName(tech.technicianEmployeeCode) }} <span class="smaller-text">({{ tech.technicianEmployeeCode }})</span></p>
+                            <p class="technician-name">{{ getTechName(tech.technicianEmployeeCode) }} <span class="smaller-text">({{ tech.technicianEmployeeCode }})</span></p>
 
 
-                        <p class="store-calls-tech-state">
-                            <span v-if="tech.technicianCallStatusId === 1" class="material-symbols-outlined sc-tech-state-icon pending material" >pending_actions</span>
-                            <font-awesome-icon v-if="tech.technicianCallStatusId === 2" class="sc-tech-state-icon received" :icon="['fa', 'user-check']" size="lg" />
-                            <font-awesome-icon v-if="tech.technicianCallStatusId === 3" class="sc-tech-state-icon en-route" :icon="['fa', 'route']" size="lg" />
-                            <font-awesome-icon v-if="tech.technicianCallStatusId === 4" class="sc-tech-state-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" />
-                            <font-awesome-icon v-if="tech.technicianCallStatusId === 5" class="sc-tech-state-icon left-site" :icon="['fa', 'road']" size="lg" />
-                            <font-awesome-icon v-if="tech.technicianCallStatusId === 6" class="sc-tech-state-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" />
-                            {{ getTechStatus(tech.technicianCallStatusId) }}
-                        </p>
+                            <p class="store-calls-tech-state">
+                                <span v-if="tech.technicianCallStatusId === 1" class="material-symbols-outlined sc-tech-state-icon pending material" >pending_actions</span>
+                                <font-awesome-icon v-if="tech.technicianCallStatusId === 2" class="sc-tech-state-icon received" :icon="['fa', 'user-check']" size="lg" />
+                                <font-awesome-icon v-if="tech.technicianCallStatusId === 3" class="sc-tech-state-icon en-route" :icon="['fa', 'route']" size="lg" />
+                                <span v-if="tech.technicianCallStatusId === 7" class="material-symbols-outlined sc-tech-state-icon rerouted">alt_route</span>
+                                <font-awesome-icon v-if="tech.technicianCallStatusId === 4" class="sc-tech-state-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" />
+                                <font-awesome-icon v-if="tech.technicianCallStatusId === 5" class="sc-tech-state-icon left-site" :icon="['fa', 'road']" size="lg" />
+                                <font-awesome-icon v-if="tech.technicianCallStatusId === 6" class="sc-tech-state-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" />
+                                <font-awesome-icon v-if="tech.technicianCallStatusId === 8" class="sc-tech-state-icon completed" :icon="['fa', 'clipboard-check']" size="lg" />
+                                {{ getTechStatus(tech.technicianCallStatusId) }}
+                            </p>
 
 
+                        </div>
                     </div>
-                </div>
 
-                
-                
+                    
+                    
+                </div>
+            
+            </template>
+            <div v-else>
+                <div class="loading-lightbox-section" v-if="loadingStoreCalls">
+                    <font-awesome-icon class="loading-lightbox-icon" :icon="['fa','circle-notch']" size="lg" spin />
+                </div>
+                <!-- <button v-if="this.selectedStore" @click="addCall()" class="store-calls-add-call-btn no-calls"><span class="material-symbols-outlined">add_call</span> Add Call</button> -->
             </div>
+
 
         </div>
 
@@ -69,16 +84,20 @@
         <button @click="addCall()" class="store-calls-add-call-btn"><span class="material-symbols-outlined">add_call</span></button>
 
 
-        <div class="allocate-tech-store-calls-customer-info-wrap">          
+        <div class="allocate-tech-store-calls-customer-info-wrap" v-if="(calls && calls.length >= 1)">          
             <p>Address</p>
             <span class="bold">{{ calls[0].customerStoreAddress }}</span>
         </div>
 
 
     </div>
-    <div v-else>
-        <button v-if="this.selectedStore" @click="addCall()" class="store-calls-add-call-btn no-calls"><span class="material-symbols-outlined">add_call</span> Add Call</button>
+    <div v-else class="allocate-tech-store-calls-wrap">
+        <div class="loading-lightbox-wrap" v-if="loadingStoreCalls">
+            <font-awesome-icon class="loading-lightbox-icon" :icon="['fa','circle-notch']" size="lg" spin />
+        </div>
+        <!-- <button v-if="this.selectedStore" @click="addCall()" class="store-calls-add-call-btn no-calls"><span class="material-symbols-outlined">add_call</span> Add Call</button> -->
     </div>
+    
 </template>
 
 
@@ -104,6 +123,7 @@ export default {
     computed: {
         ...mapGetters({
             calls: ['AllocateTech/customerStoreCalls'],
+            loadingStoreCalls: ['AllocateTech/loadingCustomerStoreCalls'],
             selectedStore: ['AllocateTech/customerStore']
         })
     },
@@ -409,6 +429,18 @@ export default {
 
 
 
+.sc-tech-state-icon.rerouted {
+    color: var(--ReroutedLight);
+}
+.store-calls-techs-grid.rerouted::before {
+    background: var(--Rerouted);
+}
+.store-calls-techs-grid.rerouted {
+    border-color: var(--Rerouted);
+}
+
+
+
 .sc-tech-state-icon.en-route {
     color: var(--EnRouteLight);
 }
@@ -453,6 +485,18 @@ export default {
 }
 .store-calls-techs-grid.on-hold {
     border-color: var(--OnHold);
+}
+
+
+
+.sc-tech-state-icon.completed {
+    color: var(--CompletedLight);
+}
+.store-calls-techs-grid.completed::before {
+    background: var(--Completed);
+}
+.store-calls-techs-grid.completed {
+    border-color: var(--Completed);
 }
 
 

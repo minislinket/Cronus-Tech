@@ -7,9 +7,12 @@
         
         <div class="call-info-wrap">
 
-            <div class="link-job-card-wrap" v-if="call.techStateId >= 4 && call.techStateId != 7">
-                <button :class="{ 'no-jc' : call.jobCards.length <= 0, 'linked' : call.jobCards.length >= 1 }" @click="openLinkJobCard()"><font-awesome-icon class="link-job-card-icon" :icon="['fa','link']" size="lg" /> </button>
-                <span>Link Job Card</span>
+            <div class="link-jc-no-order-num-wrap">
+                <div class="link-job-card-wrap" v-if="call.techStateId >= 4 && call.techStateId != 7">
+                    <button :class="{ 'no-jc' : call.jobCards.length <= 0, 'linked' : call.jobCards.length >= 1 }" @click="openLinkJobCard()"><font-awesome-icon class="link-job-card-icon" :icon="['fa','link']" size="lg" /> </button>
+                    <span>Link Job Card</span>
+                </div>
+                <p @click="openLinkOrderNumber()" v-if="!call.orderNumber && call.techStateId > 3 && call.techStateId < 7"><font-awesome-icon :icon="['fa','exclamation-triangle']" size="lg" /> Order Number</p>
             </div>
 
             <div class="call-info-wrapper call-details-wrap">
@@ -104,18 +107,18 @@
 
         </div>
 
-        
-        <ETTModal :active="ETTModalActive" @closeETT="ETTModalActive = false" @submitETT="submitETT($event)"/>
-        <OnHoldReasonModal @submitReason="submitOnHoldReason($event)" />
+    
+        <CommentModal @submitComment="submitComment($event)" />
         <LinkJobCardModal @linkJobCards="linkJobCards($event)" />
+        <LinkOrderNumberModal @linkOrderNumber="linkOrderNumber($event)" />
         
-        <div class="call-button-wrap">
+        <div class="call-button-wrap" :class="{ 'lower-margin' : call.callTypeId === 1 && call.techStateId === 4 }">
             <button :disabled="!canUpdateStatus" v-if="call.techStateId === 1" @click="canUpdateCall(2)" class="update-call-btn received"><font-awesome-icon class="update-call-icon accept" :icon="['fa', 'user-check']" size="lg" :class="{ disabled : !canUpdateStatus }" /> Accept Call</button>
             <button :disabled="!canUpdateStatus" v-if="call.techStateId === 2 || call.techStateId >= 5 && call.techStateId <= 7" @click="canUpdateCall(3)" class="update-call-btn en-route"><font-awesome-icon class="update-call-icon en-route" :icon="['fa', 'route']" size="lg" :class="{ disabled : !canUpdateStatus }" /> En Route</button>
             <button :disabled="!canUpdateStatus" v-if="call.techStateId === 3" @click="canUpdateCall(4)" class="update-call-btn on-site"><font-awesome-icon class="update-call-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" :class="{ disabled : !canUpdateStatus }" /> On Site</button>
-            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 4" @click="canUpdateCall(6)" class="update-call-btn on-hold"><font-awesome-icon class="update-call-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" :class="{ disabled : !canUpdateStatus }" /> On Hold</button>
-            <!-- <button :disabled="!canUpdateStatus" v-if="call.techStateId === 4 || call.techStateId === 6" @click="canUpdateCall(5)" class="update-call-btn left-site"><font-awesome-icon class="update-call-icon left-site" :icon="['fa', 'road']" size="lg" :class="{ disabled : !canUpdateStatus }" /> Left Site</button> -->
-            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0" v-if="call.techStateId === 4 || call.techStateId === 6 || call.techStateId === 5" @click="canUpdateCall(8)" class="update-call-btn completed"><font-awesome-icon class="update-call-icon completed" :icon="['fa', 'clipboard-check']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 && user.employeeCode !== 'TES001' }" /> Complete</button>
+            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 4" @click="openCommentsModal(6, call)" class="update-call-btn on-hold"><font-awesome-icon class="update-call-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" :class="{ disabled : !canUpdateStatus }" /> On Hold</button>
+            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0" v-if="call.techStateId === 4 && call.callTypeId === 1" @click="canUpdateCall(5)" class="update-call-btn left-site"><font-awesome-icon class="update-call-icon left-site" :icon="['fa', 'road']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 }" /> Left Site</button>
+            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.orderNumber" v-if="call.techStateId === 4 || call.techStateId === 6 || call.techStateId === 5" @click="canUpdateCall(8)" class="update-call-btn completed"><font-awesome-icon class="update-call-icon completed" :icon="['fa', 'clipboard-check']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.orderNumber }" /> Complete</button>
         </div>
     </div>
 </template>
@@ -124,17 +127,17 @@
 
 <script>
 
-import ETTModal from './ETTModal.vue';
-import OnHoldReasonModal from './OnHoldReasonModal.vue';
+import CommentModal from './CommentModal.vue';
 import LinkJobCardModal from './LinkJobCardModal.vue';
+import LinkOrderNumberModal from './LinkOrderNumberModal.vue';
 
 import { mapGetters } from 'vuex'
-import { axiosMySQL } from '../../../axios/axios';
+
 export default {
 
 
     components: {
-        ETTModal, OnHoldReasonModal, LinkJobCardModal
+         CommentModal, LinkJobCardModal, LinkOrderNumberModal
     },
 
 
@@ -146,8 +149,6 @@ export default {
             branches: JSON.parse(localStorage.getItem('branches')),
             serviceWorker: null,
             user: JSON.parse(localStorage.getItem('user')),
-            ETTModalActive: false,
-            ETT: '',
             canUpdateStatus: true
         }
     },
@@ -162,7 +163,8 @@ export default {
             activeCalls: ['Calls/activeCalls'],
             allCalls: ['Calls/allCalls'],
             modal: ['Modal/modal'],
-            online: ['StaticResources/online']
+            online: ['StaticResources/online'],
+            commentNextStatusId: ['Call/commentNextStatusId']
         })
     },
 
@@ -281,6 +283,81 @@ export default {
 
 
 
+        openLinkOrderNumber: function() {
+            this.$store.dispatch('Call/linkOrderNumberModal', true);
+        },
+
+
+        
+
+
+        linkOrderNumber: async function(orderNumber) {
+
+            var user = JSON.parse(localStorage.getItem('user'));
+            var signature = JSON.parse(localStorage.getItem('signature'));
+
+            this.call.orderNumber = orderNumber;
+
+            var data =
+            {
+                call: this.call,
+                orderNumber,
+                signature,
+                user
+            }
+
+            await this.sendToServiceWorker(data, 'linkOrderNumber');
+
+            // Update the call on the users device
+            this.$store.dispatch('Call/linkOrderNumber', orderNumber);
+
+        },
+
+
+
+
+
+
+
+        addCallComment: async function(comment) {
+
+            console.log('Call comment: ', comment);
+            var user = JSON.parse(localStorage.getItem('user'));
+            var signature = JSON.parse(localStorage.getItem('signature'));
+
+            var commentData = {
+                "employeeCode": user.employeeCode,
+                "customerCallId": this.commentingOnCall.id,
+                "comment": comment,
+                "resolved": false
+            }
+
+            var data =
+            {
+                call: this.commentingOnCall,
+                comment: commentData,
+                signature,
+                user
+            }
+
+            console.log(data);
+            
+
+            await this.sendToServiceWorker(data, 'addCallComment');
+            var nextStatusId = JSON.parse(JSON.stringify(this.commentNextStatusId));
+            var call = JSON.parse(JSON.stringify(this.commentingOnCall));
+
+            // Update the call on the users device
+            this.updateCall(nextStatusId, call);
+            this.$store.dispatch('Call/commentNextStatusId', '');
+            this.$store.dispatch('Call/commentingOnCall', '');
+            
+        },
+
+
+
+
+
 
         linkJobCards: async function(jobCardArray) {
 
@@ -372,43 +449,51 @@ export default {
 
 
 
-        recordOnHoldReason: function() {
-            this.$store.dispatch('Call/onHoldReasonModal', true);
+        openCommentsModal: function(nextStatusId, call) {
+            this.$store.dispatch('Call/commentingOnCall', call);
+            this.$store.dispatch('Call/commentNextStatusId', nextStatusId);
+            this.$store.dispatch('Call/commentModal', true);
         },
 
 
 
 
 
-        submitOnHoldReason: function() {
+        submitComment: function(data) {
+            var reason = data.reason;
+            var stockList = data.stockList;
 
+            // console.log('Tech says: ', reason || stockList);
+
+            var comment = '';
+
+            if(!reason)
+            {
+                if(stockList && stockList.length >= 1)
+                {
+                    comment = 'Stock Required:<br>'
+                    stockList.map((item, index) => {
+                        comment += 
+                        item.description + ' ('+ item.code +') Qty: ' + item.quantity + (index === stockList.length - 1 ? '' : '<br>');
+                    })
+                }
+                else
+                {
+                    comment = '';
+                }
+                
+            }
+            else
+            {
+                comment = reason.toString();
+            }
+
+            // console.log('Comment is: ', comment);
+
+            this.addCallComment(comment);
         },
 
 
-
-
-
-
-        getETT: function() {
-            this.ETTModalActive = true;
-        },
-
-
-
-
-
-
-        submitETT: function(data) {
-            var hour = data.hour ? data.hour : '00';
-            hour.length === 1 ? hour = '0' + hour : null;
-            var minute = data.minute ? data.minute : '00';
-            minute.length === 1 ? minute = '0' + minute : null;
-
-            this.ETT = hour+':'+minute;
-
-            this.canUpdateCall(3);
-            this.ETTModalActive = false;
-        },
 
 
 
@@ -424,24 +509,8 @@ export default {
                 return
             }            
 
-            // var modal = 
-            // {
-            //     active: true, // true to show modal
-            //     type: 'info', // ['info', 'warning', 'error', 'okay']
-            //     icon: ['fa', 'exclamation-triangle'], // Leave blank for no icon
-            //     heading: 'Put Current Job on Hold?',
-            //     body: '<p>Your Current Job will be placed on hold if you continue.</p>',
-            //     confirmAction: 'init',
-            //     actionFrom: 'holdCall_'+call.id+'_canUpdateCall_'+this.call.id,
-            //     resolveText: 'Okay',
-            //     rejectText: 'Cancel'
-            // }
-
-            // var flag = false;
 
             this.updateCall(nextStatusId, this.call);
-                
-
 
             this.activeCalls.map(call => {
 
@@ -452,37 +521,18 @@ export default {
                     // auto-activated status (no prompt)
                     if(call.techStateId == 3)
                     {
-                        this.updateCall(7, call);
+                        this.openCommentsModal(7, call);
                     }
 
                     // Left-Site (activated while "On-Site" (4))
                     // auto-activated status (no prompt)
                     if(call.techStateId == 4)
                     {
-                        this.updateCall(5, call);
+                        this.openCommentsModal(5, call);
                     }
 
-
-                    // if(call.techStateId >= 5 && call.techStateId !== 6)
-                    // {
-                    //     flag = true;
-                        
-
-                    //     this.$store.dispatch('Modal/modal', modal);
-                        
-                    // }
                 }
             })
-
-            
-
-            // if(!flag)
-            // {
-            //     this.updateCall(nextStatusId, this.call);
-            //     // this.checkForSameStoreCalls(nextStatusId, this.call);
-            // }
-
-            
 
         },
 
@@ -586,6 +636,7 @@ export default {
     display: flex;
     justify-content: center;
     z-index: 100;
+    
 }
 
 
@@ -595,7 +646,16 @@ export default {
     margin: 0 25px;
 }
 
+.call-button-wrap.lower-margin button {
+    margin: 0 5px;
+}
 
+
+
+.call-button-wrap.lower-margin .update-call-btn {
+    font-size: 14px;
+    flex-wrap: wrap;
+}
 
 
 .update-call-btn {
@@ -989,8 +1049,28 @@ export default {
 
 
 
-.link-job-card-wrap {
+
+
+
+
+
+.link-jc-no-order-num-wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 10px;
+}
+
+.link-jc-no-order-num-wrap p {
+    color: var(--WarningOrange);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+
+.link-job-card-wrap {
+    
 }
 
 

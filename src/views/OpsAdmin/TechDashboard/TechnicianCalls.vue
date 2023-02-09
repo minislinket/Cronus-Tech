@@ -39,6 +39,7 @@
         
 
         <TechDashboard />
+        <CallCommentsModal />
 
         <div class="tech-calls-btns-wrap">
 
@@ -69,12 +70,13 @@
 <script>
 import { mapGetters } from 'vuex'
 import TechDashboard from './TechDashboard.vue'
+import CallCommentsModal from './CallCommentsModal.vue'
 
 export default {
 
 
     components: {
-    TechDashboard
+    TechDashboard,CallCommentsModal
 },
 
 

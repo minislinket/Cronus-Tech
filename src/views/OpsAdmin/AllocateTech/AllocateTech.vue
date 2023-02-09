@@ -1,7 +1,7 @@
 <template>
     <div class="allocate-tech-wrap">
 
-        <div class="loading-lightbox-wrap" v-if="loading || loadingStoreCalls && !showingCall">
+        <div class="loading-lightbox-wrap" v-if="loading">
             <font-awesome-icon class="loading-lightbox-icon" :icon="['fa','circle-notch']" size="lg" spin />
         </div>
 
@@ -13,6 +13,12 @@
                 <div class="load-call-input-wrap">
                     <input type="tel" placeholder="enter call id..." v-model="callId" @input="checkKeyInput($event)" @keypress.enter="loadCallById($event)">
                     <button @click="loadCallById()" class="material-btn load-call-btn"><span class="material-symbols-outlined">call</span>Load</button>
+                    <div class="call-comments-icon-wrap" v-if="call">
+                        <font-awesome-icon @click="showCallComments()" class="call-comments-icon" :icon="['fa','comments']" size="lg" />
+                        <font-awesome-icon v-if="loadingCallComments" class="call-comments-loading-icon" :icon="['fa','circle-notch']" size="lg" spin />
+                        <span v-else>{{ call.comments.length }}</span>
+                        
+                    </div>
                 </div>
             </div>
         </div>
@@ -42,6 +48,7 @@
         <AddCallDetails />
         <CallEvents />
         <EditCallTypes />
+        <CallCommentsModal />
        
     </div>
 </template>
@@ -60,6 +67,7 @@ import AssignTechModal from './AssignTechModal.vue';
 import CallEvents from './CallEvents.vue';
 import AddCallDetails from './AddCallDetails.vue';
 import EditCallTypes from './EditCallTypes.vue';
+import CallCommentsModal from './CallCommentsModal.vue'
 
 export default {
 
@@ -71,7 +79,8 @@ export default {
         AssignTechModal,
         CallEvents,
         AddCallDetails,
-        EditCallTypes
+        EditCallTypes,
+        CallCommentsModal
     },
 
 
@@ -105,8 +114,9 @@ export default {
         ...mapGetters({
             showCall: ['AllocateTech/showCall'],
             call: ['AllocateTech/call'],
+            callComments: ['AllocateTech/callComments'],
+            callCommentsLoading: ['AllocateTech/callCommentsLoading'],
             loading: ['AllocateTech/loading'],
-            loadingStoreCalls: ['AllocateTech/loadingCustomerStoreCalls'],
             customerStoreCalls: ['AllocateTech/customerStoreCalls'],
             selectedStore: ['AllocateTech/customerStore'],
             modal: ['Modal/modal']
@@ -209,6 +219,12 @@ export default {
 
 
     methods: {
+
+
+        showCallComments: function() {
+            console.log(this.callComments);
+            this.$store.dispatch('AllocateTech/callCommentsModalActive', true);
+        },
 
 
 
@@ -366,6 +382,22 @@ export default {
     margin-left: 10px;
 }
 
+
+
+.call-comments-icon-wrap {
+    margin-left: 15px;
+    font-size: 20px;
+    color: var(--CommentsDark);
+    position: relative;
+}
+
+
+.call-comments-icon-wrap span {
+    position: absolute;
+    top: -2px;
+    right: 2px;
+    font-size: 8px;
+}
 
 
 

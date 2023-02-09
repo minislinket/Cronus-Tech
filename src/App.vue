@@ -411,6 +411,10 @@ under 100: standard app level components as assigned by html (usually no more th
 	--CancelledCall: rgb(200, 0, 0);
 	--ClosedCall: rgb(58, 58, 58);
 	--CompletedCall: rgb(23, 179, 23);
+	--UnAllocatedCall: rgb(224, 115, 26);
+	--CommentsLight: rgb(180, 115, 255);
+	--Comments: rgb(105, 0, 224);
+	--CommentsDark: rgb(62, 8, 122);
 
 
 	/* Standard Usage Colors */
@@ -681,7 +685,17 @@ button:disabled {
 
 
 
-
+.loading-lightbox-section {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.65);
+}
 
 
 
@@ -963,6 +977,42 @@ button:disabled {
 
 
 /* Font Face Rules */
+
+/* (Google) Material Icons - Outlined | Fill 1 | Weight 700 */
+@font-face {
+  font-family: 'Material Symbols Outlined';
+  font-style: normal;
+  src: url('./fonts/material-symbols.woff2') format('woff2');
+}
+
+
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;  /* Preferred icon size */
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+}
+
+
+
+.material-symbols-outlined {
+  font-variation-settings:
+  'FILL' 1,
+  'wght' 700,
+  'GRAD' 0,
+  'opsz' 48
+}
+
+
+
 
 
 /* nunito-200 - latin */

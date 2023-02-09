@@ -337,6 +337,7 @@ const actions = {
                 c.techStateId = call.techStateId;
                 c.techStateName = call.techStateName;
                 c.jobCards = call.jobCards;
+                c.orderNumber = call.orderNumber;
             }
         });
         // console.log('Call Updated in localStorage...', localCalls);

@@ -22,7 +22,12 @@ const state = () => ({
     viewCallEventsModal: false,
     callEvents: [],
     addCallDetailsModalActive: false,
-    editCallTypesModal: false
+    editCallTypesModal: false,
+
+
+    callComments: '',
+    callCommentsLoading: false,
+    callCommentsModalActive: false
 })
 
 
@@ -94,6 +99,23 @@ const getters = {
     editCallTypesModal: (state) => {
         return state.editCallTypesModal;
     },
+
+
+
+    callComments: (state) => {
+        return state.callComments;
+    },
+
+
+    callCommentsLoading: (state) => {
+        return state.callCommentsLoading;
+    },
+
+    callCommentsModalActive: (state) => {
+        return state.callCommentsModalActive;
+    },
+
+    
 } 
 
 
@@ -110,6 +132,16 @@ const actions = {
     },
 
 
+
+    callCommentsLoading({ commit }, toggle) {
+        commit('callCommentsLoading', toggle);
+    },
+
+
+    callCommentsModalActive({ commit }, toggle) {
+        commit('callCommentsModalActive', toggle);
+    },
+    
 
     addCallDetailsModalActive({ commit }, toggle) {
         commit('addCallDetailsModalActive', toggle);
@@ -254,7 +286,7 @@ const actions = {
 
 
 
-    processCall({ state, dispatch }, call) {
+    async processCall({ state, dispatch, commit }, call) {
 
         if(state.call.id === call.id) { return }
 
@@ -277,10 +309,41 @@ const actions = {
             call.customerAccount = account ? account : '';
             call.customerAccountName = account ? account.name : '';
         }
+
+        var callComments = await dispatch('getCallComments', call.id);
+        callComments.sort((a,b) => {
+            return new Date(b.time) - new Date(a.time);
+        })
+        call.comments = callComments;
         
+        commit('callComments', callComments);
         dispatch('setCall', call);
         dispatch('loading', false);
         dispatch('loadStoreCalls', store);
+    },
+
+
+
+
+
+    async getCallComments({ dispatch }, callId) {
+        dispatch('callCommentsLoading', true);
+        return axiosOffice.get('calls/comments?call_id='+callId)
+        .then(resp => {
+
+            dispatch('callCommentsLoading', false);
+            if(resp.status == 200)
+                return resp.data
+            else
+                return [];
+            
+        })
+        .catch(err => {
+            console.error('Axios Office Error: ', err)
+            console.error('Axios Office Error Response: ', err.response);
+            dispatch('callCommentsLoading', false);
+            return []
+        })
     },
 
 
@@ -453,13 +516,19 @@ const actions = {
 
 
 
-    async processStoreCalls({ }, calls) {
+    async processStoreCalls({ dispatch }, calls) {
 
         var customer_accounts = JSON.parse(localStorage.getItem('customer_accounts'));
         var employees = JSON.parse(localStorage.getItem('employees'));
 
 
-        await Promise.all(calls.map(call => {
+        await Promise.all(calls.map(async call => {
+
+            var callComments = await dispatch('getCallComments', call.id);
+            callComments.sort((a,b) => {
+                return new Date(b.time) - new Date(a.time);
+            })
+            call.comments = callComments;
 
             // Assign Operator
             var operator = employees.filter(emp => emp.employeeCode === call.operatorEmployeeCode)[0];
@@ -837,6 +906,20 @@ const mutations = {
     },
 
 
+    callComments(state, comments) {
+        state.callComments = comments;
+    },
+
+
+    callCommentsLoading(state, toggle) {
+        state.callCommentsLoading = toggle;
+    },
+
+
+    callCommentsModalActive(state, toggle) {
+        state.callCommentsModalActive = toggle;
+    },
+
 
     addCallDetailsModalActive(state, toggle) {
         state.addCallDetailsModalActive = toggle;
@@ -928,6 +1011,10 @@ const mutations = {
         state.viewCallEventsModal = false;
         state.callEvents = [];
         state.addCallDetailsModalActive = false;
+
+        state.callComments = '';
+        state.callCommentsLoading = false;
+        state.callCommentsModalActive = false;
     }
 }
 

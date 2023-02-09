@@ -60,6 +60,7 @@ export default {
 
         displayText: {
             handler: function() {
+                console.log('Display text changed: ', this.displayText);
                 this.searchInput = this.displayText;
             },
             deep: true,

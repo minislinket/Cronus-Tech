@@ -42,22 +42,26 @@
                             'pending' : tech.technicianCallStatusId == 1,
                             'received': tech.technicianCallStatusId == 2,
                             'en-route': tech.technicianCallStatusId == 3,
+                            'rerouted': tech.technicianCallStatusId == 7,
                             'on-site': tech.technicianCallStatusId == 4,
                             'left-site': tech.technicianCallStatusId == 5,
-                            'on-hold': tech.technicianCallStatusId == 6
+                            'on-hold': tech.technicianCallStatusId == 6,
+                            'completed': tech.technicianCallStatusId == 8
                         }">
 
 
                         <p class="technician-name">{{ getTechName(tech.technicianEmployeeCode) }} <span class="smaller-text">({{ tech.technicianEmployeeCode }})</span></p>
 
 
-                        <p  class="recent-calls-tech-state">
+                        <p class="recent-calls-tech-state">
                             <span v-if="tech.technicianCallStatusId === 1" class="material-symbols-outlined rc-tech-state-icon pending material" >pending_actions</span>
                             <font-awesome-icon v-if="tech.technicianCallStatusId === 2" class="rc-tech-state-icon received" :icon="['fa', 'user-check']" size="lg" />
                             <font-awesome-icon v-if="tech.technicianCallStatusId === 3" class="rc-tech-state-icon en-route" :icon="['fa', 'route']" size="lg" />
+                            <span v-if="tech.technicianCallStatusId === 7" class="material-symbols-outlined rc-tech-state-icon rerouted">alt_route</span>
                             <font-awesome-icon v-if="tech.technicianCallStatusId === 4" class="rc-tech-state-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" />
                             <font-awesome-icon v-if="tech.technicianCallStatusId === 5" class="rc-tech-state-icon left-site" :icon="['fa', 'road']" size="lg" />
                             <font-awesome-icon v-if="tech.technicianCallStatusId === 6" class="rc-tech-state-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" />
+                            <font-awesome-icon v-if="tech.technicianCallStatusId === 8" class="rc-tech-state-icon completed" :icon="['fa', 'clipboard-check']" size="lg" />
                             {{ getTechStatus(tech.technicianCallStatusId) }}
                         </p>
 
@@ -433,6 +437,18 @@ export default {
 
 
 
+.rc-tech-state-icon.rerouted {
+    color: var(--ReroutedLight);
+}
+.recent-calls-techs-grid.rerouted::before {
+    background: var(--Rerouted);
+}
+.recent-calls-techs-grid.rerouted {
+    border-color: var(--Rerouted);
+}
+
+
+
 .rc-tech-state-icon.on-site {
     color: var(--OnSiteLight);
 }
@@ -465,6 +481,18 @@ export default {
 }
 .recent-calls-techs-grid.on-hold {
     border-color: var(--OnHold);
+}
+
+
+
+.rc-tech-state-icon.completed {
+    color: var(--CompletedLight);
+}
+.recent-calls-techs-grid.completed::before {
+    background: var(--Completed);
+}
+.recent-calls-techs-grid.completed {
+    border-color: var(--Completed);
 }
 
 

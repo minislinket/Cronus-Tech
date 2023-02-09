@@ -32,7 +32,16 @@ const state = () => ({
         {
             url: '/company/branches',
             name: 'branches'
+        },
+        {
+            url: '/inventory/item_categories',
+            name: 'item_categories'
+        },
+        {
+            url: '/inventory/items',
+            name: 'inventory_items'
         }
+        
     ],
 
 
@@ -207,6 +216,11 @@ const actions = {
             await axiosOffice.get(res.url)
             .then(async resp => {
                 if(resp.status === 200 && resp.data)
+
+                if(res.name === 'inventory_items')
+                {
+                    resp.data.map(item => item['name'] = item.description);
+                }
                     localStorage.setItem(res.name, JSON.stringify(resp.data));
 
 
@@ -217,7 +231,8 @@ const actions = {
                 }
             })
             .catch(err => {
-                
+                console.error('Axios Office Error: ', err);
+                console.error('Axios Office Error Response: ', err.response);
             })
 
         }))

@@ -5,10 +5,10 @@
 
             <div class="filtered-techs-wrap" v-for="tech in filteredTechs" :key="tech.id" :class="{ 'hide' : tech.noCallsToShow }">
 
-                <h3>{{ tech.displayName }} <span v-if="tech.displayName !== 'Open Calls'" class="small-text">({{ tech.employeeCode }})</span> <span>[{{ tech.filteredCalls.length }}]</span></h3>
-                <p style="text-align: left" class="small-text">Completed Calls for today: {{ tech.completedForToday }}</p>
+                <h3>{{ tech.displayName }} <span v-if="tech.displayName !== 'Open Calls' && tech.displayName !== 'Un-Allocated Calls' && tech.displayName !== 'Completed Calls'" class="small-text">({{ tech.employeeCode }})</span> <span>[{{ tech.filteredCalls.length }}]</span></h3>
+                <p v-if="tech.displayName !== 'Open Calls' && tech.displayName !== 'Un-Allocated Calls' && tech.displayName !== 'Completed Calls'" style="text-align: left" class="small-text">Completed Calls for today: {{ tech.completedForToday }}</p>
 
-                <h4 class="tech-call-counts-wrap" v-if="tech.displayName !== 'Open Calls'" style="display: flex;">
+                <h4 class="tech-call-counts-wrap" v-if="tech.displayName !== 'Open Calls' && tech.displayName !== 'Un-Allocated Calls' && tech.displayName !== 'Completed Calls'" style="display: flex;">
 
                     <div @click="filterTechStatus(tech, 1)" class="tcc pending" :class="{ inactive : tech.filterByStatus > 0 && tech.filterByStatus != 1 }"><span class="material-symbols-outlined tcc-icon pending">pending_actions</span> {{ tech.pendingCalls }}</div>
                     <div @click="filterTechStatus(tech, 2)" class="tcc received" :class="{ inactive : tech.filterByStatus > 0 && tech.filterByStatus != 2 }"><font-awesome-icon class="tcc-icon received" :icon="['fa', 'user-check']" size="lg" /> {{ tech.receivedCalls }}</div>
@@ -17,40 +17,58 @@
                     <div @click="filterTechStatus(tech, 4)" class="tcc on-site" :class="{ inactive : tech.filterByStatus > 0 && tech.filterByStatus != 4 }"><font-awesome-icon class="tcc-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" /> {{ tech.onSiteCalls }}</div>
                     <div @click="filterTechStatus(tech, 5)" class="tcc left-site" :class="{ inactive : tech.filterByStatus > 0 && tech.filterByStatus != 5 }"><font-awesome-icon class="tcc-icon left-site" :icon="['fa', 'road']" size="lg" /> {{ tech.leftSiteCalls }}</div>
                     <div @click="filterTechStatus(tech, 6)" class="tcc on-hold" :class="{ inactive : tech.filterByStatus > 0 && tech.filterByStatus != 6 }"><font-awesome-icon class="tcc-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" /> {{ tech.onHoldCalls }}</div>
-                    <div @click="filterTechStatus(tech, 8)" class="tcc completed" :class="{ inactive : tech.filterByStatus > 0 && tech.filterByStatus != 8 }"><font-awesome-icon class="tcc-icon completed" :icon="['fa', 'clipboard-check']" size="lg" /> {{ tech.completedCalls }}</div>
+                    <!-- <div @click="filterTechStatus(tech, 8)" class="tcc completed" :class="{ inactive : tech.filterByStatus > 0 && tech.filterByStatus != 8 }"><font-awesome-icon class="tcc-icon completed" :icon="['fa', 'clipboard-check']" size="lg" /> {{ tech.completedCalls }}</div> -->
 
                 </h4>
 
                 <div class="filtered-tech-calls-scroll-section">
-                    <div class="filtered-calls-cards-loop" @click="loadCall(call)" v-for="call in tech.filteredCalls" :key="call.id" 
-                    :class="
-                    {
-                        'open' : getTechState(tech, call).id == 0,
-                        'pending' : getTechState(tech, call).id == 1,
-                        'received' : getTechState(tech, call).id == 2,
-                        'en-route' : getTechState(tech, call).id == 3,
-                        'rerouted' : getTechState(tech, call).id == 7,
-                        'on-site' : getTechState(tech, call).id == 4,
-                        'left-site' : getTechState(tech, call).id == 5,
-                        'on-hold' : getTechState(tech, call).id == 6,
-                        'completed' : getTechState(tech, call).id == 8
-                    }">
+                    <template v-for="call in tech.filteredCalls" :key="call.id">
+                        <div class="filtered-calls-cards-loop" v-if="call.techState !== 8 && tech.displayName !== 'Completed Calls' || call.techState == 8 && tech.displayName == 'Completed Calls'"
+                        :class="
+                        {
+                            'open' : getTechState(tech, call).id == 0,
+                            'un-allocated' : getTechState(tech, call).id == -1,
+                            'pending' : getTechState(tech, call).id == 1,
+                            'received' : getTechState(tech, call).id == 2,
+                            'en-route' : getTechState(tech, call).id == 3,
+                            'rerouted' : getTechState(tech, call).id == 7,
+                            'on-site' : getTechState(tech, call).id == 4,
+                            'left-site' : getTechState(tech, call).id == 5,
+                            'on-hold' : getTechState(tech, call).id == 6,
+                            'completed' : getTechState(tech, call).id == 8
+                        }">
+  
+                        
+                            <button class="load-call-background-btn" @click="loadCall(call)"></button>
 
-                        <div class="filtered-calls-card">
+                            <div class="filtered-calls-card">
 
-                            <p>Call ID</p>
-                            <span class="bold">{{ call.id }}</span>
-                            <p>Store</p>
-                            <span class="bold">{{ call.customerStoreName }}</span>
-                            <p>Branch#</p>
-                            <span class="bold">{{ call.customerStoreBranchCode }}</span>
-                            <p v-if="getTechState(tech, call).id !== 0">Tech</p>
-                            <span class="bold">{{ getTechState(tech, call).id === 0 ? '' : getTechState(tech, call).name }}</span>
-                            <p v-if="call.latestTechUpdate">Updated</p>
-                            <span v-if="call.latestTechUpdate">{{ call.latestTechUpdate }}</span>
-                            
+                                <p>Call ID</p>
+                                <span class="bold">{{ call.id }}</span>
+                                <p>Call Type</p>
+                                <span class="bold">{{ getCallTypeName(call.callTypeId) }}</span>
+                                <p>Store</p>
+                                <span class="bold">{{ call.customerStoreName }}</span>
+                                <p>Branch#</p>
+                                <span class="bold">{{ call.customerStoreBranchCode }}</span>
+
+                                <p v-if="getTechState(tech, call).id !== 0 && getTechState(tech, call).id !== -1">Tech</p>
+                                <p v-else>Logged</p>
+
+                                <span v-if="getTechState(tech, call).id !== 0 && getTechState(tech, call).id !== -1" class="bold">{{ getTechState(tech, call).name}}</span>
+                                <p v-else>{{ call.openTime }}</p>
+
+                                <p v-if="call.latestTechUpdate">Updated</p>
+                                <span v-if="call.latestTechUpdate">{{ call.latestTechUpdate }}</span>
+
+                                <div id="CallCommentsIcon" class="call-comments-wrap" v-if="call.comments && call.comments.length >= 1" @click="viewCallComments(call)">
+                                    <font-awesome-icon id="CallCommentsIcon" class="call-comments-icon" :icon="['fa', 'comments']" size="lg" />
+                                    <span>{{ call.comments.length }}</span>
+                                </div>
+                                
+                            </div>
                         </div>
-                    </div>
+                    </template>
                 </div>
 
                 <p class="warning" v-if="tech.filteredCalls.length <= 0 || tech.noCallsToShow">No Calls to Show</p>
@@ -65,11 +83,15 @@
 
 <script>
 import { mapGetters } from 'vuex'
+
+
+
 export default {
 
     data() {
         return {
             tech_call_states: JSON.parse(localStorage.getItem('call_tech_states')),
+            call_types: JSON.parse(localStorage.getItem('call_types'))
         }
     },
 
@@ -111,6 +133,13 @@ export default {
 
 
 
+        viewCallComments: function(call) {
+            this.$store.dispatch('TechnicianCalls/callComments', call.comments);
+            this.$store.dispatch('TechnicianCalls/callCommentsModalActive', true);
+        },
+
+
+
         checkIsToday: function() {
             
         },
@@ -129,6 +158,8 @@ export default {
         getTechState: function(tech, call) {
             // console.log('Call and tech', call, tech);
             if(tech.displayName === 'Open Calls') { return { id: 0, name: 'N/A' }}
+            if(tech.displayName === 'Un-Allocated Calls') { return { id: -1, name: 'N/A' }}
+            if(tech.displayName === 'Completed Calls') { return { id: 8, name: 'Completed' }}
             var techState = '';
             call.technicians.map(tek => {
                 if(tek.technicianEmployeeCode === tech.employeeCode)
@@ -141,6 +172,13 @@ export default {
             !techState ? techState = { id: 99, name: 'N/A' } : null;
             return techState;
             
+        },
+
+
+
+
+        getCallTypeName: function(callTypeId) {
+            return this.call_types.filter(type => type.id === callTypeId)[0].name;
         },
 
 
@@ -326,6 +364,18 @@ export default {
 
 
 
+.load-call-background-btn {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    background: transparent;
+}
+
+
+
 
 .filtered-calls-cards-loop {
     text-align: left;
@@ -335,6 +385,7 @@ export default {
     margin-right: 10px;
     padding: 10px;
     height: max-content;
+    position: relative;
 }
 
 
@@ -343,12 +394,17 @@ export default {
     display: grid;
     grid-template-columns: 1fr 2.5fr;
     width: 100%;
-    
+    position: relative;
 }
 
 .filtered-calls-cards-loop.open {
     background: var(--OpenCall);
     color: var(--TextBlack);
+}
+
+.filtered-calls-cards-loop.un-allocated {
+    background: var(--UnAllocatedCall);
+    color: var(--OffWhite);
 }
 
 .filtered-calls-cards-loop.pending {
@@ -381,6 +437,29 @@ export default {
 
 .filtered-calls-cards-loop.completed {
     background: var(--Completed);
+}
+
+
+
+
+
+.call-comments-wrap {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    z-index: 11;
+}
+
+.call-comments-wrap span {
+    position: absolute;
+    top: -4px;
+    right: 2px;
+    font-size: 8px;
+}
+
+.call-comments-icon {
+    color: var(--CommentsDark);
+    
 }
 
 </style>

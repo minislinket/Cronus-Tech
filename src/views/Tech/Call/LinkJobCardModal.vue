@@ -6,7 +6,7 @@
             <h4>Link Job Card</h4>
 
             <div class="link-jc-modal-input-wrap">
-                <input type="text" v-model="jobCardId" @input="jobCardIdVerified = false" placeholder="Job Card Number">
+                <input type="tel" v-model="jobCardId" @input="jobCardIdVerified = false" placeholder="Job Card Number">
                 <font-awesome-icon v-if="!verifying" class="link-jc-verify-jc-id-icon" :class="{ 'warning-orange' : !jobCardIdVerified, okay : jobCardIdVerified, verifying : verifying }" @click="verifyJobCard()" :icon="['far', 'check-circle']" size="lg" />
                 <font-awesome-icon v-else class="verifying-jc-id-loading-icon" :icon="['fa', 'circle-notch']" size="lg" spin />
                 <!-- <font-awesome-icon class="link-jc-add-jc-id-icon" :class="{ disabled : !jobCardIdVerified }" @click="addJobCard(), jobCardId = ''" :icon="['fa', 'plus-square']" size="lg" /> -->

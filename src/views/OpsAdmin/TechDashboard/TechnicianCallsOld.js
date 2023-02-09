@@ -183,37 +183,17 @@ const actions = {
 
         state.activeTechs.map(tech => {
 
-            if(techStatusId == 8)
-            {
-                if(tech.displayName == 'Completed Calls')
-                {
-                    if(tech.calls && tech.calls.length >= 1)
-                    {
-                        tech.filteredCalls = tech.calls.filter(call => call.techState == techStatusId);
-                        tech.filteredCalls.length <= 0 ? tech.noCallsToShow = true : tech.noCallsToShow = false;
-                    }
-                }
-                else
-                {
-                    tech.noCallsToShow = true;
-                }
-            }
-            else
-            {
-                tech.filterByStatus = techStatusId;
+            tech.filterByStatus = techStatusId;
 
-                if(tech.displayName === 'Open Calls') { 
-                    tech.noCallsToShow = true; 
-                }
-
-                if(tech.calls && tech.calls.length >= 1)
-                {
-                    tech.filteredCalls = tech.calls.filter(call => call.techState == techStatusId);
-                    tech.filteredCalls.length <= 0 ? tech.noCallsToShow = true : tech.noCallsToShow = false;
-                }
+            if(tech.displayName === 'Open Calls') { 
+                tech.noCallsToShow = true; 
             }
 
-            
+            if(tech.calls && tech.calls.length >= 1)
+            {
+                tech.filteredCalls = tech.calls.filter(call => call.techState == techStatusId);
+                tech.filteredCalls.length <= 0 ? tech.noCallsToShow = true : tech.noCallsToShow = false;
+            }
 
             // console.log('Filtered Tech: ', tech);
         })
@@ -288,85 +268,22 @@ const actions = {
         
 
         var openCallParams = { branch_id: branchId, call_status_id: 1 };
-        var allocatedCallParamsPending = { branch_id: branchId, call_status_id: 2, tech_call_status_id: 1 };
-        var allocatedCallParamsReceived = { branch_id: branchId, call_status_id: 2, tech_call_status_id: 2 };
-        var allocatedCallParamsEnRoute = { branch_id: branchId, call_status_id: 2, tech_call_status_id: 3 };
-        var allocatedCallParamsRerouted = { branch_id: branchId, call_status_id: 2, tech_call_status_id: 7 };
-        var allocatedCallParamsOnSite = { branch_id: branchId, call_status_id: 2, tech_call_status_id: 4 };
-        var allocatedCallParamsLeftSite = { branch_id: branchId, call_status_id: 2, tech_call_status_id: 5 };
-        var allocatedCallParamsOnHold = { branch_id: branchId, call_status_id: 2, tech_call_status_id: 6 };
-        var allocatedCallParamsCompleted = { branch_id: branchId, call_status_id: 2, tech_call_status_id: 8 };
+        var allocatedCallParams = { branch_id: branchId, call_status_id: 2 };
+        // var techsCompletedCallParams = { branch_id: branchId, call_status_id: 2, tech_call_status_id: 8 }
 
         // Select all of Locksecure's Calls
         if(selectedBranchId == 1) 
         { 
             delete openCallParams.branch_id;
-            delete allocatedCallParamsPending.branch_id;
-            delete allocatedCallParamsReceived.branch_id;
-            delete allocatedCallParamsEnRoute.branch_id;
-            delete allocatedCallParamsRerouted.branch_id;
-            delete allocatedCallParamsOnSite.branch_id;
-            delete allocatedCallParamsLeftSite.branch_id;
-            delete allocatedCallParamsOnHold.branch_id;
-            delete allocatedCallParamsCompleted.branch_id;
+            delete allocatedCallParams.branch_id;
         }
 
         var getOpenCalls = dispatch('getCallsFromServer', openCallParams);
-        var getAllocatedCallsPending = dispatch('getCallsFromServer', allocatedCallParamsPending);
-        var getAllocatedCallsReceived = dispatch('getCallsFromServer', allocatedCallParamsReceived);
-        var getAllocatedCallsEnRoute = dispatch('getCallsFromServer', allocatedCallParamsEnRoute);
-        var getAllocatedCallsRerouted = dispatch('getCallsFromServer', allocatedCallParamsRerouted);
-        var getAllocatedCallsOnSite = dispatch('getCallsFromServer', allocatedCallParamsOnSite);
-        var getAllocatedCallsLeftSite = dispatch('getCallsFromServer', allocatedCallParamsLeftSite);
-        var getAllocatedCallsOnHold = dispatch('getCallsFromServer', allocatedCallParamsOnHold);
-        var getAllocatedCallsCompleted = dispatch('getCallsFromServer', allocatedCallParamsCompleted);
+        var getAllocatedCalls = dispatch('getCallsFromServer', allocatedCallParams);
+        // var getTechsCompletedCalls = dispatch('getCallsFromServer', techsCompletedCallParams)
+        var [openCalls, allocatedCalls] = await Promise.all([getOpenCalls, getAllocatedCalls]);
 
-        var 
-        [
-            openCalls, allocatedCallsPending, allocatedCallsReceived, allocatedCallsEnRoute, allocatedCallsRerouted, 
-            allocatedCallsOnSite, allocatedCallsLeftSite, allocatedCallsOnHold, allocatedCallsCompleted
-        ] 
-        = 
-        await Promise.all(
-            [
-                getOpenCalls, getAllocatedCallsPending, getAllocatedCallsReceived, getAllocatedCallsEnRoute, getAllocatedCallsRerouted,
-                getAllocatedCallsOnSite, getAllocatedCallsLeftSite, getAllocatedCallsOnHold, getAllocatedCallsCompleted
-            ]
-        );
-
-
-        
-
-
-        await dispatch('initialCallProcessing', { calls: allocatedCallsPending, techState: 1 })
-        await dispatch('initialCallProcessing', { calls: allocatedCallsReceived, techState: 2 })
-        await dispatch('initialCallProcessing', { calls: allocatedCallsEnRoute, techState: 3 })
-        await dispatch('initialCallProcessing', { calls: allocatedCallsRerouted, techState: 7 })
-        await dispatch('initialCallProcessing', { calls: allocatedCallsOnSite, techState: 4 })
-        await dispatch('initialCallProcessing', { calls: allocatedCallsLeftSite, techState: 5 })
-        await dispatch('initialCallProcessing', { calls: allocatedCallsOnHold, techState: 6 })
-        await dispatch('initialCallProcessing', { calls: allocatedCallsCompleted, techState: 8 })
-
-        
-        // console.log('Pending: ', allocatedCallsPending);
-        // console.log('Received: ', allocatedCallsReceived);
-        // console.log('En Route: ', allocatedCallsEnRoute);
-        // console.log('Rerouted: ', allocatedCallsRerouted);
-        // console.log('On Site: ', allocatedCallsOnSite);
-        // console.log('Left Site: ', allocatedCallsLeftSite);
-        // console.log('On Hold: ', allocatedCallsOnHold);
-        // console.log('Completed: ', allocatedCallsCompleted);
-
-
-        
-        if
-        (
-            openCalls === false || allocatedCallsPending === false || allocatedCallsReceived === false || allocatedCallsEnRoute === false 
-            || allocatedCallsRerouted === false || allocatedCallsOnSite === false || allocatedCallsLeftSite === false 
-            || allocatedCallsOnHold === false || allocatedCallsCompleted === false
-        ) 
-        { return }
-
+        if(openCalls === false || allocatedCalls === false) { return }
 
 
         openCalls.map(call => {
@@ -387,25 +304,20 @@ const actions = {
         })
         
 
-        
+        // console.log('Open Calls: ', openCalls);
+        // console.log('Allocated Calls: ', allocatedCalls);
 
-        console.log('Pending with Techs: ', allocatedCallsPending);
-        console.log('Received with Techs: ', allocatedCallsReceived);
-        console.log('EnRoute with Techs: ', allocatedCallsEnRoute);
-        console.log('Rerouted with Techs: ', allocatedCallsRerouted);
-        console.log('OnSite with Techs: ', allocatedCallsOnSite);
-        console.log('LeftSite with Techs: ', allocatedCallsLeftSite);
-        console.log('OnHold with Techs: ', allocatedCallsOnHold);
-        console.log('Completed with Techs: ', allocatedCallsCompleted);
+        // var openCallIds = openCalls.map(call => call.id);
+        // var allocatedCallIds = allocatedCalls.map(call => call.id);
+        // var allCallIds = openCallIds.concat(allocatedCallIds);
 
-        var allocatedCalls = allocatedCallsPending.concat(allocatedCallsReceived, allocatedCallsEnRoute, allocatedCallsRerouted, allocatedCallsOnSite, allocatedCallsLeftSite, allocatedCallsOnHold, allocatedCallsCompleted);
-        
+        await dispatch('getCallTechnicians', allocatedCalls);
+        await dispatch('getCallComments', allocatedCalls);
+
+        // console.log('Calls with Technicians: ', allCalls);
 
         var allTechEmployeeCodes = []
         var deAllocatedCalls = [];
-        var completedCalls = [];
-
-        
         
         await Promise.all(allocatedCalls.map(call => {
             if(call.technicians && call.technicians.length >= 1)
@@ -497,21 +409,9 @@ const actions = {
 
 
 
-        
-
-        // await dispatch('getCallEvents', allocatedCalls);
-        console.log('Allocated Calls: ', allocatedCalls);
+        await dispatch('getCallsEvents', allocatedCalls);
 
 
-        // Remove duplicate call id's 
-        allocatedCalls = [...new Map(await Promise.all(allocatedCalls.map(v => [v.id, v]))).values()]
-
-        allocatedCalls.map(call => {
-            if(!call.technicianEmployeeCodes)
-            {
-                console.log(call);
-            }
-        })
 
         allActiveTechs.map(tech => {
             tech['calls'] = [];
@@ -546,7 +446,7 @@ const actions = {
 
                     if(call.events && call.events.length >= 1)
                     {
-                        var techUpdateEvents = call.events.filter(event => event.description.indexOf('Updated technician status:') !== -1 && event.employeeCode.indexOf(tech.employeeCode) !== -1);
+                        var techUpdateEvents = call.events.filter(event => event.description.indexOf('Updated technician status:') !== -1 && event.description.indexOf(tech.displayName) !== -1);
                         call.latestTechUpdate = techUpdateEvents[0] ? techUpdateEvents[0].time : '';
 
                         var lastUpdate = new Date(call.latestTechUpdate);
@@ -575,11 +475,7 @@ const actions = {
                         call.techState === 5 ? tech.leftSiteCalls++ : null;
                         call.techState === 6 ? tech.onHoldCalls++ : null;
                         call.techState === 7 ? tech.reroutedCalls++ : null;
-                        if(call.techState === 8)
-                        {
-                            completedCalls.push(call);
-                            tech.completedCalls++;
-                        }
+                        call.techState === 8 ? tech.completedCalls++ : null;
                     }
                 })
             }
@@ -587,29 +483,10 @@ const actions = {
 
 
 
-        var completedCallFakeTech = {
-            employeeCode: 'COMPCA',
-            active: true,
-            technician: true,
-            fullName: '',
-            displayName: 'Completed Calls',
-            branchId: branchId,
-            inventoryStoreId: null,
-            capacityId: null,
-            lastLoginOne: null,
-            lastLoginTwo: null,
-            firebaseTokenDesktop: null,
-            firebaseTokenMobile: null,
-            calls: completedCalls,
-            noCallsToShow: completedCalls.length >= 1 ? false : true,
-            filteredCalls: completedCalls
-        }
-
-        console.log('Completed Calls fake tech: ', completedCallFakeTech);
 
 
 
-        allActiveTechs.unshift(deAllocatedCallFakeTech, openCallFakeTech, completedCallFakeTech);
+        allActiveTechs.unshift(deAllocatedCallFakeTech, openCallFakeTech);
 
         
 
@@ -620,27 +497,6 @@ const actions = {
 
         dispatch('loading', false);
 
-    },
-
-
-
-
-
-
-
-    async initialCallProcessing({ dispatch }, payload) {
-
-        // Filter out doubles
-        payload.calls = [...new Map(await Promise.all(payload.calls.map(v => [v.id, v]))).values()]
-
-        // Add tech state to calls
-        await Promise.all(payload.calls.map(call => call['techState'] = payload.techState));
-
-        // Get call technicians, comments & events
-        var getCallTechs = dispatch('getCallTechnicians', payload.calls);
-        var getCallComments = dispatch('getCallComments', payload.calls);
-        var getCallEvents = dispatch('getCallEvents', payload.calls);
-        await Promise.all([getCallTechs, getCallComments, getCallEvents])
     },
 
 
@@ -681,7 +537,7 @@ const actions = {
 
 
 
-    async getCallEvents({ }, calls) {
+    async getCallsEvents({ }, calls) {
         const signal = state.eventsController ? state.eventsController.signal : '';
 
         if(calls && calls.length >= 1)
@@ -770,8 +626,7 @@ const actions = {
 
                 await axiosOffice.get('calls/techs', {
                     params: {
-                        call_id: call.id,
-                        status_id: call.techState
+                        call_id: call.id
                     },
                     signal
                 })

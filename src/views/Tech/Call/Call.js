@@ -7,8 +7,13 @@ const state = () => ({
     loading: false,
 
 
-    onHoldReasonModal: false,
-    linkJobCardModal: false
+    commentModal: false,
+    commentingOnCall: '',
+    commentNextStatusId: '',
+
+
+    linkJobCardModal: false,
+    linkOrderNumberModal: false
 })
 
 
@@ -27,16 +32,29 @@ const getters = {
     },
 
 
-    onHoldReasonModal: (state) => {
-        return state.onHoldReasonModal;
+
+    commentModal: (state) => {
+        return state.commentModal;
     },
+
+    commentingOnCall: (state) => {
+        return state.commentingOnCall;
+    },
+
+    commentNextStatusId: (state) => {
+        return state.commentNextStatusId;
+    },
+
 
 
     linkJobCardModal: (state) => {
         return state.linkJobCardModal;
-    }
+    },
 
     
+    linkOrderNumberModal: (state) => {
+        return state.linkOrderNumberModal;
+    }
     
 }
 
@@ -53,14 +71,29 @@ const actions = {
     },
 
 
-    onHoldReasonModal({ commit }, toggle) {
-        commit('onHoldReasonModal', toggle);
+    commentModal({ commit }, toggle) {
+        commit('commentModal', toggle);
     },
+
+    commentingOnCall({ commit }, call) {
+        commit('commentingOnCall', call);
+    },
+
+    commentNextStatusId({ commit }, nextStatusId) {
+        commit('commentNextStatusId', nextStatusId);
+    },
+    
 
 
     linkJobCardModal({ commit }, toggle) {
         commit('linkJobCardModal', toggle);
     },
+
+    
+    linkOrderNumberModal({ commit }, toggle) {
+        commit('linkOrderNumberModal', toggle);
+    },
+    
 
 
 
@@ -150,7 +183,7 @@ const actions = {
         dispatch('loading', false);
 
         // If the Tech is done, take them to their other calls/jobs for a new selection
-        if(nextStatusId === 8) 
+        if(nextStatusId === 8 || nextStatusId === 5 || nextStatusId === 6) 
         {
             router.push('/calls');
         }
@@ -184,6 +217,32 @@ const actions = {
 
         dispatch('loading', false);
 
+    },
+
+
+
+
+
+
+
+
+    linkOrderNumber({ state, dispatch, rootGetters }, orderNumber) {
+        dispatch('loading', true);
+
+        var allCalls = rootGetters['Calls/allCalls'];
+
+        var editCall = '';
+        allCalls.map(c => {
+            if(c.id === state.call.id)
+            {
+                editCall = JSON.parse(JSON.stringify(c));
+            }
+        });
+
+        editCall.orderNumber = orderNumber;
+        dispatch('Calls/updateLocalStorage', editCall, { root: true });
+
+        dispatch('loading', false);
     }
 
 }
@@ -201,14 +260,28 @@ const mutations = {
     },
 
 
-    onHoldReasonModal(state, toggle) {
-        state.onHoldReasonModal = toggle;
+    commentModal(state, toggle) {
+        state.commentModal = toggle;
     },
 
+    commentingOnCall(state, call) {
+        state.commentingOnCall = call;
+    },
+
+    commentNextStatusId(state, nextStatusId) {
+        state.commentNextStatusId = nextStatusId;
+    },
+    
 
     linkJobCardModal(state, toggle) {
         state.linkJobCardModal = toggle;
     },
+
+
+    linkOrderNumberModal(state, toggle) {
+        state.linkOrderNumberModal = toggle;
+    },
+    
 
 
     
