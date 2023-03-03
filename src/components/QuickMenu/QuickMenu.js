@@ -65,7 +65,7 @@ const state = () => ({
             id: 2,
             icon: 'contact_phone',
             url: '/technician_calls',
-            text: 'Technicians',
+            text: 'Tech Dash',
             active: false,
             iconFontSize: '32px'
         },

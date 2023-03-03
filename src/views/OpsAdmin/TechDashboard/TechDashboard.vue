@@ -15,9 +15,9 @@
                     <div @click="filterTechStatus(tech, 3)" class="tcc en-route" :class="{ inactive : tech.filterByStatus > 0 && tech.filterByStatus != 3 }"><font-awesome-icon class="tcc-icon en-route" :icon="['fa', 'route']" size="lg" /> {{ tech.enRouteCalls }}</div>
                     <div @click="filterTechStatus(tech, 7)" class="tcc rerouted" :class="{ inactive : tech.filterByStatus > 0 && tech.filterByStatus != 7 }"><span class="material-symbols-outlined tcc-icon rerouted">alt_route</span> {{ tech.reroutedCalls }}</div>
                     <div @click="filterTechStatus(tech, 4)" class="tcc on-site" :class="{ inactive : tech.filterByStatus > 0 && tech.filterByStatus != 4 }"><font-awesome-icon class="tcc-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" /> {{ tech.onSiteCalls }}</div>
-                    <div @click="filterTechStatus(tech, 5)" class="tcc left-site" :class="{ inactive : tech.filterByStatus > 0 && tech.filterByStatus != 5 }"><font-awesome-icon class="tcc-icon left-site" :icon="['fa', 'road']" size="lg" /> {{ tech.leftSiteCalls }}</div>
+                    <div @click="filterTechStatus(tech, 5)" class="tcc returning" :class="{ inactive : tech.filterByStatus > 0 && tech.filterByStatus != 5 }"><font-awesome-icon class="tcc-icon returning" style="transform: scaleX(-1);" :icon="['fa', 'clock-rotate-left']" size="lg" /> {{ tech.returningCalls }}</div>
                     <div @click="filterTechStatus(tech, 6)" class="tcc on-hold" :class="{ inactive : tech.filterByStatus > 0 && tech.filterByStatus != 6 }"><font-awesome-icon class="tcc-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" /> {{ tech.onHoldCalls }}</div>
-                    <!-- <div @click="filterTechStatus(tech, 8)" class="tcc completed" :class="{ inactive : tech.filterByStatus > 0 && tech.filterByStatus != 8 }"><font-awesome-icon class="tcc-icon completed" :icon="['fa', 'clipboard-check']" size="lg" /> {{ tech.completedCalls }}</div> -->
+                    <div @click="filterTechStatus(tech, 9)" class="tcc transferred" :class="{ inactive : tech.filterByStatus > 0 && tech.filterByStatus != 9 }"><font-awesome-icon class="tcc-icon transferred" :icon="['fa', 'shuffle']" size="lg" /> {{ tech.transferredCalls }}</div>
 
                 </h4>
 
@@ -33,9 +33,10 @@
                             'en-route' : getTechState(tech, call).id == 3,
                             'rerouted' : getTechState(tech, call).id == 7,
                             'on-site' : getTechState(tech, call).id == 4,
-                            'left-site' : getTechState(tech, call).id == 5,
+                            'returning' : getTechState(tech, call).id == 5,
                             'on-hold' : getTechState(tech, call).id == 6,
-                            'completed' : getTechState(tech, call).id == 8
+                            'completed' : getTechState(tech, call).id == 8,
+                            'transferred' : getTechState(tech, call).id == 9
                         }">
   
                         
@@ -46,7 +47,7 @@
                                 <p>Call ID</p>
                                 <span class="bold">{{ call.id }}</span>
                                 <p>Call Type</p>
-                                <span class="bold">{{ getCallTypeName(call.callTypeId) }}</span>
+                                <span class="bold">{{ getCallTypeName(call.callTypeId) }} <span class="smaller-text">({{ getCallSubTypeName(call.callSubTypeId) }})</span></span>
                                 <p>Store</p>
                                 <span class="bold">{{ call.customerStoreName }}</span>
                                 <p>Branch#</p>
@@ -55,14 +56,28 @@
                                 <p v-if="getTechState(tech, call).id !== 0 && getTechState(tech, call).id !== -1">Tech</p>
                                 <p v-else>Logged</p>
 
-                                <span v-if="getTechState(tech, call).id !== 0 && getTechState(tech, call).id !== -1" class="bold">{{ getTechState(tech, call).name}}</span>
+                                <span v-if="getTechState(tech, call).id !== 0 && getTechState(tech, call).id !== -1 && getTechState(tech, call).id !== 8" class="bold tech-status-name-icon-wrap">
+                                    <span v-if="getTechState(tech, call).id == 1" class="material-symbols-outlined tech-dashboard-tech-state-icon pending material" >pending_actions</span>
+                                    <font-awesome-icon v-if="getTechState(tech, call).id == 2" class="tech-dashboard-tech-state-icon received" :icon="['fa', 'user-check']" size="lg" />
+                                    <font-awesome-icon v-if="getTechState(tech, call).id == 3" class="tech-dashboard-tech-state-icon en-route" :icon="['fa', 'route']" size="lg" />
+                                    <font-awesome-icon v-if="getTechState(tech, call).id == 4" class="tech-dashboard-tech-state-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" />
+                                    <font-awesome-icon v-if="getTechState(tech, call).id == 5" class="tech-dashboard-tech-state-icon returning" style="transform: scaleX(-1);" :icon="['fa', 'clock-rotate-left']" size="lg" />
+                                    <font-awesome-icon v-if="getTechState(tech, call).id == 6" class="tech-dashboard-tech-state-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" />
+                                    <font-awesome-icon v-if="getTechState(tech, call).id == 9" class="tech-dashboard-tech-state-icon transferred" :icon="['fa', 'shuffle']" size="lg" />
+                                    <span v-if="getTechState(tech, call).id == 7" class="material-symbols-outlined tech-dashboard-tech-state-icon rerouted material" >alt_route</span>
+                                    {{ getTechState(tech, call).name}}
+                                    <font-awesome-icon v-if="call.storeProblem && getTechState(tech, call).id == 6" class="call-problem-icon store" :icon="['fa', 'store-alt']" size="lg" />
+                                    <font-awesome-icon style="font-size: 14px" v-if="call.stockProblem && getTechState(tech, call).id == 6" class="call-problem-icon stock" :icon="['fa', 'dolly']" size="lg" />
+                                    <font-awesome-icon v-if="call.orderProblem && getTechState(tech, call).id == 6" class="call-problem-icon order" :icon="['fa', 'file-circle-exclamation']" size="lg" />
+                                </span>
+                                <span v-else-if="getTechState(tech, call).id === 8">{{ call.mainTech }}</span>
                                 <p v-else>{{ call.openTime }}</p>
 
                                 <p v-if="call.latestTechUpdate">Updated</p>
                                 <span v-if="call.latestTechUpdate">{{ call.latestTechUpdate }}</span>
 
-                                <div id="CallCommentsIcon" class="call-comments-wrap" v-if="call.comments && call.comments.length >= 1" @click="viewCallComments(call)">
-                                    <font-awesome-icon id="CallCommentsIcon" class="call-comments-icon" :icon="['fa', 'comments']" size="lg" />
+                                <div class="call-comments-wrap" v-if="call.comments && call.comments.length >= 1" @click="viewCallComments(call)">
+                                    <font-awesome-icon class="call-comments-icon" :icon="['fa', 'comments']" size="lg" />
                                     <span>{{ call.comments.length }}</span>
                                 </div>
                                 
@@ -91,7 +106,8 @@ export default {
     data() {
         return {
             tech_call_states: JSON.parse(localStorage.getItem('call_tech_states')),
-            call_types: JSON.parse(localStorage.getItem('call_types'))
+            call_types: JSON.parse(localStorage.getItem('call_types')),
+            call_sub_types: JSON.parse(localStorage.getItem('call_sub_types'))
         }
     },
 
@@ -160,7 +176,10 @@ export default {
             if(tech.displayName === 'Open Calls') { return { id: 0, name: 'N/A' }}
             if(tech.displayName === 'Un-Allocated Calls') { return { id: -1, name: 'N/A' }}
             if(tech.displayName === 'Completed Calls') { return { id: 8, name: 'Completed' }}
+            if(!call) { return { id: 99, name: 'N/A' } }
             var techState = '';
+            // console.log(call);
+            
             call.technicians.map(tek => {
                 if(tek.technicianEmployeeCode === tech.employeeCode)
                 {
@@ -177,8 +196,20 @@ export default {
 
 
 
+        getTechFromCall: function(tech, call) {
+            call.technicians.filter(tek => tek.technicianEmployeeCode === tech.employeeCode)
+        },
+
+
+
+
         getCallTypeName: function(callTypeId) {
             return this.call_types.filter(type => type.id === callTypeId)[0].name;
+        },
+
+
+        getCallSubTypeName: function(callSubTypeId) {
+            return this.call_sub_types.filter(type => type.id === callSubTypeId)[0].name;
         },
 
 
@@ -322,8 +353,8 @@ export default {
     color: var(--OnSite);
 }
 
-.tcc.left-site {
-    color: var(--LeftSite);
+.tcc.returning {
+    color: var(--Returning);
 }
 
 .tcc.on-hold {
@@ -332,6 +363,10 @@ export default {
 
 .tcc.completed {
     color: var(--Completed);
+}
+
+.tcc.transferred {
+    color: var(--Transferred);
 }
 
 
@@ -427,8 +462,8 @@ export default {
     background: var(--OnSite);
 }
 
-.filtered-calls-cards-loop.left-site {
-    background: var(--LeftSite);
+.filtered-calls-cards-loop.returning {
+    background: var(--Returning);
 }
 
 .filtered-calls-cards-loop.on-hold {
@@ -437,6 +472,10 @@ export default {
 
 .filtered-calls-cards-loop.completed {
     background: var(--Completed);
+}
+
+.filtered-calls-cards-loop.transferred {
+    background: var(--Transferred);
 }
 
 
@@ -459,7 +498,71 @@ export default {
 
 .call-comments-icon {
     color: var(--CommentsDark);
-    
+}
+
+
+
+
+
+
+.tech-status-name-icon-wrap {
+    display: flex;
+    align-items: center;
+}
+
+
+
+.tech-dashboard-tech-state-icon {
+    font-size: 12px;
+    margin-right: 5px;
+}
+
+
+
+
+.tech-dashboard-tech-state-icon.pending {
+    color: var(--PendingLight);
+}
+
+.tech-dashboard-tech-state-icon.received {
+    color: var(--ReceivedLight);
+}
+
+.tech-dashboard-tech-state-icon.en-route {
+    color: var(--EnRouteLight);
+}
+
+.tech-dashboard-tech-state-icon.on-site {
+    color: var(--OnSiteLight);
+}
+
+.tech-dashboard-tech-state-icon.returning {
+    color: var(--ReturningLight);
+}
+
+.tech-dashboard-tech-state-icon.rerouted {
+    color: var(--ReroutedLight);
+}
+
+.tech-dashboard-tech-state-icon.on-hold {
+    color: var(--OnHoldLight);
+}
+
+.tech-dashboard-tech-state-icon.transferred {
+    color: var(--TransferredLight);
+}
+
+
+
+
+
+
+
+
+.call-problem-icon {
+    font-size: 12px;
+    color: var(--Returning);
+    margin: 0 3px;
 }
 
 </style>

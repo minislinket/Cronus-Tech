@@ -1,38 +1,54 @@
 <template>
     <div class="app-modal-lightbox" v-if="active" :class="{ active : active }">
         
-        <div class="on-hold-reason-modal app-modal-content" :class="{ tall : type === 'stock' }">
+        <div class="comment-modal app-modal-content" :class="{ tall : type === 'stock' }">
 
-            <h4>Add Comment to Call #{{ call.id }}</h4>
 
-            <div class="on-hold-initial-selection">
+            <div class="comment-headers-wrap">
+                <h4>{{ call.customerStoreName.substr(0, 25) }}</h4>
+                <h4 class="status-heading on-hold">
+                    <font-awesome-icon class="comments-tech-state-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" />
+                    {{ getTechStatusName(6) }}
+                </h4>
+                
+            </div>
+
+            <h5 class="for-calls-heading">Commenting on Call:</h5>            
+            <h5 class="calls-heading-wrap">
+                <span class="calls-heading">{{ call.id }}</span>
+            </h5>
+
+            <h4>Comment Type</h4>
+
+            <div class="comment-initial-selection">
                 <select v-model="type">
                     <option value="stock">Stock</option>
                     <option value="store">Store Problem</option>
-                    <option value="other">Other</option>
+                    <option value="order">Awaiting Order</option>
                 </select>
             </div>
 
-            <div class="on-hold-reason-input-wrap" v-if="type">
-                <textarea v-if="type == 'store' || type == 'other'" type="text" placeholder="Reason for placing this job on hold" v-model="reason"></textarea>
-                <div v-else class="select-stock-wrap">
+            <div class="comment-input-wrap" v-if="type">
+                <textarea v-if="type == 'store'" type="text" placeholder="Add Comment" v-model="reason"></textarea>
+                <div v-else-if="type == 'stock'" class="select-stock-wrap">
                     <h5>Stock Type</h5>
                     <select v-model="selectedCategory">
                         <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
                     </select>
-                    <SearchSelect class="on-hold-stock-reason-search-select" :searchArray="itemsArray" :heading="itemSearch.heading" :displayText="itemDisplayText" @select="selectItem($event)" />
+                    <SearchSelect class="comment-stock-reason-search-select" :searchArray="itemsArray" :heading="itemSearch.heading" :displayText="itemDisplayText" @select="selectItem($event)" />
                 </div>
+                <p v-if="type == 'order'">{{ reason }}</p>
             </div>
 
-            <div class="on-hold-stock-grid headings" v-if="type === 'stock'">
+            <div class="comment-stock-grid headings" v-if="type === 'stock'">
                 <h5>Item</h5>
                 <h5>Qty</h5>
                 <h5>Remove</h5>
             </div>
 
 
-            <div class="on-hold-stock-scroll-section" v-if="type === 'stock'">
-                <div class="on-hold-stock-grid" v-for="(item, index) in stockList" :key="item.code">
+            <div class="comment-stock-scroll-section" v-if="type === 'stock'">
+                <div class="comment-stock-grid" v-for="(item, index) in stockList" :key="item.code">
 
                     <p class="bold">{{ item.code }}</p>
 
@@ -47,7 +63,7 @@
                 </div>
             </div>
             
-            <div class="on-hold-reason-btn-wrap">
+            <div class="comment-btn-wrap">
                 <button :disabled="type === 'stock' && stockList.length <= 0 || type !== 'stock' && !reason" @click="submitReason()">Submit</button>
                 <button class="warning" @click="closeCommentModal()">Cancel</button>
             </div>
@@ -95,8 +111,7 @@ export default {
         ...mapGetters({
             active: ['Call/commentModal'],
             required: ['Call/commentRequired'],
-            call: ['Call/commentingOnCall'],
-            nextStatusId: ['Call/commentNextStatusId']
+            call: ['Call/call'],
         })
     },
 
@@ -128,8 +143,15 @@ export default {
                 {
                     this.reason = '';
                 }
-                else
+                if(this.type === 'order')
                 {
+                    this.reason = 'Awaiting Order!';
+                    this.selectedCategory = '';
+                    this.stockList = [];
+                }
+                if(this.type === 'store')
+                {
+                    this.reason = '';
                     this.selectedCategory = '';
                     this.stockList = [];
                 }
@@ -151,6 +173,16 @@ export default {
 
 
     methods: {
+
+
+
+
+        getTechStatusName: function(techStateId) {
+            return this.tech_statuses.filter(status => status.id === techStateId)[0].name;
+        },
+
+
+
 
 
         selectItem: function(item) {
@@ -197,6 +229,21 @@ export default {
 
 
 
+
+        // checkNoComment: function() {
+        //     if(this.nextStatusId !== 6)
+        //     {
+        //         this.$emit('noComment');
+        //         this.closeCommentModal();
+        //     }
+        //     else
+        //     {
+        //         this.closeCommentModal()
+        //     }
+        // },
+
+
+
         closeCommentModal: function() {
             this.$store.dispatch('Call/commentModal', false);
             this.type = '';
@@ -210,7 +257,8 @@ export default {
         submitReason: function() {
             var reason = JSON.parse(JSON.stringify(this.reason));
             var stockList = JSON.parse(JSON.stringify(this.stockList));
-            this.$emit('submitReason', { reason, stockList });
+            var type = JSON.parse(JSON.stringify(this.type));
+            this.$emit('submitComment', { reason, stockList, type });
 
             this.closeCommentModal();
             /* setTimeout(() => {
@@ -228,53 +276,79 @@ export default {
 <style>
 
 
-.on-hold-reason-modal {
+.app-modal-content.comment-modal {
     
+    height: 80vh;
     max-height: 80vh;
     width: 90vw;
     padding-bottom: 50px;
+    padding-top: 0;
 }
 
-.on-hold-reason-modal.tall {
+.app-modal-content.comment-modal.tall {
     height: 80vh;
 }
 
-.on-hold-reason-modal.active {
+.comment-modal.active {
     top: 120px;
 }
 
 
 
 
-.on-hold-stock-reason-search-select .search-input-wrap input,
-.on-hold-stock-reason-search-select .search-results-drop-down-wrap {
+.comment-stock-reason-search-select .search-input-wrap input,
+.comment-stock-reason-search-select .search-results-drop-down-wrap {
     width: 70vw;
 }
 
-.on-hold-stock-reason-search-select.array-input-search-wrap h4 {
+.comment-stock-reason-search-select.array-input-search-wrap h4 {
     text-align: center;
     font-size: 14px;
 }
 
 
-.on-hold-reason-modal h4 {
-    
+
+
+
+.comment-headers-wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 -8px;
+    padding: 5px 8px;
+    margin-bottom: 5px;
+    border-bottom: 1px solid var(--OffWhite);
 }
 
 
 
-.on-hold-initial-selection {
+.for-calls-heading {
+    text-align: left;
+}
+
+
+.calls-heading-wrap {
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+
+
+
+
+
+.comment-initial-selection {
     margin-bottom: 15px;
 }
 
-.on-hold-initial-selection select {
+.comment-initial-selection select {
     width: 60%;
 }
 
 
 
 
-.on-hold-reason-input-wrap {
+.comment-input-wrap {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -282,7 +356,7 @@ export default {
 }
 
 
-.on-hold-reason-input-wrap textarea {
+.comment-input-wrap textarea {
     width: 80%;
     height: 200px;
 }
@@ -298,15 +372,15 @@ export default {
 
 
 
-.on-hold-stock-grid.headings {
+.comment-stock-grid.headings {
 
 }
 
 
 
 
-.on-hold-stock-scroll-section {
-    height: 50%;
+.comment-stock-scroll-section {
+    height: 36%;
     overflow-y: scroll;
     box-shadow: inset 0px -8px 6px -6px rgba(0,0,0,0.4);
 }
@@ -314,7 +388,7 @@ export default {
 
 
 
-.on-hold-stock-grid {
+.comment-stock-grid {
     display: grid;
     grid-template-columns: 1fr 1.5fr 1fr;
     column-gap: 8px;
@@ -322,7 +396,7 @@ export default {
     justify-items: center;
 }
 
-.on-hold-stock-grid input {
+.comment-stock-grid input {
     width: 40px;
     height: 25px;
     background: transparent;
@@ -345,7 +419,7 @@ export default {
 
 
 
-.on-hold-reason-btn-wrap {
+.comment-btn-wrap {
     display: flex;
     align-items: center;
     justify-content: space-evenly;
@@ -357,5 +431,77 @@ export default {
     right: 0;
     margin: 0 auto;
 }
+
+
+
+.comment-btn-wrap button.warning.orange {
+    color: var(--WarningOrange);
+}
+
+
+
+.status-heading {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+
+/* .status-heading.pending {
+    color: var(--Pending);
+}
+
+.status-heading.received {
+    color: var(--Received);
+}
+
+.status-heading.en-route {
+    color: var(--EnRoute);
+}
+
+.status-heading.rerouted {
+    color: var(--Rerouted);
+}
+
+.status-heading.on-site {
+    color: var(--OnSite);
+}
+
+.status-heading.left-site {
+    color: var(--LeftSite);
+}
+
+.status-heading.on-hold {
+    color: var(--OnHold);
+}
+
+.status-heading.completed {
+    color: var(--Completed);
+} */
+
+
+
+
+
+
+.comments-tech-state-icon {
+    margin-right: 3px;
+    font-size: 16px;
+}
+
+
+
+
+.comments-tech-state-icon.left-site {
+    color: var(--LeftSiteLight);
+}
+.comments-tech-state-icon.on-hold {
+    color: var(--OnHoldLight);
+}
+.comments-tech-state-icon.rerouted {
+    color: var(--ReroutedLight);
+}
+
+
 
 </style>

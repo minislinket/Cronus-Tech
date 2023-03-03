@@ -31,7 +31,7 @@ let backgroundSyncActive = false;
 
 // Listen for messages from the App
 self.addEventListener('message', function (event) {
-	console.log('Message from app: ', event);
+	// console.log('Message from app: ', event);
 
 
 
@@ -85,7 +85,7 @@ self.addEventListener('message', function (event) {
 
 			existingData.orderNumbers.push({orderNumber: data.orderNumber, sending: false, sent: false});
 			
-			console.log('SW CallOrderNumberStore comment updated: ', CallOrderNumberStore);
+			// console.log('SW CallOrderNumberStore comment updated: ', CallOrderNumberStore);
 
 			event.waitUntil(linkOrderNumber(data.call.id));
 
@@ -114,7 +114,7 @@ self.addEventListener('message', function (event) {
 			data.call.techStateName ? delete data.call.techStateName : null;
 
 			CallOrderNumberStore.push(data);
-			console.log('SW CallOrderNumberStore comment added: ', CallOrderNumberStore);
+			// console.log('SW CallOrderNumberStore comment added: ', CallOrderNumberStore);
 			
 
 			event.waitUntil(linkOrderNumber(data.call.id));
@@ -147,7 +147,7 @@ self.addEventListener('message', function (event) {
 
 			existingData.callComments.push({comment: data.comment, sending: false, sent: false});
 			
-			console.log('SW callCommentStore comment updated: ', callCommentStore);
+			// console.log('SW callCommentStore comment updated: ', callCommentStore);
 
 			event.waitUntil(addCallComment(data.call.id));
 
@@ -162,7 +162,7 @@ self.addEventListener('message', function (event) {
 
 			delete data.comments;
 			callCommentStore.push(data);
-			console.log('SW callCommentStore comment added: ', callCommentStore);
+			// console.log('SW callCommentStore comment added: ', callCommentStore);
 			
 
 			event.waitUntil(addCallComment(data.call.id));
@@ -200,7 +200,7 @@ self.addEventListener('message', function (event) {
 				existingData.jobCardLinks.push({jobCard, sending: false, sent: false});
 			})
 			
-			console.log('SW callJobCardLinkStore JC Link updated: ', callJobCardLinkStore);
+			// console.log('SW callJobCardLinkStore JC Link updated: ', callJobCardLinkStore);
 
 			event.waitUntil(linkJobCard(data.call.id));
 			
@@ -216,7 +216,7 @@ self.addEventListener('message', function (event) {
 
 			delete data.jobCards;
 			callJobCardLinkStore.push(data);
-			console.log('SW callJobCardLinkStore JC Link added: ', callJobCardLinkStore);
+			// console.log('SW callJobCardLinkStore JC Link added: ', callJobCardLinkStore);
 			
 			
 
@@ -382,7 +382,7 @@ self.addEventListener('message', function (event) {
 // })
 async function linkOrderNumber(callId) {
 	var orderNumberData = CallOrderNumberStore.filter(exData => exData.call.id.toString() === callId.toString())[0];
-	console.log('Link Order Number: ', orderNumberData);
+	// console.log('Link Order Number: ', orderNumberData);
 
 
 
@@ -390,7 +390,7 @@ async function linkOrderNumber(callId) {
 
 	await Promise.all(orderNumberData.orderNumbers.map(async orderNumber => {
 
-		console.log('Processing call Order Number: ', orderNumber);
+		// console.log('Processing call Order Number: ', orderNumber);
 
 		if(!orderNumber.sending) 
 		{ 
@@ -425,7 +425,7 @@ async function linkOrderNumber(callId) {
 			callCommentStore = callCommentStore.filter(exData => exData.call.id.toString() !== orderNumberData.call.id.toString());
 		}
 	}
-	console.log('Comments Store filtered after data sent: ', callCommentStore);
+	// console.log('Comments Store filtered after data sent: ', callCommentStore);
 }
 
 
@@ -443,7 +443,7 @@ async function linkOrderNumber(callId) {
 
 async function addCallComment(callId) {
 	var commentData = callCommentStore.filter(exData => exData.call.id.toString() === callId.toString())[0];
-	console.log('Add call comment: ', commentData);
+	// console.log('Add call comment: ', commentData);
 
 
 
@@ -451,7 +451,7 @@ async function addCallComment(callId) {
 
 	await Promise.all(commentData.callComments.map(async comment => {
 
-		console.log('Processing call comment: ', comment);
+		// console.log('Processing call comment: ', comment);
 
 		if(!comment.sending) 
 		{ 
@@ -486,7 +486,7 @@ async function addCallComment(callId) {
 			callCommentStore = callCommentStore.filter(exData => exData.call.id.toString() !== commentData.call.id.toString());
 		}
 	}
-	console.log('Comments Store filtered after data sent: ', callCommentStore);
+	// console.log('Comments Store filtered after data sent: ', callCommentStore);
 }
 
 
@@ -501,7 +501,7 @@ async function linkJobCard(callId) {
 
 
 	var jcData = callJobCardLinkStore.filter(exData => exData.call.id.toString() === callId.toString())[0];
-	console.log('Link JC to call with: ', jcData);
+	// console.log('Link JC to call with: ', jcData);
 
 
 
@@ -509,7 +509,7 @@ async function linkJobCard(callId) {
 
 	await Promise.all(jcData.jobCardLinks.map(async update => {
 
-		console.log('Processing job card link: ', update);
+		// console.log('Processing job card link: ', update);
 
 		if(!update.sending) 
 		{ 
@@ -544,7 +544,7 @@ async function linkJobCard(callId) {
 			callJobCardLinkStore = callJobCardLinkStore.filter(exData => exData.call.id.toString() !== jcData.call.id.toString());
 		}
 	}
-	console.log('JC_Call Store filtered after data sent: ', callJobCardLinkStore);
+	// console.log('JC_Call Store filtered after data sent: ', callJobCardLinkStore);
 
 }
 
@@ -561,7 +561,7 @@ async function linkJobCard(callId) {
 async function updateCall(callId) {
 
 	var callData = callSyncStore.filter(exData => exData.call.id.toString() === callId.toString())[0];
-	console.log('Update call with: ', callData);
+	// console.log('Update call with: ', callData);
 	
 
 	var flag = false;
@@ -605,7 +605,7 @@ async function updateCall(callId) {
 			callSyncStore = callSyncStore.filter(exData => exData.call.id.toString() !== callData.call.id.toString());
 		}
 	}
-	console.log('Sync Store filtered after data send to update: ', callSyncStore);
+	// console.log('Sync Store filtered after data send to update: ', callSyncStore);
 
 	// backgroundSyncActive = false;
  

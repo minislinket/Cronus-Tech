@@ -8,12 +8,13 @@ const state = () => ({
 
 
     commentModal: false,
-    commentingOnCall: '',
+    commentingOnCalls: [],
     commentNextStatusId: '',
 
 
     linkJobCardModal: false,
-    linkOrderNumberModal: false
+    linkOrderNumberModal: false,
+    returnDateModal: false
 })
 
 
@@ -37,8 +38,8 @@ const getters = {
         return state.commentModal;
     },
 
-    commentingOnCall: (state) => {
-        return state.commentingOnCall;
+    commentingOnCalls: (state) => {
+        return state.commentingOnCalls;
     },
 
     commentNextStatusId: (state) => {
@@ -54,7 +55,12 @@ const getters = {
     
     linkOrderNumberModal: (state) => {
         return state.linkOrderNumberModal;
-    }
+    },
+
+    returnDateModal: (state) => {
+        return state.returnDateModal;
+    },
+    
     
 }
 
@@ -75,8 +81,8 @@ const actions = {
         commit('commentModal', toggle);
     },
 
-    commentingOnCall({ commit }, call) {
-        commit('commentingOnCall', call);
+    commentingOnCalls({ commit }, call) {
+        commit('commentingOnCalls', call);
     },
 
     commentNextStatusId({ commit }, nextStatusId) {
@@ -93,6 +99,11 @@ const actions = {
     linkOrderNumberModal({ commit }, toggle) {
         commit('linkOrderNumberModal', toggle);
     },
+
+    returnDateModal({ commit }, toggle) {
+        commit('returnDateModal', toggle);
+    },
+    
     
 
 
@@ -264,8 +275,8 @@ const mutations = {
         state.commentModal = toggle;
     },
 
-    commentingOnCall(state, call) {
-        state.commentingOnCall = call;
+    commentingOnCalls(state, calls) {
+        state.commentingOnCalls = calls;
     },
 
     commentNextStatusId(state, nextStatusId) {
@@ -281,6 +292,11 @@ const mutations = {
     linkOrderNumberModal(state, toggle) {
         state.linkOrderNumberModal = toggle;
     },
+
+    returnDateModal(state, toggle) {
+        state.returnDateModal = toggle;
+    },
+    
     
 
 

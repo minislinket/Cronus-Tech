@@ -158,6 +158,22 @@ export default {
                     {
                         if(!resp.data.customerCallId)
                         {
+                            if(resp.data.documentStatusId === 8)
+                            {
+                                var toast = {
+                                    shown: false,
+                                    type: 'error', // ['info', 'warning', 'error', 'okay']
+                                    heading: 'Job Card has been Cancelled', // (Optional)
+                                    body: '', 
+                                    time: 3000, // in milliseconds
+                                    icon: '' // leave blank for default type icon
+                                }
+
+                                this.$store.dispatch('Toast/toast', toast, {root: true});
+                                this.jobCard = '';
+                                this.jobCardIdVerified = false;
+                                return
+                            }
                             this.jobCard = resp.data;
                             this.jobCardIdVerified = true;
                             this.addJobCard();
@@ -165,15 +181,15 @@ export default {
                         else
                         {
                             var toast = {
-                            shown: false,
-                            type: 'warning', // ['info', 'warning', 'error', 'okay']
-                            heading: 'Job Card already linked to a Call', // (Optional)
-                            body: '', 
-                            time: 3000, // in milliseconds
-                            icon: '' // leave blank for default type icon
-                        }
+                                shown: false,
+                                type: 'warning', // ['info', 'warning', 'error', 'okay']
+                                heading: 'Job Card already linked to a Call', // (Optional)
+                                body: '', 
+                                time: 3000, // in milliseconds
+                                icon: '' // leave blank for default type icon
+                            }
 
-                        this.$store.dispatch('Toast/toast', toast, {root: true});
+                            this.$store.dispatch('Toast/toast', toast, {root: true});
                             this.jobCard = '';
                             this.jobCardIdVerified = false;
                         }

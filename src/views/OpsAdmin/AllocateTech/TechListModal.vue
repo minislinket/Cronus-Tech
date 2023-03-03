@@ -16,8 +16,11 @@
                     'received' : tech.technicianCallStatusId === 2,
                     'en-route' : tech.technicianCallStatusId === 3,
                     'on-site' : tech.technicianCallStatusId === 4,
-                    'left-site' : tech.technicianCallStatusId === 5,
+                    'returning' : tech.technicianCallStatusId === 5,
                     'on-hold' : tech.technicianCallStatusId === 6,
+                    'completed' : tech.technicianCallStatusId === 8,
+                    'rerouted' : tech.technicianCallStatusId === 7,
+                    'transferred' : tech.technicianCallStatusId === 9
                 }
                 ">
                     <span v-if="tech.technicianCallStatusId === 1" class="material-symbols-outlined tl-tech-state-icon pending material" >pending_actions</span>
@@ -25,9 +28,10 @@
                     <font-awesome-icon v-if="tech.technicianCallStatusId === 3" class="tl-tech-state-icon en-route" :icon="['fa', 'route']" size="lg" />
                     <span v-if="tech.technicianCallStatusId === 7" class="material-symbols-outlined tl-tech-state-icon rerouted material" >alt_route</span>
                     <font-awesome-icon v-if="tech.technicianCallStatusId === 4" class="tl-tech-state-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" />
-                    <font-awesome-icon v-if="tech.technicianCallStatusId === 5" class="tl-tech-state-icon left-site" :icon="['fa', 'road']" size="lg" />
+                    <font-awesome-icon v-if="tech.technicianCallStatusId === 5" class="tl-tech-state-icon returning" style="transform: scaleX(-1);" :icon="['fa', 'clock-rotate-left']" size="lg" />
                     <font-awesome-icon v-if="tech.technicianCallStatusId === 6" class="tl-tech-state-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" />
-                    <font-awesome-icon v-if="tech.technicianCallStatusId === 8" class="tl-tech-state-icon on-hold" :icon="['fa', 'clipboard-check']" size="lg" />
+                    <font-awesome-icon v-if="tech.technicianCallStatusId === 8" class="tl-tech-state-icon completed" :icon="['fa', 'clipboard-check']" size="lg" />
+                    <font-awesome-icon v-if="tech.technicianCallStatusId === 9" class="rc-tech-state-icon transferred" :icon="['fa', 'shuffle']" size="lg" />
                     <span class="bold">{{ getTechState(tech.technicianCallStatusId) }}</span>
                 </div>
                 
@@ -239,8 +243,8 @@ export default {
     color: var(--OnSiteLight);
 }
 
-.tech-list-tech-status-wrap.left-site {
-    color: var(--LeftSiteLight);
+.tech-list-tech-status-wrap.returning {
+    color: var(--ReturningLight);
 }
 
 .tech-list-tech-status-wrap.on-hold {

@@ -52,7 +52,7 @@ const actions = {
 
         await dispatch('getCallTechnicians', allCalls);
 
-        console.log('Recent Calls: ', allCalls);
+        // console.log('Recent Calls: ', allCalls);
         allCalls.sort((a,b) => {
             return new Date(b.openTime) - new Date(a.openTime);
         })

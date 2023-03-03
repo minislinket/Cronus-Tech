@@ -11,6 +11,7 @@ import StaticResources from './Modules/StaticResources'
 import Settings from '../views/Settings/Settings'
 import UserRole from './Modules/UserRole'
 import ErrorLog from './Modules/ErrorLog'
+import GeoLocation from './Modules/GeoLocation'
 
 import RouteFCM from './Modules/RouteFCM'
 
@@ -61,6 +62,7 @@ export default createStore({
     Settings,
     UserRole,
     ErrorLog,
+    GeoLocation,
 
     // Firebase Message App Routing
     RouteFCM,

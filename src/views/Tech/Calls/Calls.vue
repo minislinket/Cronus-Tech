@@ -38,15 +38,15 @@
                 <span class="bold call-info">Client Call # {{ call.id }}</span>
                 <font-awesome-icon class="call-store-icon" :icon="['fa', 'info-circle']" size="lg" />
                 <span class="call-info call-detail bold">{{ call.callDetails.length <= 30 ? call.callDetails : call.callDetails.substring(0,30) + '...' }}</span>
-                <div class="tech-state-icon-wrap" :class="{ pending : call.techStateId === 1, received : call.techStateId === 2, 'en-route' : call.techStateId === 3, 'at-site' : call.techStateId === 4, 'left-site' : call.techStateId === 5, 'on-hold' : call.techStateId === 6, 'rerouted' : call.techStateId == 7 }">
+                <div class="tech-state-icon-wrap" :class="{ pending : call.techStateId === 1, received : call.techStateId === 2, 'en-route' : call.techStateId === 3, 'on-site' : call.techStateId === 4, 'returning' : call.techStateId === 5, 'on-hold' : call.techStateId === 6, 'rerouted' : call.techStateId == 7, 'transferred' : call.techStateId == 9 }">
                     <div>
                         <span v-if="call.techStateId === 1" class="material-symbols-outlined tech-state-icon pending material" >pending_actions</span>
-                        <!-- <font-awesome-icon v-if="call.techStateId === 1" class="tech-state-icon pending" :icon="['fa', 'phone-alt']" size="lg" /> -->
                         <font-awesome-icon v-if="call.techStateId === 2" class="tech-state-icon received" :icon="['fa', 'user-check']" size="lg" />
                         <font-awesome-icon v-if="call.techStateId === 3" class="tech-state-icon en-route" :icon="['fa', 'route']" size="lg" />
-                        <font-awesome-icon v-if="call.techStateId === 4" class="tech-state-icon at-site" :icon="['fa', 'map-marker-alt']" size="lg" />
-                        <font-awesome-icon v-if="call.techStateId === 5" class="tech-state-icon left-site" :icon="['fa', 'road']" size="lg" />
+                        <font-awesome-icon v-if="call.techStateId === 4" class="tech-state-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" />
+                        <font-awesome-icon v-if="call.techStateId === 5" class="tech-state-icon returning" style="transform: scaleX(-1);" :icon="['fa', 'clock-rotate-left']" size="lg" />
                         <font-awesome-icon v-if="call.techStateId === 6" class="tech-state-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" />
+                        <font-awesome-icon v-if="call.techStateId === 9" class="tech-state-icon transferred" :icon="['fa', 'shuffle']" size="lg" />
                         <span v-if="call.techStateId === 7" class="material-symbols-outlined tech-state-icon rerouted material" >alt_route</span>
                         <span class="tech-state-name">{{ call.techStateName }}</span>
                     </div>
@@ -288,22 +288,22 @@ export default {
 } */
 
 
-.tech-state-icon-wrap.at-site {
+.tech-state-icon-wrap.on-site {
     background: var(--OnSite);
     color: var(--OnSiteLight);
     
 }
-/* .tech-state-icon-wrap.at-site .tech-state-name {
+/* .tech-state-icon-wrap.on-site .tech-state-name {
     color: var(--OnSiteLight);
 } */
 
 
-.tech-state-icon-wrap.left-site {
-    background: var(--LeftSite);
-    color: var(--LeftSiteLight);
+.tech-state-icon-wrap.returning {
+    background: var(--Returning);
+    color: var(--ReturningLight);
 }
-/* .tech-state-icon-wrap.left-site .tech-state-name {
-    color: var(--LeftSiteLight);
+/* .tech-state-icon-wrap.returning .tech-state-name {
+    color: var(--ReturningLight);
 } */
 
 
@@ -314,6 +314,16 @@ export default {
 /* .tech-state-icon-wrap.on-hold .tech-state-name {
     color: var(--OnHoldLight);
 } */
+
+
+.tech-state-icon-wrap.transferred {
+    background: var(--Transferred);
+    color: var(--TransferredLight);
+}
+/* .tech-state-icon-wrap.transferred .tech-state-name {
+    color: var(--TransferredLight);
+} */
+
 
 
 
@@ -374,11 +384,11 @@ export default {
     
 }
 
-.tech-state-icon.at-site {
+.tech-state-icon.on-site {
     
 }
 
-.tech-state-icon.left-site {
+.tech-state-icon.returning {
     
 }
 

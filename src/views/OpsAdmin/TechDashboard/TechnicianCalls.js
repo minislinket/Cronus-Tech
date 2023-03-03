@@ -143,10 +143,10 @@ const actions = {
 
 
     filterCallsByTech({ commit, state }, techEmployeeCode) {
-        console.log('Filtering Calls by tech: ', techEmployeeCode);
+        // console.log('Filtering Calls by tech: ', techEmployeeCode);
         if(!techEmployeeCode)
         {
-            console.log('Committing all active techs to display: ', state.activeTechs);
+            // console.log('Committing all active techs to display: ', state.activeTechs);
             state.activeTechs.map(tech => {
                 tech.filteredCalls = tech.calls;
                 tech.noCallsToShow = false;
@@ -157,7 +157,7 @@ const actions = {
         }
         
         var filteredTechs = state.activeTechs.filter(tech => tech.employeeCode === techEmployeeCode);
-        console.log('Committing filtered techs: ', filteredTechs);
+        // console.log('Committing filtered techs: ', filteredTechs);
         commit('filteredTechs', filteredTechs);
     },
 
@@ -281,96 +281,59 @@ const actions = {
     async getBranchCalls({ commit, dispatch }, selectedBranchId) {
         dispatch('loading', true);
 
-        var allTechs = JSON.parse(localStorage.getItem('technicians'));
+        var allTechs = JSON.parse(localStorage.getItem('employees'));
         var user = JSON.parse(localStorage.getItem('user'));
         var branchId = selectedBranchId ? selectedBranchId : user.branchId;
         var customer_stores = JSON.parse(LZString.decompress(localStorage.getItem('customer_stores')));
         
 
         var openCallParams = { branch_id: branchId, call_status_id: 1 };
-        var allocatedCallParamsPending = { branch_id: branchId, call_status_id: 2, tech_call_status_id: 1 };
-        var allocatedCallParamsReceived = { branch_id: branchId, call_status_id: 2, tech_call_status_id: 2 };
-        var allocatedCallParamsEnRoute = { branch_id: branchId, call_status_id: 2, tech_call_status_id: 3 };
-        var allocatedCallParamsRerouted = { branch_id: branchId, call_status_id: 2, tech_call_status_id: 7 };
-        var allocatedCallParamsOnSite = { branch_id: branchId, call_status_id: 2, tech_call_status_id: 4 };
-        var allocatedCallParamsLeftSite = { branch_id: branchId, call_status_id: 2, tech_call_status_id: 5 };
-        var allocatedCallParamsOnHold = { branch_id: branchId, call_status_id: 2, tech_call_status_id: 6 };
-        var allocatedCallParamsCompleted = { branch_id: branchId, call_status_id: 2, tech_call_status_id: 8 };
+        var allocatedCallParams = { branch_id: branchId, call_status_id: 2 };
+
 
         // Select all of Locksecure's Calls
         if(selectedBranchId == 1) 
         { 
             delete openCallParams.branch_id;
-            delete allocatedCallParamsPending.branch_id;
-            delete allocatedCallParamsReceived.branch_id;
-            delete allocatedCallParamsEnRoute.branch_id;
-            delete allocatedCallParamsRerouted.branch_id;
-            delete allocatedCallParamsOnSite.branch_id;
-            delete allocatedCallParamsLeftSite.branch_id;
-            delete allocatedCallParamsOnHold.branch_id;
-            delete allocatedCallParamsCompleted.branch_id;
+            delete allocatedCallParams.branch_id;
         }
 
         var getOpenCalls = dispatch('getCallsFromServer', openCallParams);
-        var getAllocatedCallsPending = dispatch('getCallsFromServer', allocatedCallParamsPending);
-        var getAllocatedCallsReceived = dispatch('getCallsFromServer', allocatedCallParamsReceived);
-        var getAllocatedCallsEnRoute = dispatch('getCallsFromServer', allocatedCallParamsEnRoute);
-        var getAllocatedCallsRerouted = dispatch('getCallsFromServer', allocatedCallParamsRerouted);
-        var getAllocatedCallsOnSite = dispatch('getCallsFromServer', allocatedCallParamsOnSite);
-        var getAllocatedCallsLeftSite = dispatch('getCallsFromServer', allocatedCallParamsLeftSite);
-        var getAllocatedCallsOnHold = dispatch('getCallsFromServer', allocatedCallParamsOnHold);
-        var getAllocatedCallsCompleted = dispatch('getCallsFromServer', allocatedCallParamsCompleted);
-
-        var 
-        [
-            openCalls, allocatedCallsPending, allocatedCallsReceived, allocatedCallsEnRoute, allocatedCallsRerouted, 
-            allocatedCallsOnSite, allocatedCallsLeftSite, allocatedCallsOnHold, allocatedCallsCompleted
-        ] 
-        = 
-        await Promise.all(
-            [
-                getOpenCalls, getAllocatedCallsPending, getAllocatedCallsReceived, getAllocatedCallsEnRoute, getAllocatedCallsRerouted,
-                getAllocatedCallsOnSite, getAllocatedCallsLeftSite, getAllocatedCallsOnHold, getAllocatedCallsCompleted
-            ]
-        );
+        var getAllocatedCalls = dispatch('getCallsFromServer', allocatedCallParams);
 
 
-        
+        var [openCalls, allocatedCalls] = await Promise.all([getOpenCalls, getAllocatedCalls]);
 
 
-        await dispatch('initialCallProcessing', { calls: allocatedCallsPending, techState: 1 })
-        await dispatch('initialCallProcessing', { calls: allocatedCallsReceived, techState: 2 })
-        await dispatch('initialCallProcessing', { calls: allocatedCallsEnRoute, techState: 3 })
-        await dispatch('initialCallProcessing', { calls: allocatedCallsRerouted, techState: 7 })
-        await dispatch('initialCallProcessing', { calls: allocatedCallsOnSite, techState: 4 })
-        await dispatch('initialCallProcessing', { calls: allocatedCallsLeftSite, techState: 5 })
-        await dispatch('initialCallProcessing', { calls: allocatedCallsOnHold, techState: 6 })
-        await dispatch('initialCallProcessing', { calls: allocatedCallsCompleted, techState: 8 })
-
-        
-        // console.log('Pending: ', allocatedCallsPending);
-        // console.log('Received: ', allocatedCallsReceived);
-        // console.log('En Route: ', allocatedCallsEnRoute);
-        // console.log('Rerouted: ', allocatedCallsRerouted);
-        // console.log('On Site: ', allocatedCallsOnSite);
-        // console.log('Left Site: ', allocatedCallsLeftSite);
-        // console.log('On Hold: ', allocatedCallsOnHold);
-        // console.log('Completed: ', allocatedCallsCompleted);
-
+        var getCallTechs = dispatch('getCallTechnicians', allocatedCalls);
+        var getCallComments = dispatch('getCallComments', allocatedCalls);
+        var getOpenCallComments = dispatch('getCallComments', openCalls);
+        var getCallEvents = dispatch('getCallEvents', allocatedCalls);
+        await Promise.all([getCallTechs, getCallComments, getOpenCallComments, getCallEvents]);
 
         
         if
-        (
-            openCalls === false || allocatedCallsPending === false || allocatedCallsReceived === false || allocatedCallsEnRoute === false 
-            || allocatedCallsRerouted === false || allocatedCallsOnSite === false || allocatedCallsLeftSite === false 
-            || allocatedCallsOnHold === false || allocatedCallsCompleted === false
-        ) 
-        { return }
+        ( openCalls === false || allocatedCalls === false ) { return }
 
 
 
         openCalls.map(call => {
-            call['comments'] = [];
+            call['storeProblem'] = false;
+            call['orderProblem'] = false;
+            call['stockProblem'] = false;
+
+            // Stock Required: || Awaiting Order! || Store Problem:
+
+            call.comments.map(comment => {
+                if(!comment.resolved)
+                {
+                    if(comment.comment.indexOf('Stock Required:') !== -1) { call.stockProblem = true }   
+                    else if(comment.comment.indexOf('Awaiting Order!') !== -1) { call.orderProblem = true }
+                    else if(comment.comment.indexOf('Store Problem:') !== -1) { call.storeProblem = true }
+                }
+            })
+
+            call['technicians'] = [];
             var store = customer_stores.filter(store =>  store.id === call.customerStoreId)[0];
             if(store)
             {
@@ -387,19 +350,6 @@ const actions = {
         })
         
 
-        
-
-        console.log('Pending with Techs: ', allocatedCallsPending);
-        console.log('Received with Techs: ', allocatedCallsReceived);
-        console.log('EnRoute with Techs: ', allocatedCallsEnRoute);
-        console.log('Rerouted with Techs: ', allocatedCallsRerouted);
-        console.log('OnSite with Techs: ', allocatedCallsOnSite);
-        console.log('LeftSite with Techs: ', allocatedCallsLeftSite);
-        console.log('OnHold with Techs: ', allocatedCallsOnHold);
-        console.log('Completed with Techs: ', allocatedCallsCompleted);
-
-        var allocatedCalls = allocatedCallsPending.concat(allocatedCallsReceived, allocatedCallsEnRoute, allocatedCallsRerouted, allocatedCallsOnSite, allocatedCallsLeftSite, allocatedCallsOnHold, allocatedCallsCompleted);
-        
 
         var allTechEmployeeCodes = []
         var deAllocatedCalls = [];
@@ -408,12 +358,31 @@ const actions = {
         
         
         await Promise.all(allocatedCalls.map(call => {
+
+
+            call['storeProblem'] = false;
+            call['orderProblem'] = false;
+            call['stockProblem'] = false;
+
+            // Stock Required: || Awaiting Order! || Store Problem:
+
+            call.comments.map(comment => {
+                if(!comment.resolved)
+                {
+                    if(comment.comment.indexOf('Stock Required:') !== -1) { call.stockProblem = true }   
+                    else if(comment.comment.indexOf('Awaiting Order!') !== -1) { call.orderProblem = true }
+                    else if(comment.comment.indexOf('Store Problem:') !== -1) { call.storeProblem = true }
+                }
+            })
+
+
             if(call.technicians && call.technicians.length >= 1)
             {
                 call.technicians.map(callTech => allTechEmployeeCodes.push(callTech.technicianEmployeeCode));
             }
             else
             {
+                call.technicians = [];
                 deAllocatedCalls.push(call);
             }
 
@@ -500,18 +469,9 @@ const actions = {
         
 
         // await dispatch('getCallEvents', allocatedCalls);
-        console.log('Allocated Calls: ', allocatedCalls);
+        // console.log('Allocated Calls: ', allocatedCalls);
 
 
-        // Remove duplicate call id's 
-        allocatedCalls = [...new Map(await Promise.all(allocatedCalls.map(v => [v.id, v]))).values()]
-
-        allocatedCalls.map(call => {
-            if(!call.technicianEmployeeCodes)
-            {
-                console.log(call);
-            }
-        })
 
         allActiveTechs.map(tech => {
             tech['calls'] = [];
@@ -521,7 +481,8 @@ const actions = {
             tech['reroutedCalls'] = 0;
             tech['onSiteCalls'] = 0;
             tech['onHoldCalls'] = 0;
-            tech['leftSiteCalls'] = 0;
+            tech['returningCalls'] = 0;
+            tech['transferredCalls'] = 0;
             tech['completedCalls'] = 0;
             tech['filterByStatus'] = 0;
             tech['completedForToday'] = 0;
@@ -539,6 +500,7 @@ const actions = {
                 tech.filteredCalls = techCalls;
                 
                 tech.calls.map(call => {
+                    call['mainTech'] = tech.displayName;
                     call.techState = '';
                     call.latestTechUpdate = '';
 
@@ -572,9 +534,10 @@ const actions = {
                         call.techState === 2 ? tech.receivedCalls++ : null;
                         call.techState === 3 ? tech.enRouteCalls++ : null;
                         call.techState === 4 ? tech.onSiteCalls++ : null;
-                        call.techState === 5 ? tech.leftSiteCalls++ : null;
+                        call.techState === 5 ? tech.returningCalls++ : null;
                         call.techState === 6 ? tech.onHoldCalls++ : null;
                         call.techState === 7 ? tech.reroutedCalls++ : null;
+                        call.techState === 9 ? tech.transferredCalls++ : null;
                         if(call.techState === 8)
                         {
                             completedCalls.push(call);
@@ -605,7 +568,7 @@ const actions = {
             filteredCalls: completedCalls
         }
 
-        console.log('Completed Calls fake tech: ', completedCallFakeTech);
+        // console.log('Completed Calls fake tech: ', completedCallFakeTech);
 
 
 
@@ -613,7 +576,7 @@ const actions = {
 
         
 
-        console.log('Active Technicians for branch ', branchId,': ', allActiveTechs);
+        // console.log('Active Technicians for branch ', branchId,': ', allActiveTechs);
         commit('activeTechs', allActiveTechs);
         commit('branchCalls', allocatedCalls);
         commit('filteredTechs', allActiveTechs);
@@ -628,18 +591,11 @@ const actions = {
 
 
 
-    async initialCallProcessing({ dispatch }, payload) {
-
-        // Filter out doubles
-        payload.calls = [...new Map(await Promise.all(payload.calls.map(v => [v.id, v]))).values()]
-
-        // Add tech state to calls
-        await Promise.all(payload.calls.map(call => call['techState'] = payload.techState));
-
+    async initialCallProcessing({ dispatch }, calls) {
         // Get call technicians, comments & events
-        var getCallTechs = dispatch('getCallTechnicians', payload.calls);
-        var getCallComments = dispatch('getCallComments', payload.calls);
-        var getCallEvents = dispatch('getCallEvents', payload.calls);
+        var getCallTechs = dispatch('getCallTechnicians', calls);
+        var getCallComments = dispatch('getCallComments', calls);
+        var getCallEvents = dispatch('getCallEvents', calls);
         await Promise.all([getCallTechs, getCallComments, getCallEvents])
     },
 
@@ -861,7 +817,7 @@ const mutations = {
         state.branchCalls = [];
         state.activeTechs = [];
         state.filteredTechs = [];
-        console.log('Soft Reset: ', state)
+        // console.log('Soft Reset: ', state)
     }
 
 }

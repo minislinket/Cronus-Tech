@@ -8,11 +8,11 @@
         <div class="call-info-wrap">
 
             <div class="link-jc-no-order-num-wrap">
-                <div class="link-job-card-wrap" v-if="call.techStateId >= 4 && call.techStateId != 7">
+                <div class="link-job-card-wrap" v-if="call.techStateId >= 4">
                     <button :class="{ 'no-jc' : call.jobCards.length <= 0, 'linked' : call.jobCards.length >= 1 }" @click="openLinkJobCard()"><font-awesome-icon class="link-job-card-icon" :icon="['fa','link']" size="lg" /> </button>
                     <span>Link Job Card</span>
                 </div>
-                <p @click="openLinkOrderNumber()" v-if="!call.orderNumber && call.techStateId > 3 && call.techStateId < 7"><font-awesome-icon :icon="['fa','exclamation-triangle']" size="lg" /> Order Number</p>
+                <p @click="openLinkOrderNumber()" v-if="!call.orderNumber && call.techStateId >= 4"><button class="no-order-number"><font-awesome-icon :icon="['fa','exclamation-triangle']" size="lg" /></button> Order Number</p>
             </div>
 
             <div class="call-info-wrapper call-details-wrap">
@@ -62,7 +62,7 @@
                 </div>
             </div>
 
-            <div class="current-tech-state-wrap" :class="{ pending : call.techStateId === 1, received : call.techStateId === 2, 'en-route' : call.techStateId === 3, 'on-site' : call.techStateId === 4, 'left-site' : call.techStateId === 5, 'on-hold' : call.techStateId === 6, 'rerouted' : call.techStateId == 7 }">
+            <div class="current-tech-state-wrap" :class="{ pending : call.techStateId === 1, received : call.techStateId === 2, 'en-route' : call.techStateId === 3, 'on-site' : call.techStateId === 4, 'returning' : call.techStateId === 5, 'on-hold' : call.techStateId === 6, 'rerouted' : call.techStateId == 7, 'transferred' : call.techStateId == 9 }">
                 <p class="call-info-store" :class="{ 'small-text' : call.customerStoreName && call.customerStoreName.length >= 18 }">{{ call.customerStoreName }} <span v-if="call.customerStoreName">({{ call.customerStoreBranchCode }})</span></p>
                 <div class="job-status-wrap">
                     <h6 class="current-job-status-heading-text">Job Status</h6>
@@ -75,31 +75,56 @@
                         </div>
                         <span class="material-symbols-outlined material-arrow-right">chevron_right</span>
 
-                        <!-- Received -->
+                        <!-- Received  -->
                         <div class="call-current-tech-state received" :class="{ 'inactive'  : call.techStateId !== 2 }">
-                            <font-awesome-icon class="call-current-tech-state-icon" :icon="['fa', 'user-check']" size="lg" />
+                            <font-awesome-icon class="call-current-tech-state-icon received" :icon="['fa', 'user-check']" size="lg" />
                         </div>
                         <span class="material-symbols-outlined material-arrow-right">chevron_right</span>
 
 
-                        <!-- En-Route / Rerouted -->
-                        <div class="call-current-tech-state" :class="{ 'inactive'  : call.techStateId !== 3 && call.techStateId !== 7, 'en-route' : call.techStateId == 3, 'rerouted' : call.techStateId == 7 }">
-                            <span class="material-symbols-outlined call-current-tech-state-icon material rerouted" >alt_route</span>
+                        <!-- En-Route -->
+                        <div class="call-current-tech-state en-route" :class="{ 'inactive'  : call.techStateId !== 3 }">
                             <font-awesome-icon class="call-current-tech-state-icon en-route" :icon="['fa', 'route']" size="lg" />
                         </div>
                         <span class="material-symbols-outlined material-arrow-right">chevron_right</span>
 
-                        <!-- On-Site / Left-Site -->
-                        <div class="call-current-tech-state" :class="{ 'inactive'  : call.techStateId !== 4 && call.techStateId !== 5, 'on-site' : call.techStateId == 4, 'left-site' : call.techStateId == 5 }">
-                            <font-awesome-icon class="call-current-tech-state-icon floating left-site" :icon="['fa', 'road']" size="lg" />
+                        <!-- On-Site -->
+                        <div class="call-current-tech-state on-site" :class="{ 'inactive'  : call.techStateId !== 4 }">
                             <font-awesome-icon class="call-current-tech-state-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" />
                         </div>
 
-                        <!-- On-Hold / Completed -->
-                        <div class="call-current-tech-state completed" :class="{ 'inactive'  : call.techStateId !== 8 && call.techStateId !== 6, 'on-hold' : call.techStateId == 6, 'completed' : call.techStateId == 8 }">
-                            <font-awesome-icon class="call-current-tech-state-icon floating on-hold" :icon="['fa', 'pause-circle']" size="lg" />
+                        <!-- Completed -->
+                        <div class="call-current-tech-state completed" :class="{ 'inactive'  : call.techStateId !== 8 }">
                             <font-awesome-icon class="call-current-tech-state-icon completed" :icon="['fa', 'clipboard-check']" size="lg" />
                         </div>
+
+
+                        <!-- Transferred -->
+                        <div class="call-current-tech-state floating-icons transferred" :class="{ 'inactive'  : call.techStateId !== 9 }">
+                            <font-awesome-icon class="call-current-tech-state-icon transferred" :icon="['fa', 'shuffle']" size="lg" />
+                        </div>
+
+
+                        <!-- Returning -->
+                        <div class="call-current-tech-state floating-icons returning" :class="{ 'inactive'  : call.techStateId !== 5 }">
+                            <font-awesome-icon class="call-current-tech-state-icon returning" style="transform: scaleX(-1); font-size: 16px;" :icon="['fa', 'clock-rotate-left']" size="lg" />
+                        </div>
+
+
+                        <!-- Rerouted -->
+                        <div class="call-current-tech-state floating-icons rerouted" :class="{ 'inactive'  : call.techStateId !== 7 }">
+                            <span style="font-size: 18px;" class="material-symbols-outlined call-current-tech-state-icon material rerouted" >alt_route</span>
+                        </div>
+
+
+                        <!-- On Hold -->
+                        <div class="call-current-tech-state floating-icons on-hold" :class="{ 'inactive'  : call.techStateId !== 6 }">
+                            <font-awesome-icon class="call-current-tech-state-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" />
+                        </div>
+
+                        
+                        
+                        
                     </div>
                 </div>
             </div>
@@ -108,17 +133,18 @@
         </div>
 
     
-        <CommentModal @submitComment="submitComment($event)" />
+        <CommentModal @submitComment="submitComment($event)" @noComment="submitNoComment()" />
         <LinkJobCardModal @linkJobCards="linkJobCards($event)" />
         <LinkOrderNumberModal @linkOrderNumber="linkOrderNumber($event)" />
+        <ReturnDateModal @recordReturnDate="recordReturnDate($event)" />
         
-        <div class="call-button-wrap" :class="{ 'lower-margin' : call.callTypeId === 1 && call.techStateId === 4 }">
+        <div class="call-button-wrap" >
             <button :disabled="!canUpdateStatus" v-if="call.techStateId === 1" @click="canUpdateCall(2)" class="update-call-btn received"><font-awesome-icon class="update-call-icon accept" :icon="['fa', 'user-check']" size="lg" :class="{ disabled : !canUpdateStatus }" /> Accept Call</button>
-            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 2 || call.techStateId >= 5 && call.techStateId <= 7" @click="canUpdateCall(3)" class="update-call-btn en-route"><font-awesome-icon class="update-call-icon en-route" :icon="['fa', 'route']" size="lg" :class="{ disabled : !canUpdateStatus }" /> En Route</button>
+            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 2 || call.techStateId >= 5 && call.techStateId <= 7 || call.techStateId == 9" @click="canUpdateCall(3)" class="update-call-btn en-route"><font-awesome-icon class="update-call-icon en-route" :icon="['fa', 'route']" size="lg" :class="{ disabled : !canUpdateStatus }" /> En Route</button>
             <button :disabled="!canUpdateStatus" v-if="call.techStateId === 3" @click="canUpdateCall(4)" class="update-call-btn on-site"><font-awesome-icon class="update-call-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" :class="{ disabled : !canUpdateStatus }" /> On Site</button>
-            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 4" @click="openCommentsModal(6, call)" class="update-call-btn on-hold"><font-awesome-icon class="update-call-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" :class="{ disabled : !canUpdateStatus }" /> On Hold</button>
-            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0" v-if="call.techStateId === 4 && call.callTypeId === 1" @click="canUpdateCall(5)" class="update-call-btn left-site"><font-awesome-icon class="update-call-icon left-site" :icon="['fa', 'road']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 }" /> Left Site</button>
-            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.orderNumber" v-if="call.techStateId === 4 || call.techStateId === 6 || call.techStateId === 5" @click="canUpdateCall(8)" class="update-call-btn completed"><font-awesome-icon class="update-call-icon completed" :icon="['fa', 'clipboard-check']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.orderNumber }" /> Complete</button>
+            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 4" @click="openCommentsModal(), this.currentCallNextStatusId = 6" class="update-call-btn on-hold"><font-awesome-icon class="update-call-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" :class="{ disabled : !canUpdateStatus }" /> On Hold</button>
+            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0" v-if="call.techStateId === 4" @click="captureReturnDate(), this.currentCallNextStatusId = 5" class="update-call-btn returning"><font-awesome-icon class="update-call-icon returning" :icon="['fa', 'clock-rotate-left']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 }" /> Returning</button>
+            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.orderNumber" v-if="call.techStateId === 4 || call.techStateId === 6" @click="canUpdateCall(8)" class="update-call-btn completed"><font-awesome-icon class="update-call-icon completed" :icon="['fa', 'clipboard-check']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.orderNumber }" /> Complete</button>
         </div>
     </div>
 </template>
@@ -130,6 +156,7 @@
 import CommentModal from './CommentModal.vue';
 import LinkJobCardModal from './LinkJobCardModal.vue';
 import LinkOrderNumberModal from './LinkOrderNumberModal.vue';
+import ReturnDateModal from './ReturnDateModal.vue'
 
 import { mapGetters } from 'vuex'
 
@@ -137,7 +164,7 @@ export default {
 
 
     components: {
-         CommentModal, LinkJobCardModal, LinkOrderNumberModal
+         CommentModal, LinkJobCardModal, LinkOrderNumberModal, ReturnDateModal
     },
 
 
@@ -149,7 +176,9 @@ export default {
             branches: JSON.parse(localStorage.getItem('branches')),
             serviceWorker: null,
             user: JSON.parse(localStorage.getItem('user')),
-            canUpdateStatus: true
+            canUpdateStatus: true,
+            currentCallNextStatusId: '',
+            updateCalls: []
         }
     },
 
@@ -164,7 +193,8 @@ export default {
             allCalls: ['Calls/allCalls'],
             modal: ['Modal/modal'],
             online: ['StaticResources/online'],
-            commentNextStatusId: ['Call/commentNextStatusId']
+            commentNextStatusId: ['Call/commentNextStatusId'],
+            commentingOnCalls: ['Call/commentingOnCalls']
         })
     },
 
@@ -232,21 +262,9 @@ export default {
 
         modal: {
             handler: function() {
-                if(this.modal.confirmAction === true && this.modal.actionFrom.indexOf('_canUpdateCall_'+this.call.id) !== -1)
+                if(this.modal.confirmAction === true && this.modal.actionFrom.indexOf('complete_call_'+this.call.id) !== -1)
                 {
-                    var holdCallId = this.modal.actionFrom.split('_')[1];
-                    var holdCall = this.activeCalls.filter(call => call.id.toString() === holdCallId.toString())[0];
-                    this.updateCall(6, holdCall);
-                    this.checkForSameStoreCalls(6, holdCall);
-
-                    // console.log('Call placed on hold: ', holdCall);
-
-
-                    var nextStatusId = this.call.techStateId === 6 ? 3 : this.call.techStateId + 1;  
-                    this.updateCall(nextStatusId, this.call);
-                    // this.checkForSameStoreCalls(nextStatusId, this.call);
-                    // console.log('Call updated: ', this.call);
-                    
+                    this.updateCall(8, this.call);             
                 }
                 
             },
@@ -270,6 +288,42 @@ export default {
 
 
     methods: {
+
+
+
+
+        captureReturnDate: function() {
+            this.$store.dispatch('Call/returnDateModal', true);
+        },
+
+
+
+        recordReturnDate: async function(data) {
+            // console.log(data);
+
+            var user = JSON.parse(localStorage.getItem('user'));
+            var signature = JSON.parse(localStorage.getItem('signature'));
+
+            var comment = {
+                comment: 'Returning to site on '+data,
+                customerCallId: this.call.id,
+                employeeCode: user.employeeCode,
+                resolved: false
+            }
+
+            var data =
+            {
+                call: this.call,
+                comment,
+                signature,
+                user
+            }
+
+            await this.sendToServiceWorker(data, 'addCallComment');
+
+            // Update the call on the users device
+            this.updateCall(5, this.call);
+        },
 
 
 
@@ -321,36 +375,42 @@ export default {
 
         addCallComment: async function(comment) {
 
-            console.log('Call comment: ', comment);
+            // await Promise.all(this.commentingOnCalls.map(async commentCall => {
+
+            var call = JSON.parse(JSON.stringify(this.call));
+
+            // console.log('Call comment: ', comment);
             var user = JSON.parse(localStorage.getItem('user'));
             var signature = JSON.parse(localStorage.getItem('signature'));
 
             var commentData = {
                 "employeeCode": user.employeeCode,
-                "customerCallId": this.commentingOnCall.id,
+                "customerCallId": call.id,
                 "comment": comment,
                 "resolved": false
             }
 
             var data =
             {
-                call: this.commentingOnCall,
+                call,
                 comment: commentData,
                 signature,
                 user
             }
 
-            console.log(data);
+            // console.log(data);
             
 
             await this.sendToServiceWorker(data, 'addCallComment');
-            var nextStatusId = JSON.parse(JSON.stringify(this.commentNextStatusId));
-            var call = JSON.parse(JSON.stringify(this.commentingOnCall));
 
             // Update the call on the users device
-            this.updateCall(nextStatusId, call);
-            this.$store.dispatch('Call/commentNextStatusId', '');
-            this.$store.dispatch('Call/commentingOnCall', '');
+            this.updateCall(6, this.call);
+
+
+            // }))
+
+            // this.$store.dispatch('Call/commentNextStatusId', '');
+            // this.$store.dispatch('Call/commentingOnCalls', []);
             
         },
 
@@ -449,9 +509,9 @@ export default {
 
 
 
-        openCommentsModal: function(nextStatusId, call) {
-            this.$store.dispatch('Call/commentingOnCall', call);
-            this.$store.dispatch('Call/commentNextStatusId', nextStatusId);
+        openCommentsModal: function() {
+            // this.$store.dispatch('Call/commentingOnCalls', calls);
+            // this.$store.dispatch('Call/commentNextStatusId', nextStatusId);
             this.$store.dispatch('Call/commentModal', true);
         },
 
@@ -462,12 +522,13 @@ export default {
         submitComment: function(data) {
             var reason = data.reason;
             var stockList = data.stockList;
+            var type = data.type;
 
             // console.log('Tech says: ', reason || stockList);
 
             var comment = '';
 
-            if(!reason)
+            if(type == 'stock')
             {
                 if(stockList && stockList.length >= 1)
                 {
@@ -483,16 +544,43 @@ export default {
                 }
                 
             }
-            else
+            else if(type == 'store')
+            {
+                comment = 'Store Problem: ' + reason.toString();
+            }
+            else if(type == 'order')
             {
                 comment = reason.toString();
             }
 
             // console.log('Comment is: ', comment);
 
+            // this.updateCall(6, this.call);
             this.addCallComment(comment);
         },
 
+
+
+
+        submitNoComment: async function() {
+
+            // Update the current Call
+            var nextStatusId = JSON.parse(JSON.stringify(this.currentCallNextStatusId));
+            this.currentCallNextStatusId = '';
+            this.updateCall(nextStatusId, this.call);
+
+            // Update any other calls
+            await Promise.all(this.commentingOnCalls.map(async commentCall => {
+                var call = JSON.parse(JSON.stringify(commentCall));
+                var nextStatusId = JSON.parse(JSON.stringify(this.commentNextStatusId));
+                
+                // Update the call on the users device
+                this.updateCall(nextStatusId, call);
+            }))
+
+            this.$store.dispatch('Call/commentNextStatusId', '');
+            this.$store.dispatch('Call/commentingOnCalls', []);
+        },
 
 
 
@@ -507,33 +595,55 @@ export default {
             {
                 this.updateCall(nextStatusId, this.call);
                 return
-            }            
+            }          
 
 
-            this.updateCall(nextStatusId, this.call);
-
+            // Check for any other calls that are at a different store
             this.activeCalls.map(call => {
 
                 if(call.id !== this.call.id && call.customerStoreId !== this.call.customerStoreId)
                 {
 
-                    // Rerouted (activated while "En-Route" (3))
+                    // Rerouted (activated while "En-Route" (3) OR 'On-Site' (4) at any other call)
                     // auto-activated status (no prompt)
-                    if(call.techStateId == 3)
+                    if(call.techStateId == 3 || call.techStateId == 4)
                     {
-                        this.openCommentsModal(7, call);
-                    }
-
-                    // Left-Site (activated while "On-Site" (4))
-                    // auto-activated status (no prompt)
-                    if(call.techStateId == 4)
-                    {
-                        this.openCommentsModal(5, call);
+                        this.updateCall(7, call);
                     }
 
                 }
             })
 
+
+            if(nextStatusId == 4)
+            {
+                this.$store.dispatch('GeoLocation/updateServerWithLocation', this.call.customerStoreId);
+            }
+
+
+            if(nextStatusId == 8)
+            {
+                var modal = {
+                    active: true, // true to show modal
+                    type: 'okay', // ['info', 'warning', 'error', 'okay']
+                    icon: [], // Leave blank for no icon
+                    heading: 'Complete Job?',
+                    body:   '<p>Once completed, this job will no longer be available on your Job List.</p>',
+                    confirmAction: 'init',
+                    actionFrom: 'complete_call_'+this.call.id,
+                    actionData: '',
+                    resolveText: 'Okay',
+                    rejectText: 'Cancel'
+                    
+                }
+                this.$store.dispatch('Modal/modal', modal);
+                return
+            }
+
+
+            // Update the current Call
+            this.updateCall(nextStatusId, this.call);
+ 
         },
 
 
@@ -634,6 +744,7 @@ export default {
     margin: 0 auto;
     width: 100%;
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     z-index: 100;
     
@@ -644,6 +755,12 @@ export default {
 
 .call-button-wrap button {
     margin: 0 25px;
+    margin-bottom: 20px;
+    height: 38px;
+}
+
+.call-button-wrap button:last-child {
+    margin-bottom: 0;
 }
 
 .call-button-wrap.lower-margin button {
@@ -674,13 +791,15 @@ export default {
     color: var(--OnSiteLight);
 }
 
-.update-call-btn.left-site {
-    color: var(--LeftSiteLight);
+.update-call-btn.returning {
+    color: var(--ReturningLight);
 }
 
-.update-call-icon.left-site {
-    color: rgb(240,240,240);
+.update-call-icon.returning {
+    color: var(--ReturningLight);
+    transform: scaleX(-1);
 }
+
 
 .update-call-btn.on-hold {
     color: var(--OnHoldLight);
@@ -694,12 +813,12 @@ export default {
     color: var(--CompletedLight);
 }
 
-.update-call-icon.completed {
-    color: var(--CompletedLight);
+.update-call-icon.transferred {
+    color: var(--TransferredLight);
 }
 
 .update-call-icon.on-hold.disabled,
-.update-call-icon.left-site.disabled,
+.update-call-icon.returning.disabled,
 .update-call-icon.on-site.disabled,
 .update-call-icon.en-route.disabled,
 .update-call-icon.received.disabled,
@@ -783,7 +902,7 @@ export default {
 
 
 .call-info-wrapper.last {
-    margin-bottom: 50px;
+    margin-bottom: 100px;
 }
 
 
@@ -801,6 +920,37 @@ export default {
 }
 
 
+.call-current-tech-state.floating-icons {
+    position: absolute;
+    top: -25px;
+    right: 0;
+    font-size: 14px;
+    margin-left: -3px;
+    height: 100%;
+}
+
+
+
+
+.call-current-tech-state.floating-icons.transferred {
+    right: 68px;
+}
+
+.call-current-tech-state.floating-icons.rerouted {
+    right: 44px;
+}
+
+.call-current-tech-state.floating-icons.returning {
+    right: 24px;
+}
+
+.call-current-tech-state.floating-icons.on-hold {
+    right: 0;
+}
+
+
+
+
 .call-current-tech-state.inactive {
     color: var(--TransparentGrey);
 }
@@ -808,7 +958,8 @@ export default {
 
 .current-tech-state-wrap.pending .call-current-tech-state.inactive,
 .current-tech-state-wrap.received .call-current-tech-state.inactive,
-.current-tech-state-wrap.rerouted .call-current-tech-state.inactive
+.current-tech-state-wrap.rerouted .call-current-tech-state.inactive/* ,
+.current-tech-state-wrap.transferred .call-current-tech-state.inactive */
 {
     color: var(--TransparentBlack);
 }
@@ -845,11 +996,11 @@ export default {
 
 
 
-.current-tech-state-wrap.on-site .call-current-tech-state.on-site .call-current-tech-state-icon.left-site {
+.current-tech-state-wrap.on-site .call-current-tech-state.on-site .call-current-tech-state-icon.returning {
     color: var(--TransparentGrey);
 }
 
-.current-tech-state-wrap.left-site .call-current-tech-state.left-site .call-current-tech-state-icon.on-site {
+.current-tech-state-wrap.returning .call-current-tech-state.returning .call-current-tech-state-icon.on-site {
     color: var(--TransparentGrey);
 }
 
@@ -882,8 +1033,19 @@ export default {
     font-size: 12px;
     transition: color 800ms ease-out;
     margin-top: 8px;
+    position: relative;
 }
 
+
+
+.call-current-tech-state.floating-icons .call-current-tech-state-icon {
+    margin-right: 5px;
+}
+
+
+.call-current-tech-state.floating-icons .call-current-tech-state-icon:last-child {
+    margin-right: 0;
+}
 
 
 .call-current-tech-state-icon,
@@ -897,17 +1059,17 @@ export default {
 
 
 .call-current-tech-state-icon.material.rerouted {
-    position: absolute;
-    top: -26px;
+    /* position: absolute;
+    top: -26px; */
 }
 
 
 .call-current-tech-state-icon.floating {
-    position: absolute;
+    /* position: absolute;
     top: -25px;
     font-size: 22px;
     margin-left: -3px;
-    height: 100%;
+    height: 100%; */
 }
 
 
@@ -963,6 +1125,8 @@ export default {
 }
 
 
+
+
 .current-tech-state-wrap.pending {
     background: var(--Pending);
     color: var(--PendingDark);
@@ -988,9 +1152,9 @@ export default {
     color: var(--OnSiteLight);
 }
 
-.current-tech-state-wrap.left-site {
-    background: var(--LeftSiteDark);
-    color: var(--LeftSite);
+.current-tech-state-wrap.returning {
+    background: var(--ReturningDark);
+    color: var(--Returning);
 }
 
 .current-tech-state-wrap.on-hold {
@@ -1001,6 +1165,11 @@ export default {
 .current-tech-state-wrap.completed {
     background: var(--CompletedDark);
     color: var(--Completed);
+}
+
+.current-tech-state-wrap.transferred {
+    background: var(--TransferredDark);
+    color: var(--Transferred);
 }
 
 
@@ -1092,6 +1261,15 @@ export default {
 
 .link-job-card-icon {
 
+}
+
+
+
+.no-order-number {
+    background: var(--WarningOrange);
+    color: var(--TextBlack);
+    padding: 5px 6px;
+    margin-right: 2px;
 }
 
 

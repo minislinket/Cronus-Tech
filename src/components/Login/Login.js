@@ -320,7 +320,7 @@ const actions = {
 
     logout({ commit, dispatch }) {
 
-        var clearThese = ['signature', 'user', 'time_stamp', 'calls', 'employees'];
+        var clearThese = ['signature', 'user', 'time_stamp', 'calls', 'employees', 'user_type', 'msgToken'];
         clearThese.map(item => {
             localStorage.removeItem(item);
         });

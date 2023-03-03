@@ -40,9 +40,10 @@
                             'en-route': tech.technicianCallStatusId == 3,
                             'rerouted': tech.technicianCallStatusId == 7,
                             'on-site': tech.technicianCallStatusId == 4,
-                            'left-site': tech.technicianCallStatusId == 5,
+                            'returning': tech.technicianCallStatusId == 5,
                             'on-hold': tech.technicianCallStatusId == 6,
-                            'completed': tech.technicianCallStatusId == 8
+                            'completed': tech.technicianCallStatusId == 8,
+                            'transferred': tech.technicianCallStatusId == 9
                         }">
 
 
@@ -55,9 +56,10 @@
                                 <font-awesome-icon v-if="tech.technicianCallStatusId === 3" class="sc-tech-state-icon en-route" :icon="['fa', 'route']" size="lg" />
                                 <span v-if="tech.technicianCallStatusId === 7" class="material-symbols-outlined sc-tech-state-icon rerouted">alt_route</span>
                                 <font-awesome-icon v-if="tech.technicianCallStatusId === 4" class="sc-tech-state-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" />
-                                <font-awesome-icon v-if="tech.technicianCallStatusId === 5" class="sc-tech-state-icon left-site" :icon="['fa', 'road']" size="lg" />
+                                <font-awesome-icon v-if="tech.technicianCallStatusId === 5" class="sc-tech-state-icon returning" style="transform: scaleX(-1);" :icon="['fa', 'clock-rotate-left']" size="lg" />
                                 <font-awesome-icon v-if="tech.technicianCallStatusId === 6" class="sc-tech-state-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" />
                                 <font-awesome-icon v-if="tech.technicianCallStatusId === 8" class="sc-tech-state-icon completed" :icon="['fa', 'clipboard-check']" size="lg" />
+                                <font-awesome-icon v-if="tech.technicianCallStatusId === 9" class="rc-tech-state-icon transferred" :icon="['fa', 'shuffle']" size="lg" />
                                 {{ getTechStatus(tech.technicianCallStatusId) }}
                             </p>
 
@@ -377,7 +379,7 @@ export default {
     content: '';
     position: absolute;
     right: 0;
-    width: 90px;
+    width: 120px;
     height: 100%;
     background: var(--GunMetal);
     z-index: 1;
@@ -465,14 +467,14 @@ export default {
 
 
 
-.sc-tech-state-icon.left-site {
-    color: var(--LeftSiteLight);
+.sc-tech-state-icon.returning {
+    color: var(--ReturningLight);
 }
-.store-calls-techs-grid.left-site::before {
-    background: var(--LeftSite);
+.store-calls-techs-grid.returning::before {
+    background: var(--Returning);
 }
-.store-calls-techs-grid.left-site {
-    border-color: var(--LeftSite);
+.store-calls-techs-grid.returning {
+    border-color: var(--Returning);
 }
 
 

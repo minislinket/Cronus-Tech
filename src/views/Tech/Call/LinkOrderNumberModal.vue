@@ -6,7 +6,7 @@
             <h4>Upload Order Number</h4>
 
             <div class="link-order-number-modal-input-wrap">
-                <input type="tel" v-model="orderNumber" @input="orderNumberVerified = 'init'" placeholder="Order Number">
+                <input type="text" v-model="orderNumber" @input="abortOrderNumberCheck()" placeholder="Order Number">
                 <font-awesome-icon v-if="!verifying && orderNumberVerified !== false" class="link-order-number-icon" :class="{ 'warning-orange' : orderNumberVerified == 'init', okay : orderNumberVerified == true, verifying : verifying }" @click="verifyOrderNumber()" :icon="['far', 'check-circle']" size="lg" />
                 <font-awesome-icon v-else-if="!verifying && orderNumberVerified == false" class="link-order-number-icon warning" :class="{ 'used' : orderNumberVerified == false, verifying : verifying }" @click="verifyOrderNumber()" :icon="['far', 'times-circle']" size="lg" />
                 <font-awesome-icon v-if="verifying" class="verifying-order-number-id-loading-icon" :icon="['fa', 'circle-notch']" size="lg" spin />
@@ -35,6 +35,7 @@ export default {
             orderNumber: '',
             verifying: false,
             orderNumberVerified: 'init',
+            axiosController: ''
         }
     },
 
@@ -55,6 +56,10 @@ export default {
         verifying: {
             handler: function() {
                 console.log('verifying?', this.verifying);
+                if(!this.verifying && this.axiosController)
+                {
+
+                }
             },
             deep: true,
             immediate: true
@@ -65,6 +70,7 @@ export default {
 
 
     mounted() {
+        this.axiosController = new AbortController();
         this.orderNumber = '';
         this.orderNumberVerified = 'init';
         this.verifying = false;
@@ -76,12 +82,71 @@ export default {
     methods: {
 
 
+
+        abortOrderNumberCheck: function() {
+    
+            this.orderNumberVerified = 'init';
+            if(this.verifying)
+            {
+                this.axiosController.abort();
+                this.axiosController = new AbortController();
+            }
+        },
+
+
+
+
+        looksLikeAnOrderNumber: function() {
+
+            var vowelMatch = this.orderNumber.match(/[aeiou]/gi);
+            // console.log(vowelMatch === null ? 0 : vowelMatch.length);
+
+            if(vowelMatch && vowelMatch.length >= 3)
+            {
+                var modal = {
+                    active: true, // true to show modal
+                    type: 'warning', // ['info', 'warning', 'error', 'okay']
+                    icon: [], // Leave blank for no icon
+                    heading: 'Order Number?',
+                    body:   '<p>That doesn\'t look like an Order Number.</p><br>'
+                            +'<p>If you\'re having trouble getting the Order from the Store, please place this Job/Call On-Hold with a reason of "Awaiting Order".</p>',
+                    confirmAction: 'init',
+                    actionFrom: '',
+                    actionData: '',
+                    resolveText: 'Okay',
+                    rejectText: 'Cancel'
+                    
+                }
+                this.$store.dispatch('Modal/modal', modal);
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+            
+
+            
+
+        },
+
+
+
+
+
         verifyOrderNumber: async function() {
+
+            const signal = this.axiosController ? this.axiosController.signal : '';
+
+
+            if(!this.looksLikeAnOrderNumber()) { return }
+
+
 
             this.verifying = true;
 
             
-            await axiosOffice.get('invoices/?orderNumber=' + this.orderNumber + '&customerAccountId=' + this.call.customerAccount.id)
+            await axiosOffice.get('invoices/?orderNumber=' + this.orderNumber + '&customerAccountId=' + this.call.customerAccount.id, { signal })
             .then(async resp => {
 
                 if(resp.status === 200)

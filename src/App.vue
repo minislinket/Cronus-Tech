@@ -45,6 +45,7 @@ export default {
 		return {
 			isMobile: false,
 			isPortrait: false,
+			geoLocationInterval: ''
 		}
 	},
 
@@ -57,7 +58,10 @@ export default {
 			modal: ['Modal/modal'],
 			pendingCalls: ['Calls/pendingCalls'],
 			online: ['StaticResources/online'],
-			userType: ['UserRole/currentUserRole']
+			userType: ['UserRole/currentUserRole'],
+			geoLocationUpdateTimeMinutes: ['GeoLocation/geoLocationUpdateTimeMinutes'],
+			stopGeoLocationService: ['GeoLocation/stopGeoLocationService'],
+			startGeoLocationService: ['GeoLocation/startGeoLocationService']
 		})
 	},
 
@@ -90,7 +94,22 @@ export default {
 					this.checkSWBackgroundSyncStore()
 			},
 			deep: true,
-		}
+		},
+
+
+		stopGeoLocationService: {
+			handler: function() {
+				// this.stopGeoLocationService == true ? this.stopGeoLocation() : null;
+			},
+			deep: true,
+		},
+
+		startGeoLocationService: {
+			handler: function() {
+				// this.startGeoLocationService == true ? this.startGeoLocation() : null;
+			},
+			deep: true,
+		},
 	},
 
 
@@ -99,7 +118,7 @@ export default {
 
 	created() {
 
-		navigator.serviceWorker.getRegistration().then(reg => { this.listenForWaitingServiceWorker(reg, this.promptUserToRefresh), this.createUserCredential(reg) });
+		navigator.serviceWorker.getRegistration().then(reg => { this.listenForWaitingServiceWorker(reg, this.promptUserToRefresh) }); /* , this.createUserCredential(reg) */
 		navigator.serviceWorker.addEventListener('controllerchange', function() { window.location.reload() });
 
 	},
@@ -111,6 +130,20 @@ export default {
 	mounted() {
 
 		this.checkCallSyncStoreBackup();
+
+
+		// Check if Geo Location Service is available and start it up
+		if(navigator.geolocation) 
+            {
+				console.log('Geo Location is available...');
+                // this.startGeoLocation();
+            } 
+            else 
+            {
+                console.log('Geo Location not supported by browser');
+				this.stopGeoLocation();
+            }
+		
 
 		// var user_type = localStorage.getItem('user_type');
 		// if(user_type)
@@ -187,6 +220,39 @@ export default {
 
 
 	methods: {
+
+
+
+		startGeoLocation: function() {
+
+			console.log('Starting Geo Location Service...');
+
+			// Incase an interval is already setup, clear it and start again
+			if(this.geoLocationInterval)
+			{
+				clearInterval(this.geoLocationInterval);
+			}
+
+			// Get initial location
+			this.$store.dispatch('GeoLocation/updateCurrentLocation');
+
+			// Set an interval to get intermittent updates
+			this.geoLocationInterval = setInterval(() => {
+				this.$store.dispatch('GeoLocation/updateCurrentLocation');
+			}, this.geoLocationUpdateTimeMinutes * 1000 * 60)
+			
+		},
+
+
+
+		stopGeoLocation: function() {
+			console.log('Stopping Geo Location Service...');
+			clearInterval(this.geoLocationInterval);
+		},
+
+
+
+
 
 
 		createUserCredential: async function(reg) {
@@ -374,27 +440,33 @@ under 100: standard app level components as assigned by html (usually no more th
 	--PendingLight: rgb(255, 139, 30);
 	--Pending: rgb(196, 99, 9);
 	--PendingDark: rgb(94, 41, 17);
-	--ReceivedLight: rgb(176, 255, 17);
-	--Received: rgb(114, 167, 62);
-	--ReceivedDark: rgb(52, 62, 26);
-	--EnRouteLight: rgb(98, 255, 195);
-	--EnRoute: rgb(25, 141, 126);
-	--EnRouteDark: rgb(13, 81, 83);
-	--ReroutedLight: rgb(16, 181, 231);
-	--Rerouted: rgb(25, 127, 141);
-	--ReroutedDark: rgb(13, 58, 70);
-	--OnSiteLight: rgb(101, 219, 255);
+	--TransferredLight: rgb(198, 98, 255);
+	--Transferred: rgb(129, 62, 167);
+	--TransferredDark: rgb(52, 26, 62);
+	--EnRouteLight: rgb(124, 255, 227);
+	--EnRoute: rgb(38, 173, 150);
+	--EnRouteDark: rgb(16, 74, 77);
+	--ReroutedLight: rgb(255, 252, 62);
+	--Rerouted: rgb(163, 154, 31);
+	--ReroutedDark: rgb(77, 71, 9);
+	--OnSiteLight: rgb(101, 211, 255);
 	--OnSite: rgb(36, 121, 173);
-	--OnSiteDark: rgb(20, 68, 99);
+	--OnSiteDark: rgb(14, 48, 71);
 	--LeftSiteLight: rgb(75, 168, 255);
 	--LeftSite: rgb(36, 86, 161);
 	--LeftSiteDark: rgb(9, 32, 66);
+	--ReturningLight: rgb(255, 186, 107);
+	--Returning: rgb(214, 129, 0);
+	--ReturningDark: rgb(82, 48, 9);
 	--OnHoldLight: rgb(255, 40, 40);
 	--OnHold: rgb(135, 30, 30);
 	--OnHoldDark: rgb(70, 10, 10);
 	--CompletedLight: rgb(85, 255, 127);
 	--Completed: rgb(29, 117, 55);
-	--CompletedDark: rgb(5, 66, 25);
+	--CompletedDark: rgb(5, 56, 22);
+	--ReceivedLight: rgb(187, 255, 61);
+	--Received: rgb(142, 173, 32);
+	--ReceivedDark: rgb(44, 53, 4);
 
 
 	/* Cronus v2.1 Colors */
@@ -758,6 +830,10 @@ button:disabled {
 	transition: background 250ms ease;
 }
 
+.app-blocking-lightbox {
+	z-index: 1499;
+}
+
 
 
 .app-blocking-lightbox.active,
@@ -767,6 +843,9 @@ button:disabled {
 	transition: background 350ms ease;
 }
 
+.app-blocking-lightbox.active {
+
+}
 
 
 

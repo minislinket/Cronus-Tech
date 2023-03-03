@@ -91,18 +91,22 @@ const actions = {
         var getOnSiteCalls = dispatch('loadTechnicianCallsFromServer', onSiteParams);
 
         // Left Site Calls
-        var leftSiteParams = {technician_employee_code: user.employeeCode, call_status_id: 2, tech_call_status_id: 5};
-        var getLeftSiteCalls = dispatch('loadTechnicianCallsFromServer', leftSiteParams);
+        var returningParams = {technician_employee_code: user.employeeCode, call_status_id: 2, tech_call_status_id: 5};
+        var getReturningCalls = dispatch('loadTechnicianCallsFromServer', returningParams);
         
         // On Hold Calls
         var onHoldParams = {technician_employee_code: user.employeeCode, call_status_id: 2, tech_call_status_id: 6};
         var getOnHoldCalls = dispatch('loadTechnicianCallsFromServer', onHoldParams);
 
+        // Transferred Calls
+        var transferredParams = {technician_employee_code: user.employeeCode, call_status_id: 2, tech_call_status_id: 9};
+        var getTransferredCalls = dispatch('loadTechnicianCallsFromServer', transferredParams);
+
         
         // Get all technician calls simultaneously
-        var [pendingCalls, receivedCalls, enRouteCalls, reroutedCalls, onSiteCalls, leftSiteCalls, onHoldCalls] 
+        var [pendingCalls, receivedCalls, enRouteCalls, reroutedCalls, onSiteCalls, returningCalls, onHoldCalls, transferredCalls] 
         = 
-        await Promise.all([getPendingCalls, getReceivedCalls, getEnRouteCalls, getReroutedCalls, getOnSiteCalls, getLeftSiteCalls, getOnHoldCalls]);
+        await Promise.all([getPendingCalls, getReceivedCalls, getEnRouteCalls, getReroutedCalls, getOnSiteCalls, getReturningCalls, getOnHoldCalls, getTransferredCalls]);
 
         // console.log('Pending Calls: ', pendingCalls);
         // console.log('Received Calls: ', receivedCalls);
@@ -111,8 +115,8 @@ const actions = {
         // console.log('On Hold Calls: ', onHoldCalls);
 
 
-        var allCalls = pendingCalls.concat(receivedCalls, enRouteCalls, reroutedCalls, onSiteCalls, leftSiteCalls, onHoldCalls);
-        console.log('All Calls: ', allCalls);
+        var allCalls = pendingCalls.concat(receivedCalls, enRouteCalls, reroutedCalls, onSiteCalls, returningCalls, onHoldCalls, transferredCalls);
+        // console.log('All Calls: ', allCalls);
 
         var flag = false;
         allCalls.map(call => call === false ? flag = true : null);
@@ -370,7 +374,7 @@ const actions = {
 
         // Grab the id's from both local and server calls and push each to it's own array
         await Promise.all(serverCalls.map(async serverCall => {
-            if(serverCall.techStateId >= 4 && serverCall.techStateId <= 6)
+            if(serverCall.techStateId >= 4 && serverCall.techStateId <= 7 || serverCall.techStateId == 9)
             {
                 await dispatch('getCallJobCards', serverCall);
             }
@@ -467,6 +471,15 @@ const actions = {
                             // console.log('Server call key: ',key, serverCall[key])
                             localCall[key] !== serverCall[key] ? localCall[key] = serverCall[key] : null;
                         }
+                        if(key == 'techStateId')
+                        {
+                            if(serverCall[key] == 9 || serverCall[key] == 6)
+                            {
+                                localCall.techState = serverCall.techState;
+                                localCall.techStateId = serverCall.techStateId;
+                                localCall.techStateName = serverCall.techStateName;
+                            }
+                        }
                     }
                 }
 
@@ -524,24 +537,24 @@ const actions = {
 
         var activeCalls = calls.filter(call => {
             // console.log(call.techStateId);
-            return call.techStateId >= 2 && call.techStateId <= 5 || call.techStateId >= 6 && call.techStateId <= 7;
+            return call.techStateId >= 2 && call.techStateId <= 5 || call.techStateId >= 6 && call.techStateId <= 7 || call.techStateId == 9;
         });
         activeCalls.sort((a,b) => {
-            return b.techStateId - a.techStateId;
+            return b.id - a.id;
         })
-        console.log('Active calls: ', activeCalls);
+        // console.log('Active calls: ', activeCalls);
 
         var pendingCalls = calls.filter(call => call.techStateId == 1);
         pendingCalls.sort((a,b) => {
-            return a.techStateId - b.techStateId;
+            return a.id - b.id;
         })
-        console.log('Pending calls: ', pendingCalls);
+        // console.log('Pending calls: ', pendingCalls);
 
         commit('setActiveCalls', activeCalls);
         commit('setPendingCalls', pendingCalls);
 
         pendingCalls.length >= 1 ? dispatch('Calls/showActiveCalls', false, { root: true }) : dispatch('Calls/showActiveCalls', true, { root: true });
-        console.log('--------calls done loading--------');
+        // console.log('--------calls done loading--------');
         commit('loading', false);
     },
 

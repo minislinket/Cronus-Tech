@@ -56,6 +56,12 @@ import {
   faChevronDown,
   faComment,
   faComments,
+  faRotateLeft,
+  faClockRotateLeft,
+  faShuffle,
+  faBan,
+  faDolly,
+  faFileCircleExclamation,
 } from '@fortawesome/free-solid-svg-icons'
 
 
@@ -124,5 +130,11 @@ library.add(
   faChevronDown,
   farTimesCircle,
   faComment,
-  faComments
+  faComments,
+  faRotateLeft,
+  faClockRotateLeft,
+  faShuffle,
+  faBan,
+  faDolly,
+  faFileCircleExclamation
 )
