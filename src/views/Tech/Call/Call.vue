@@ -1,7 +1,7 @@
 <template>
     <div class="call-wrap">
 
-        <div class="loading-lightbox-wrap" v-if="loading">
+        <div class="loading-lightbox-wrap on-top" v-if="loading">
             <font-awesome-icon class="loading-lightbox-icon" :icon="['fa','circle-notch']" size="lg" spin />
         </div>
         
@@ -12,8 +12,25 @@
                     <button :class="{ 'no-jc' : call.jobCards.length <= 0, 'linked' : call.jobCards.length >= 1 }" @click="openLinkJobCard()"><font-awesome-icon class="link-job-card-icon" :icon="['fa','link']" size="lg" /> </button>
                     <span>Link Job Card</span>
                 </div>
-                <p @click="openLinkOrderNumber()" v-if="!call.orderNumber && call.techStateId >= 4"><button class="no-order-number"><font-awesome-icon :icon="['fa','exclamation-triangle']" size="lg" /></button> Order Number</p>
+                <p @click="openLinkOrderNumber()" v-if="call.techStateId >= 4"><button class="no-order-number" :class="{ okay : call.orderNumber }"><font-awesome-icon :icon="['fa','exclamation-triangle']" size="lg" /></button> Order Number</p>
             </div>
+            <div class="link-jc-no-order-num-wrap">
+                <div class="link-job-card-wrap" v-if="call.techStateId >= 4">
+                    <button :class="{ 'no-jc' : !call.allJobCardsHaveCMIS, 'linked' : call.allJobCardsHaveCMIS }" @click="openUploadDocs()"><font-awesome-icon class="link-job-card-icon" :icon="['fa','file-arrow-up']" size="lg" /> </button>
+                    <span>Upload Docs</span>
+                </div>
+                <div class="refresh-job-card-btn-wrap" v-if="call.techStateId >= 4">
+                    <button class="refresh-call-jcs-btn" @click="refreshCallDocs()"><font-awesome-icon class="refresh-job-cards-icon" :icon="['fa','sync-alt']" size="lg" /> </button>
+                    <span>Refresh Docs</span>
+                </div>
+            </div>
+
+
+            <div class="call-info-wrapper job-card-list">
+                <h4>Job Cards</h4>
+                <span v-for="(jc, i) in call.jobCards" :key="jc.id">{{ jc.id }}<span v-if="call.jobCards.length - 1 !== i">, </span></span>
+            </div>
+
 
             <div class="call-info-wrapper call-details-wrap">
                 <h4>Call Detail</h4>
@@ -133,18 +150,19 @@
         </div>
 
     
-        <CommentModal @submitComment="submitComment($event)" @noComment="submitNoComment()" />
+        <CommentModal @submitComment="submitComment($event)" />
         <LinkJobCardModal @linkJobCards="linkJobCards($event)" />
         <LinkOrderNumberModal @linkOrderNumber="linkOrderNumber($event)" />
         <ReturnDateModal @recordReturnDate="recordReturnDate($event)" />
-        
+        <UploadDocument @uploadDocs="uploadDocs($event)"/>
+
         <div class="call-button-wrap" >
             <button :disabled="!canUpdateStatus" v-if="call.techStateId === 1" @click="canUpdateCall(2)" class="update-call-btn received"><font-awesome-icon class="update-call-icon accept" :icon="['fa', 'user-check']" size="lg" :class="{ disabled : !canUpdateStatus }" /> Accept Call</button>
             <button :disabled="!canUpdateStatus" v-if="call.techStateId === 2 || call.techStateId >= 5 && call.techStateId <= 7 || call.techStateId == 9" @click="canUpdateCall(3)" class="update-call-btn en-route"><font-awesome-icon class="update-call-icon en-route" :icon="['fa', 'route']" size="lg" :class="{ disabled : !canUpdateStatus }" /> En Route</button>
             <button :disabled="!canUpdateStatus" v-if="call.techStateId === 3" @click="canUpdateCall(4)" class="update-call-btn on-site"><font-awesome-icon class="update-call-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" :class="{ disabled : !canUpdateStatus }" /> On Site</button>
-            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 4" @click="openCommentsModal(), this.currentCallNextStatusId = 6" class="update-call-btn on-hold"><font-awesome-icon class="update-call-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" :class="{ disabled : !canUpdateStatus }" /> On Hold</button>
-            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0" v-if="call.techStateId === 4" @click="captureReturnDate(), this.currentCallNextStatusId = 5" class="update-call-btn returning"><font-awesome-icon class="update-call-icon returning" :icon="['fa', 'clock-rotate-left']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 }" /> Returning</button>
-            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.orderNumber" v-if="call.techStateId === 4 || call.techStateId === 6" @click="canUpdateCall(8)" class="update-call-btn completed"><font-awesome-icon class="update-call-icon completed" :icon="['fa', 'clipboard-check']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.orderNumber }" /> Complete</button>
+            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 4" @click="openCommentsModal()" class="update-call-btn on-hold"><font-awesome-icon class="update-call-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" :class="{ disabled : !canUpdateStatus }" /> On Hold</button>
+            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS" v-if="call.techStateId === 4" @click="captureReturnDate()" class="update-call-btn returning"><font-awesome-icon class="update-call-icon returning" :icon="['fa', 'clock-rotate-left']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS }" /> Returning</button>
+            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS || !call.orderNumber" v-if="call.techStateId === 4 || call.techStateId === 6" @click="canUpdateCall(8)" class="update-call-btn completed"><font-awesome-icon class="update-call-icon completed" :icon="['fa', 'clipboard-check']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.orderNumber }" /> Complete</button>
         </div>
     </div>
 </template>
@@ -157,14 +175,16 @@ import CommentModal from './CommentModal.vue';
 import LinkJobCardModal from './LinkJobCardModal.vue';
 import LinkOrderNumberModal from './LinkOrderNumberModal.vue';
 import ReturnDateModal from './ReturnDateModal.vue'
+import UploadDocument from './UploadDocument.vue';
 
 import { mapGetters } from 'vuex'
+
 
 export default {
 
 
     components: {
-         CommentModal, LinkJobCardModal, LinkOrderNumberModal, ReturnDateModal
+         CommentModal, LinkJobCardModal, LinkOrderNumberModal, ReturnDateModal, UploadDocument
     },
 
 
@@ -177,7 +197,6 @@ export default {
             serviceWorker: null,
             user: JSON.parse(localStorage.getItem('user')),
             canUpdateStatus: true,
-            currentCallNextStatusId: '',
             updateCalls: []
         }
     },
@@ -288,6 +307,35 @@ export default {
 
 
     methods: {
+
+
+
+
+        refreshCallDocs: function() {
+            this.$store.dispatch('Calls/refreshCallJobCards', this.call);
+        },
+
+
+
+
+        openUploadDocs: function() {
+            this.$store.dispatch('Call/uploadDocModal', true);
+        },
+
+
+        uploadDocs: async function(payload) {   
+            // console.log(payload);
+
+            var data =
+            {
+                fileTypeId: payload.fileTypeId,
+                call: this.call,
+                jobCardId: payload.jobCardId,
+                formData: payload.formData,
+            }
+
+            this.$store.dispatch('Call/uploadDocuments', data);
+        },
 
 
 
@@ -485,6 +533,7 @@ export default {
 
                     // Post the data to the SW
                     data = JSON.stringify(data);
+                    // console.log('Posting SW msg with data: ', data)
                     reg.active.postMessage({type, data});
                 })
                 .catch(err => {
@@ -562,25 +611,6 @@ export default {
 
 
 
-        submitNoComment: async function() {
-
-            // Update the current Call
-            var nextStatusId = JSON.parse(JSON.stringify(this.currentCallNextStatusId));
-            this.currentCallNextStatusId = '';
-            this.updateCall(nextStatusId, this.call);
-
-            // Update any other calls
-            await Promise.all(this.commentingOnCalls.map(async commentCall => {
-                var call = JSON.parse(JSON.stringify(commentCall));
-                var nextStatusId = JSON.parse(JSON.stringify(this.commentNextStatusId));
-                
-                // Update the call on the users device
-                this.updateCall(nextStatusId, call);
-            }))
-
-            this.$store.dispatch('Call/commentNextStatusId', '');
-            this.$store.dispatch('Call/commentingOnCalls', []);
-        },
 
 
 
@@ -1231,9 +1261,9 @@ export default {
 }
 
 .link-jc-no-order-num-wrap p {
-    color: var(--WarningOrange);
-    font-size: 12px;
-    font-weight: 700;
+    /* color: var(--WarningOrange); */
+    /* font-size: 12px; */
+    /* font-weight: 700; */
 }
 
 
@@ -1265,11 +1295,34 @@ export default {
 
 
 
+.refresh-job-card-btn-wrap {
+
+}
+
+
+.refresh-call-jcs-btn {
+    background: var(--OffWhite);
+    padding: 5px 8px;
+    margin-right: 10px;
+}
+
+.refresh-job-cards-icon {
+    color: var(--CompletedCall);
+    font-size: 18px;
+}
+
+
+
 .no-order-number {
     background: var(--WarningOrange);
     color: var(--TextBlack);
     padding: 5px 6px;
     margin-right: 2px;
+}
+
+
+.no-order-number.okay {
+    background: var(--ReceivedLight);
 }
 
 

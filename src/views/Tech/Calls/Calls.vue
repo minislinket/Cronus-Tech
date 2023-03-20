@@ -58,6 +58,12 @@
         </div>
 
 
+
+        <!-- <div class="temp-button-wrap">
+            <button @click="setTechAtOffice()">@Office</button>
+        </div> -->
+
+
         
     </div>
 </template>
@@ -141,6 +147,11 @@ export default {
 
 
     methods: {
+
+        setTechAtOffice: function() {
+            this.$store.dispatch('GeoLocation/markTechAtOffice')
+        },
+
 
         loadCall: function(call) {
             this.$store.dispatch('Call/loadCall', call.id);

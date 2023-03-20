@@ -421,6 +421,7 @@ under 100: standard app level components as assigned by html (usually no more th
 900     -   Lightbox
 1000    -   
 1500    -   Modal, Toast
+1600	-	Lightbox over Modal/Toast
 1800    -   Back to Portrait Orientation Warning
 
 */
@@ -785,6 +786,12 @@ button:disabled {
 	align-items: center;
 	justify-content: center;
 	padding-bottom: 100px;
+}
+
+
+
+.loading-lightbox-wrap.on-top {
+	z-index: 1600;
 }
 
 

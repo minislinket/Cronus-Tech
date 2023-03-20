@@ -230,17 +230,6 @@ export default {
 
 
 
-        // checkNoComment: function() {
-        //     if(this.nextStatusId !== 6)
-        //     {
-        //         this.$emit('noComment');
-        //         this.closeCommentModal();
-        //     }
-        //     else
-        //     {
-        //         this.closeCommentModal()
-        //     }
-        // },
 
 
 

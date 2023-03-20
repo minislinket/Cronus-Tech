@@ -99,14 +99,14 @@ const actions = {
         var getOnHoldCalls = dispatch('loadTechnicianCallsFromServer', onHoldParams);
 
         // Transferred Calls
-        var transferredParams = {technician_employee_code: user.employeeCode, call_status_id: 2, tech_call_status_id: 9};
-        var getTransferredCalls = dispatch('loadTechnicianCallsFromServer', transferredParams);
+        // var transferredParams = {technician_employee_code: user.employeeCode, call_status_id: 2, tech_call_status_id: 9};
+        // var getTransferredCalls = dispatch('loadTechnicianCallsFromServer', transferredParams);
 
         
         // Get all technician calls simultaneously
-        var [pendingCalls, receivedCalls, enRouteCalls, reroutedCalls, onSiteCalls, returningCalls, onHoldCalls, transferredCalls] 
+        var [pendingCalls, receivedCalls, enRouteCalls, reroutedCalls, onSiteCalls, returningCalls, onHoldCalls/* , transferredCalls */] 
         = 
-        await Promise.all([getPendingCalls, getReceivedCalls, getEnRouteCalls, getReroutedCalls, getOnSiteCalls, getReturningCalls, getOnHoldCalls, getTransferredCalls]);
+        await Promise.all([getPendingCalls, getReceivedCalls, getEnRouteCalls, getReroutedCalls, getOnSiteCalls, getReturningCalls, getOnHoldCalls/* , getTransferredCalls */]);
 
         // console.log('Pending Calls: ', pendingCalls);
         // console.log('Received Calls: ', receivedCalls);
@@ -115,7 +115,7 @@ const actions = {
         // console.log('On Hold Calls: ', onHoldCalls);
 
 
-        var allCalls = pendingCalls.concat(receivedCalls, enRouteCalls, reroutedCalls, onSiteCalls, returningCalls, onHoldCalls, transferredCalls);
+        var allCalls = pendingCalls.concat(receivedCalls, enRouteCalls, reroutedCalls, onSiteCalls, returningCalls, onHoldCalls/* , transferredCalls */);
         // console.log('All Calls: ', allCalls);
 
         var flag = false;
@@ -309,18 +309,42 @@ const actions = {
         var user = JSON.parse(localStorage.getItem('user'));
         // console.log('Getting JC\'s for call: ', call.id)
         return axiosOffice.get('job_cards?allocatedEmployeeCode='+ user.employeeCode +'&customerCallId='+ call.id)
-        .then(resp => {
+        .then(async resp => {
             // console.log('call JC resp: ', resp);
             if(resp.status === 200)
             {
                 call.jobCards = resp.data;
+                call['allJobCardsHaveCMIS'] = true;
+                if(call.jobCards.length >= 1)
+                {
+                    await Promise.all(call.jobCards.map(jc => jc.cmisDocumentId ? null : call.allJobCardsHaveCMIS = false));
+                }
+                else
+                {
+                    call.allJobCardsHaveCMIS = false
+                }
+                
             }
         })
         .catch(err => {
             console.error('Axios_Office Error: ', err);
             console.error('Axios_Office Error Response: ', err.response);
             call.jobCards = [];
+            call.allJobCardsHaveCMIS = false;
         })
+    },
+
+
+
+
+
+
+
+    async refreshCallJobCards({ dispatch }, call) {
+        dispatch('Call/loading', true, { root: true });
+        await dispatch('getCallJobCards', call);
+        dispatch('updateLocalStorage', call);
+        dispatch('Call/loading', true, { root: false });
     },
 
 
@@ -342,6 +366,7 @@ const actions = {
                 c.techStateName = call.techStateName;
                 c.jobCards = call.jobCards;
                 c.orderNumber = call.orderNumber;
+                c.allJobCardsHaveCMIS = call.allJobCardsHaveCMIS;
             }
         });
         // console.log('Call Updated in localStorage...', localCalls);

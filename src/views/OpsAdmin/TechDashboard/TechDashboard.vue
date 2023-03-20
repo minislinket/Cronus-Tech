@@ -23,7 +23,7 @@
 
                 <div class="filtered-tech-calls-scroll-section">
                     <template v-for="call in tech.filteredCalls" :key="call.id">
-                        <div class="filtered-calls-cards-loop" v-if="call.techState !== 8 && tech.displayName !== 'Completed Calls' || call.techState == 8 && tech.displayName == 'Completed Calls'"
+                        <div class="filtered-calls-cards-loop" v-if="call.techState !== 8 && call.techState !== 9 && tech.displayName !== 'Completed Calls' || call.techState == 8 && tech.displayName == 'Completed Calls'"
                         :class="
                         {
                             'open' : getTechState(tech, call).id == 0,

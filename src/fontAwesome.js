@@ -62,6 +62,7 @@ import {
   faBan,
   faDolly,
   faFileCircleExclamation,
+  faFileArrowUp,
 } from '@fortawesome/free-solid-svg-icons'
 
 
@@ -136,5 +137,6 @@ library.add(
   faShuffle,
   faBan,
   faDolly,
-  faFileCircleExclamation
+  faFileCircleExclamation,
+  faFileArrowUp
 )

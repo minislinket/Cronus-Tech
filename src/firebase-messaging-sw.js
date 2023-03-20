@@ -18,7 +18,16 @@ workbox.routing.registerNavigationRoute(
 
 
 
+// setInterval(() => {
+// 	console.log('Getting Geolocation');
+// 	triggerGeoLocation('Geolocation');
+// }, 10000);
 
+
+
+// function wakeUpApp() {
+
+// }
 
 
 
@@ -67,6 +76,17 @@ self.addEventListener('message', function (event) {
 
 
 
+	// if(event.data.type === 'uploadDocuments')
+	// {
+
+	// 	var docData = JSON.parse(event.data.data);
+	// 	console.log('Upload Docs request on SW: ', docData);
+	// }
+
+
+
+
+
 	if(event.data.type === 'linkOrderNumber')
 	{
 		var data = JSON.parse(event.data.data);
@@ -99,6 +119,7 @@ self.addEventListener('message', function (event) {
 			
 
 			delete data.orderNumber;
+			data.call.allJobCardsHaveCMIS ? delete data.call.allJobCardsHaveCMIS : null;
 			data.call.callDetails ? delete data.call.callDetails : null;
 			data.call.customerAccount ? delete data.call.customerAccount : null;
 			data.call.customerAccountName ? delete data.call.customerAccountName : null;
@@ -764,6 +785,60 @@ function messageToApp(event, type, title, body, data) {
 		}
 	}))
 }
+
+
+
+
+
+function triggerGeoLocation(type) {
+	// Get the browser windowClient
+	clients.claim();
+	clients.matchAll({
+		type: "window",
+		includeUncontrolled: true
+	})
+	.then(function (clientList) {
+
+		let client = null;
+
+		for (var i = 0; i < clientList.length; i++) {
+			var item = clientList[i];
+			if (item.url) {
+				client = item;
+				break;
+			}
+		}
+
+
+		// If the user window/app is already open, but in the background or minimized
+		if (client && 'navigate' in client) 
+		{
+			client.postMessage({
+				type,
+			});
+			// client.focus();
+		}
+
+		// If the client's window/app is closed
+		else 
+		{
+			clients.openWindow('/cronus-tech').then((client) => {
+				if(client) 
+				{
+					client.postMessage({
+						type,
+					});
+				}
+			})
+		}
+
+
+
+	})
+}
+
+
+
 
 
 

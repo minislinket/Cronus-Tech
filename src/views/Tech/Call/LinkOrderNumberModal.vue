@@ -13,6 +13,7 @@
                 <!-- <font-awesome-icon class="link-order-number-add-jc-id-icon" :class="{ disabled : !jobCardIdVerified }" @click="addJobCard(), jobCardId = ''" :icon="['fa', 'plus-square']" size="lg" /> -->
                 
             </div>
+
             
             <div class="link-order-number-modal-btn-wrap">
                 <button :disabled="!this.orderNumber || !this.orderNumberVerified || this.orderNumberVerified == 'init' || verifying == true" @click="linkOrderNumber()">Submit</button>
@@ -80,6 +81,9 @@ export default {
 
 
     methods: {
+
+
+        
 
 
 
@@ -320,10 +324,10 @@ export default {
 
 
 
-.job-card-id-grid-scroll-section {
+/* .job-card-id-grid-scroll-section {
     height: 60%;
     text-align: left;
-}
+} */
 
 
 .job-card-id-grid {

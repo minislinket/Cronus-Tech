@@ -40,6 +40,10 @@ const state = () => ({
         {
             url: '/inventory/items',
             name: 'inventory_items'
+        },
+        {
+            url: '/document_types',
+            name: 'document_types'
         }
         
     ],
@@ -221,7 +225,28 @@ const actions = {
                 {
                     resp.data.map(item => item['name'] = item.description);
                 }
-                    localStorage.setItem(res.name, JSON.stringify(resp.data));
+
+                if(res.name === 'document_types')
+                {
+                    // var orderFormIndex = '';
+                    // resp.data.filter((type, i) => i == 18 ? orderFormIndex = i : null)[0];
+                    // var orderForm = resp.data.filter(type => type.id == 18)[0];
+                    
+                    // resp.data.splice(orderFormIndex, 1);
+
+
+
+                    resp.data.unshift
+                    (
+                        { id: 19, name: "Job Card", abbreviation: "JC" },
+                        // orderForm
+                    )
+
+                   
+                }
+
+
+                localStorage.setItem(res.name, JSON.stringify(resp.data));
 
 
                 if(res.name === 'employees')
@@ -229,6 +254,9 @@ const actions = {
                     var techs = resp.data.filter(emp => emp.technician === true && emp.active === true);
                     localStorage.setItem('technicians', JSON.stringify(techs));
                 }
+                
+
+                
             })
             .catch(err => {
                 console.error('Axios Office Error: ', err);

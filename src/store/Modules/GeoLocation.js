@@ -61,17 +61,60 @@ const actions = {
 
 
 
+    // markTechAtOffice({  }) {
+
+    //     axiosOffice.
+
+    // },
+
+
+
+
     updateCurrentLocation({ commit, dispatch }) {
 
         // console.log('Updating GeoLocation...');
-        navigator.geolocation.getCurrentPosition(positionData => {
+        navigator.geolocation.getCurrentPosition(processPositionData, errorHandler, {
+            enableHighAccuracy: true,
+            timeout: 20000,
+            maximumAge: 0
+        })
+
+
+
+        function processPositionData(positionData) {
             // console.log(positionData);
             if(positionData)
             {
                 // dispatch('checkLocationAccuracy', positionData);
                 commit('location', positionData);
             }
-        })
+        }
+
+
+
+        function errorHandler(error) {
+            switch ( error.code ) { 
+                case error.PERMISSION_DENIED: 
+                    
+                    console.error( "User denied the request for Geolocation." ); 
+                    break; 
+        
+                case error.POSITION_UNAVAILABLE: 
+        
+                    console.error( "Location information is unavailable." ); 
+                    break; 
+        
+                case error.TIMEOUT: 
+        
+                    console.error( "The request to get user location timed out." ); 
+                    break; 
+        
+                case error.UNKNOWN_ERROR: 
+        
+                    console.error( "An unknown error occurred." ); 
+                    break; 
+            }
+        }
     },
 
 

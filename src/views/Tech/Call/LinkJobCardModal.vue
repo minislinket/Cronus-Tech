@@ -13,12 +13,19 @@
                 
             </div>
 
+            
+
             <div class="job-card-id-grid-scroll-section">
                 <div class="job-card-id-grid" v-for="(jc, index) in jobCardArray" :key="jc">
                     <p>{{ jc.id }}</p>
                     <font-awesome-icon @click="jobCardArray.splice(index, 1)" class="warning" :icon="['fa', 'trash']" size="lg" />
                 </div>
             </div>
+
+            
+
+
+            
             
             <div class="link-jc-modal-btn-wrap">
                 <button :disabled="jobCardArray.length <= 0" @click="linkJobCards()">Submit</button>
@@ -44,7 +51,8 @@ export default {
             jobCardIdVerified: false,
             jobCardArray: [],
             debounce: '',
-            user: JSON.parse(localStorage.getItem('user'))
+            user: JSON.parse(localStorage.getItem('user')),
+            
         }
     },
 
@@ -82,6 +90,12 @@ export default {
 
 
     methods: {
+
+
+
+        clearFileList: function() {
+            this.fileList = [];
+        },
 
 
 
@@ -258,7 +272,7 @@ export default {
 <style>
 
 .link-jc-modal-modal {
-    height: 50vh;
+    height: 70vh;
 }
 
 
@@ -366,7 +380,7 @@ export default {
 
 
 .job-card-id-grid-scroll-section {
-    height: 60%;
+    height: 20%;
     text-align: left;
 }
 
@@ -382,6 +396,15 @@ export default {
 .job-card-id-grid:last-child {
     border-bottom: none;
 }
+
+
+
+
+
+
+
+
+
 
 
 </style>

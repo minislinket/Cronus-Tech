@@ -1,3 +1,4 @@
+import { axiosOffice } from "../../../axios/axios";
 import router from "../../../router";
 
 
@@ -14,7 +15,8 @@ const state = () => ({
 
     linkJobCardModal: false,
     linkOrderNumberModal: false,
-    returnDateModal: false
+    returnDateModal: false,
+    uploadDocModal: false
 })
 
 
@@ -60,6 +62,11 @@ const getters = {
     returnDateModal: (state) => {
         return state.returnDateModal;
     },
+
+
+    uploadDocModal: (state) => {
+        return state.uploadDocModal;
+    }
     
     
 }
@@ -102,6 +109,11 @@ const actions = {
 
     returnDateModal({ commit }, toggle) {
         commit('returnDateModal', toggle);
+    },
+
+
+    uploadDocModal({ commit }, toggle) {
+        commit('uploadDocModal', toggle);
     },
     
     
@@ -254,7 +266,113 @@ const actions = {
         dispatch('Calls/updateLocalStorage', editCall, { root: true });
 
         dispatch('loading', false);
-    }
+    },
+
+
+
+
+
+
+
+    uploadDocuments({ dispatch }, payload) {
+        dispatch('loading', true);
+
+        var query = '';
+
+        if(payload.fileTypeId == 19)
+        {
+            query = 'job_cards/'+payload.jobCardId+'/upload';
+        }
+        else
+        {
+            query = 'customers/store/' + payload.call.customerStoreId + '/upload?customer_call_id=' + payload.call.id  + '&document_type_id=' + payload.fileTypeId;
+        }
+
+
+        axiosOffice.post(query, payload.formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+                'Accept': 'multipart/form-data'
+            }
+        })
+        .then(resp => {
+            console.log(resp);
+            if(resp.status == 200)
+            {
+                var toast = {
+                    shown: false,
+                    type: 'okay', // ['info', 'warning', 'error', 'okay']
+                    heading: 'Files uploaded successfully', // (Optional)
+                    body: '', 
+                    time: 3500, // in milliseconds
+                    icon: '' // leave blank for default type icon
+                }
+
+                dispatch('Toast/toast', toast, {root: true});
+                dispatch('uploadDocModal', false);
+                dispatch('loading', false);
+                // payload.call.allJobCardsHaveCMIS = true;
+                dispatch('Calls/updateLocalStorage', payload.call, { root: true });
+            }
+        })
+        .catch(err => {
+            console.error('Axios Office Error: ', err);
+            console.error('Axios Office Error Response: ', err.response);
+
+
+            if(err.response && err.response.data && err.response.data.message && err.response.data.message.indexOf('Job card must be linked to a call first') !== -1)
+            {
+                var toast = {
+                    shown: false,
+                    type: 'warning', // ['info', 'warning', 'error', 'okay']
+                    heading: 'Link Job Card', // (Optional)
+                    body: 'Please link your Job Card to a Job/Call first', 
+                    time: 5000, // in milliseconds
+                    icon: '' // leave blank for default type icon
+                }
+    
+                dispatch('Toast/toast', toast, {root: true});
+                dispatch('loading', false);
+                return
+            }
+
+
+
+            var modal = {
+                active: true, // true to show modal
+                type: 'error', // ['info', 'warning', 'error', 'okay']
+                icon: [], // Leave blank for no icon
+                heading: 'Error during upload',
+                body:   'Please make sure you have stable internet, then try the upload again',
+                confirmAction: 'init',
+                actionFrom: '',
+                actionData: '',
+                resolveText: 'Okay',
+                rejectText: ''
+                
+            }
+            dispatch('Modal/modal', modal, { root: true });
+
+
+            // var toast = {
+            //     shown: false,
+            //     type: 'error', // ['info', 'warning', 'error', 'okay']
+            //     heading: 'Error during upload', // (Optional)
+            //     body: 'Please make sure you have stable internet, then try again', 
+            //     time: 5000, // in milliseconds
+            //     icon: '' // leave blank for default type icon
+            // }
+
+            // dispatch('Toast/toast', toast, {root: true});
+            dispatch('loading', false);
+        })
+
+
+        
+    },
+
+
+
 
 }
 
@@ -297,7 +415,9 @@ const mutations = {
         state.returnDateModal = toggle;
     },
     
-    
+    uploadDocModal(state, toggle) {
+        state.uploadDocModal = toggle;
+    },
 
 
     

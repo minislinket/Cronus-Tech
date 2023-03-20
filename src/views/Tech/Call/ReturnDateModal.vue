@@ -192,10 +192,7 @@ export default {
 
 
 
-.job-card-id-grid-scroll-section {
-    height: 60%;
-    text-align: left;
-}
+
 
 
 .job-card-id-grid {
