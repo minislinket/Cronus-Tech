@@ -73,7 +73,7 @@ const actions = {
     updateCurrentLocation({ commit, dispatch }) {
 
         // console.log('Updating GeoLocation...');
-        navigator.geolocation.getCurrentPosition(processPositionData, errorHandler, {
+        navigator.geolocation.watchPosition(processPositionData, errorHandler, {
             enableHighAccuracy: true,
             timeout: 20000,
             maximumAge: 0
@@ -140,6 +140,47 @@ const actions = {
                 }
 
                 axiosOffice.post('customers/stores/'+ customerStoreId +'/location', locationData)
+                .then(resp => {
+                    console.log(resp);
+                })
+                .catch(err => {
+                    console.error('Axios Office Error: ', err);
+                    console.error('Axios Office Error Response: ', err.response);
+                })
+            }
+
+        })
+
+    },
+
+
+
+
+
+
+
+    updateTechnicianLocation({ commit }) {
+
+        var user = JSON.parse(localStorage.getItem('user'));
+
+        navigator.geolocation.getCurrentPosition(positionData => {
+            if(positionData)
+            {
+                commit('location', positionData);
+
+                var employee = 
+                {
+                    "employeeCode": user.employeeCode,
+                    "lastLatitude": positionData.coords.latitude,
+                    "lastLongitude": positionData.coords.longitude,
+                }
+                
+
+                axiosOffice.put('company/employees/'+user.employeeCode+'/location', employee, {
+                    params: {
+                        at_office: false
+                    }
+                })
                 .then(resp => {
                     console.log(resp);
                 })

@@ -128,6 +128,8 @@
 
         </div>
 
+        <button class="update-location-btn" @click="updateLocation()"><font-awesome-icon :icon="['fa', 'location-dot']" size="lg" /> Update Location</button>
+
         <button class="switch-user-type-btn" v-if="availableUserRoles.includes(2)" @click="switchProfile()"><font-awesome-icon :icon="['fa', 'retweet']" size="lg" /> Switch to Ops-Admin</button>
 
         
@@ -254,6 +256,13 @@ export default {
 
 
     methods: {
+
+
+
+
+        updateLocation: function() {
+            this.$store.dispatch('GeoLocation/updateTechnicianLocation');
+        },
 
 
 
@@ -630,6 +639,18 @@ export default {
 }
 
 
+
+
+
+
+.update-location-btn {
+    position: fixed;
+    bottom: 140px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: max-content;
+}
 
 
 </style>

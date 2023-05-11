@@ -18,14 +18,14 @@ const state = () => ({
             text: 'Jobs',
             active: false
         },
-        /* {
+        {
             id: 2,
-            icon: ['fa', 'user-circle'],
-            url: '/',
-            text: 'Sample',
+            icon: ['fa', 'box-archive'],
+            url: '/stock',
+            text: 'Stock',
             active: false
         },
-        {
+        /* {
             id: 4,
             icon: ['fa', 'exclamation-triangle'],
             url: '/',

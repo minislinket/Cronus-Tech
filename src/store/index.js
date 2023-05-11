@@ -29,6 +29,9 @@ import Dashboard from '../views/Tech/Dashboard/Dashboard'
 import Calls from '../views/Tech/Calls/Calls'
 import Call from '../views/Tech/Call/Call'
 
+// Tech Stock
+import TechStock from '../views/Tech/Stock/TechStock'
+
 
 
 
@@ -81,7 +84,7 @@ export default createStore({
     // Calls
     Calls,
     Call,
-
+    TechStock,
 
 
 

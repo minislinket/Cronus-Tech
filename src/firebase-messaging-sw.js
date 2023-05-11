@@ -18,16 +18,7 @@ workbox.routing.registerNavigationRoute(
 
 
 
-// setInterval(() => {
-// 	console.log('Getting Geolocation');
-// 	triggerGeoLocation('Geolocation');
-// }, 10000);
 
-
-
-// function wakeUpApp() {
-
-// }
 
 
 

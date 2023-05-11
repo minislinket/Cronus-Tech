@@ -10,6 +10,7 @@ import PasswordReset from '../views/PswReset/PswReset.vue'
 import Dashboard from '../views/Tech/Dashboard/Dashboard.vue'
 import Calls from '../views/Tech/Calls/Calls.vue'
 import Call from '../views/Tech/Call/Call.vue'
+import Stock from '../views/Tech/Stock/Stock.vue'
 
 
 // Technician Operation Manager Application Routes
@@ -32,7 +33,11 @@ const routes = [
 	{
 		path: '/settings',
 		name: 'Settings',
-		component: Settings
+		component: Settings,
+		meta: {
+			title: 'Settings',
+			icon: ['fa', 'cog']
+		}
 	},
 	{
 		path: '/psw-reset',
@@ -48,7 +53,11 @@ const routes = [
 	{
 		path: '/dashboard',
 		name: 'Dashboard',
-		component: Dashboard
+		component: Dashboard,
+		meta: {
+			title: 'Home',
+			icon: ['fa', 'home']
+		}
 	},
 	{
 		path: '/calls',
@@ -68,7 +77,15 @@ const routes = [
 			icon: ['fa', 'tools']
 		}
 	},
-
+	{
+		path: '/stock',
+		name: 'Stock',
+		component: Stock,
+		meta: {
+			title: 'Stock Levels',
+			icon: ['fa', 'box-archive']
+		}
+	},
 	
 
 
@@ -79,6 +96,7 @@ const routes = [
 		path: '/ops_dashboard',
 		name: 'Operations Dashboard',
 		component: OpsDashboard,
+	
 	},
 	{
 		path: '/add_call',

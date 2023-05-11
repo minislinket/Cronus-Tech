@@ -63,6 +63,11 @@ import {
   faDolly,
   faFileCircleExclamation,
   faFileArrowUp,
+  faBoxArchive,
+  faBell,
+  faLocationDot,
+  faFileCircleCheck,
+  faMapLocationDot,
 } from '@fortawesome/free-solid-svg-icons'
 
 
@@ -138,5 +143,10 @@ library.add(
   faBan,
   faDolly,
   faFileCircleExclamation,
-  faFileArrowUp
+  faFileArrowUp,
+  faBoxArchive,
+  faBell,
+  faLocationDot,
+  faFileCircleCheck,
+  faMapLocationDot
 )

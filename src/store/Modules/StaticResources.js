@@ -142,6 +142,8 @@ const actions = {
 
         await dispatch('getUser');
 
+        
+
         var getCustomerStores = dispatch('getCustomerStores');
         var getCustomerAccounts = dispatch('getCustomerAccounts');
         var setBaseResources = dispatch('setBaseResources');
@@ -221,6 +223,13 @@ const actions = {
             .then(async resp => {
                 if(resp.status === 200 && resp.data)
 
+
+                // if(res.name == 'branches')
+                // {
+                //     await dispatch('setBranchCoordinates', resp.data);
+                // }
+
+
                 if(res.name === 'inventory_items')
                 {
                     resp.data.map(item => item['name'] = item.description);
@@ -267,6 +276,59 @@ const actions = {
   
 
     },
+
+
+
+
+
+    async setBranchCoordinates({}, branches) {
+
+        await Promise.all(branches.map(branch => {
+
+            switch(branch.id) {
+
+                // Gauteng
+                case 4: 
+                    branch.longitude = '';
+                    branch.latitude = '';
+                    break
+                // KZN
+                case 5: 
+                    branch.longitude = '';
+                    branch.latitude = '';
+                    break
+                // Western Cape
+                case 6: 
+                    branch.longitude = '';
+                    branch.latitude = '';
+                    break
+                // Eastern Cape
+                case 7: 
+                    branch.longitude = '';
+                    branch.latitude = '';
+                    break
+                // Free State
+                case 8: 
+                    branch.longitude = '';
+                    branch.latitude = '';
+                    break
+                // Limpopo
+                case 9: 
+                    branch.longitude = '';
+                    branch.latitude = '';
+                    break
+                // National
+                case 11: 
+                    branch.longitude = '';
+                    branch.latitude = '';
+                    break
+
+            }
+
+        }))
+
+    },
+
 
 
 

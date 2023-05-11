@@ -7,23 +7,23 @@ import StaticResources from './store/Modules/StaticResources';
 
 
 
-function updateGeoLocation() {	
-	var count = localStorage.getItem('geo_update_count');
+// function updateGeoLocation() {	
+// 	var count = localStorage.getItem('geo_update_count');
 
-	if(count)
-	{
-		count++
-	}
-	else
-	{
-		count = 1;
-	}
+// 	if(count)
+// 	{
+// 		count++
+// 	}
+// 	else
+// 	{
+// 		count = 1;
+// 	}
 
-	localStorage.setItem('geo_update_count', count);
-	console.log('Geo Update Count');
+// 	localStorage.setItem('geo_update_count', count);
+// 	console.log('Geo Update Count', count);
 
 
-}
+// }
 
 
 
@@ -109,12 +109,12 @@ if (process.env.NODE_ENV === 'production') {
 
 
 			// Intercept Geolocation update requests
-			if(event.type && event.type === 'Geolocation')
-			{
-				console.log('Received Geolocation Update Request from SW');
-				updateGeoLocation();
-				return 
-			}
+			// if(event.type && event.type === 'update_location')
+			// {
+			// 	console.log('Received Geolocation Update Request from SW');
+			// 	updateGeoLocation();
+			// 	return 
+			// }
 
 
 			// Intercept Push Notification Clicks and redirect user to desired page

@@ -60,7 +60,7 @@ export default {
 
         displayText: {
             handler: function() {
-                console.log('Display text changed: ', this.displayText);
+                // console.log('Display text changed: ', this.displayText);
                 this.searchInput = this.displayText;
             },
             deep: true,
@@ -100,7 +100,7 @@ export default {
 
 
         selectItem: function(item) {
-            console.log('Search Select has selected an item... ', item);
+            // console.log('Search Select has selected an item... ', item);
             this.showDropDown = false;
             this.searchInput = item.name;
             this.$emit('select', item);

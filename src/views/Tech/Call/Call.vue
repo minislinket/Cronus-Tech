@@ -8,18 +8,18 @@
         <div class="call-info-wrap">
 
             <div class="link-jc-no-order-num-wrap">
-                <div class="link-job-card-wrap" v-if="call.techStateId >= 4">
+                <div class="link-job-card-wrap" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2">
                     <button :class="{ 'no-jc' : call.jobCards.length <= 0, 'linked' : call.jobCards.length >= 1 }" @click="openLinkJobCard()"><font-awesome-icon class="link-job-card-icon" :icon="['fa','link']" size="lg" /> </button>
                     <span>Link Job Card</span>
                 </div>
-                <p @click="openLinkOrderNumber()" v-if="call.techStateId >= 4"><button class="no-order-number" :class="{ okay : call.orderNumber }"><font-awesome-icon :icon="['fa','exclamation-triangle']" size="lg" /></button> Order Number</p>
+                <p @click="openLinkOrderNumber()" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2"><button class="no-order-number" :class="{ okay : call.orderNumber }"><font-awesome-icon :icon="['fa','exclamation-triangle']" size="lg" /></button> Order Number</p>
             </div>
             <div class="link-jc-no-order-num-wrap">
-                <div class="link-job-card-wrap" v-if="call.techStateId >= 4">
+                <div class="link-job-card-wrap" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2">
                     <button :class="{ 'no-jc' : !call.allJobCardsHaveCMIS, 'linked' : call.allJobCardsHaveCMIS }" @click="openUploadDocs()"><font-awesome-icon class="link-job-card-icon" :icon="['fa','file-arrow-up']" size="lg" /> </button>
                     <span>Upload Docs</span>
                 </div>
-                <div class="refresh-job-card-btn-wrap" v-if="call.techStateId >= 4">
+                <div class="refresh-job-card-btn-wrap" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2">
                     <button class="refresh-call-jcs-btn" @click="refreshCallDocs()"><font-awesome-icon class="refresh-job-cards-icon" :icon="['fa','sync-alt']" size="lg" /> </button>
                     <span>Refresh Docs</span>
                 </div>
@@ -28,7 +28,7 @@
 
             <div class="call-info-wrapper job-card-list">
                 <h4>Job Cards</h4>
-                <span v-for="(jc, i) in call.jobCards" :key="jc.id">{{ jc.id }}<span v-if="call.jobCards.length - 1 !== i">, </span></span>
+                <span style="display: flex; align-items: center;" v-for="(jc, i) in call.jobCards" :key="jc.id">{{ jc.id }}<font-awesome-icon v-if="jc.cmisDocumentId" class="has-doc-upload-icon" :icon="['fa','file-circle-check']" size="lg" /><span v-if="call.jobCards.length - 1 !== i">, </span></span>
             </div>
 
 
@@ -40,6 +40,11 @@
             <div class="call-info-wrapper">
                 <h4>Address ({{ call.customerStore && call.customerStore.distance ? call.customerStore.distance : '' }} km <span class="small-text distance-x2">distance x2</span>)</h4>
                 <p style="text-align: center;">{{ call.customerStoreAddress }}</p>
+
+                <div class="customer-store-maps-link" v-if="call.customerStore && call.customerStore.longitude">
+                    <font-awesome-icon class="maps-link-icon" :icon="['fa','map-location-dot']" size="lg" />
+                    <a :href="'http://maps.google.com/maps?z=12&t=m&q=loc:'+call.customerStore.latitude+'+'+call.customerStore.longitude">Open with Google Maps</a>
+                </div>
 
                 <h4 style="margin-top: 15px;">Customer Account</h4>
                 <p style="text-align: center;">{{ call.customerAccountName }}</p>
@@ -158,11 +163,11 @@
 
         <div class="call-button-wrap" >
             <button :disabled="!canUpdateStatus" v-if="call.techStateId === 1" @click="canUpdateCall(2)" class="update-call-btn received"><font-awesome-icon class="update-call-icon accept" :icon="['fa', 'user-check']" size="lg" :class="{ disabled : !canUpdateStatus }" /> Accept Call</button>
-            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 2 || call.techStateId >= 5 && call.techStateId <= 7 || call.techStateId == 9" @click="canUpdateCall(3)" class="update-call-btn en-route"><font-awesome-icon class="update-call-icon en-route" :icon="['fa', 'route']" size="lg" :class="{ disabled : !canUpdateStatus }" /> En Route</button>
-            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 3" @click="canUpdateCall(4)" class="update-call-btn on-site"><font-awesome-icon class="update-call-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" :class="{ disabled : !canUpdateStatus }" /> On Site</button>
-            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 4" @click="openCommentsModal()" class="update-call-btn on-hold"><font-awesome-icon class="update-call-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" :class="{ disabled : !canUpdateStatus }" /> On Hold</button>
-            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS" v-if="call.techStateId === 4" @click="captureReturnDate()" class="update-call-btn returning"><font-awesome-icon class="update-call-icon returning" :icon="['fa', 'clock-rotate-left']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS }" /> Returning</button>
-            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS || !call.orderNumber" v-if="call.techStateId === 4 || call.techStateId === 6" @click="canUpdateCall(8)" class="update-call-btn completed"><font-awesome-icon class="update-call-icon completed" :icon="['fa', 'clipboard-check']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.orderNumber }" /> Complete</button>
+            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 2 && call.callTypeId != 6 || call.techStateId >= 5 && call.techStateId <= 7 && call.callTypeId != 6 || call.techStateId == 9 && call.callTypeId != 6" @click="canUpdateCall(3)" class="update-call-btn en-route"><font-awesome-icon class="update-call-icon en-route" :icon="['fa', 'route']" size="lg" :class="{ disabled : !canUpdateStatus }" /> En Route</button>
+            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 3 && call.callTypeId != 6" @click="canUpdateCall(4)" class="update-call-btn on-site"><font-awesome-icon class="update-call-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" :class="{ disabled : !canUpdateStatus }" /> On Site</button>
+            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS" v-if="call.techStateId === 4 && call.callTypeId != 6" @click="openCommentsModal()" class="update-call-btn on-hold"><font-awesome-icon class="update-call-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS }" /> On Hold</button>
+            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS" v-if="call.techStateId === 4 && call.callTypeId != 6" @click="captureReturnDate()" class="update-call-btn returning"><font-awesome-icon class="update-call-icon returning" :icon="['fa', 'clock-rotate-left']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS }" /> Returning</button>
+            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS || !call.orderNumber" v-if="call.techStateId === 4 || call.techStateId === 6 || call.techStateId === 2 && call.callTypeId == 6" @click="canUpdateCall(8)" class="update-call-btn completed"><font-awesome-icon class="update-call-icon completed" :icon="['fa', 'clipboard-check']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.orderNumber }" /> Complete</button>
         </div>
     </div>
 </template>
@@ -308,7 +313,8 @@ export default {
 
     methods: {
 
-
+        
+            
 
 
         refreshCallDocs: function() {
@@ -421,7 +427,7 @@ export default {
 
 
 
-        addCallComment: async function(comment) {
+        addCallComment: async function(comment, type) {
 
             // await Promise.all(this.commentingOnCalls.map(async commentCall => {
 
@@ -436,6 +442,15 @@ export default {
                 "customerCallId": call.id,
                 "comment": comment,
                 "resolved": false
+            }
+
+            if(type == 'order')
+            {
+                commentData['orderIssue'] = true;
+            }
+            if(type === 'stock')
+            {
+                commentData['stockIssue'] = true;
             }
 
             var data =
@@ -605,7 +620,7 @@ export default {
             // console.log('Comment is: ', comment);
 
             // this.updateCall(6, this.call);
-            this.addCallComment(comment);
+            this.addCallComment(comment, type);
         },
 
 
@@ -935,6 +950,30 @@ export default {
     margin-bottom: 100px;
 }
 
+
+
+
+.has-doc-upload-icon {
+    font-size: 14px;
+    margin-left: 3px;
+    color: var(--OkayGreen);
+}
+
+
+.customer-store-maps-link {
+    margin-top: 8px;
+    text-align: center;
+}
+
+.maps-link-icon {
+    margin-right: 5px;
+}
+
+.customer-store-maps-link a {
+    color: var(--CompletedLight);
+    font-weight: 700;
+    text-decoration: none;
+}
 
 
 

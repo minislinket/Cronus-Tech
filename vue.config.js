@@ -26,7 +26,8 @@ module.exports = {
     manifestOptions: {
       orientation: 'portrait',
       display: 'standalone',
-      start_url: '/cronus-tech/'
+      start_url: '/cronus-tech/',
+      lang: 'en-GB',
     }
   },
 

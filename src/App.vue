@@ -97,19 +97,19 @@ export default {
 		},
 
 
-		stopGeoLocationService: {
-			handler: function() {
-				// this.stopGeoLocationService == true ? this.stopGeoLocation() : null;
-			},
-			deep: true,
-		},
+		// stopGeoLocationService: {
+		// 	handler: function() {
+		// 		// this.stopGeoLocationService == true ? this.stopGeoLocation() : null;
+		// 	},
+		// 	deep: true,
+		// },
 
-		startGeoLocationService: {
-			handler: function() {
-				// this.startGeoLocationService == true ? this.startGeoLocation() : null;
-			},
-			deep: true,
-		},
+		// startGeoLocationService: {
+		// 	handler: function() {
+		// 		// this.startGeoLocationService == true ? this.startGeoLocation() : null;
+		// 	},
+		// 	deep: true,
+		// },
 	},
 
 
@@ -118,7 +118,7 @@ export default {
 
 	created() {
 
-		navigator.serviceWorker.getRegistration().then(reg => { this.listenForWaitingServiceWorker(reg, this.promptUserToRefresh) }); /* , this.createUserCredential(reg) */
+		navigator.serviceWorker.getRegistration().then(reg => { this.listenForWaitingServiceWorker(reg, this.promptUserToRefresh) }); 
 		navigator.serviceWorker.addEventListener('controllerchange', function() { window.location.reload() });
 
 	},
@@ -129,20 +129,32 @@ export default {
 
 	mounted() {
 
+		// this.startPeriodicSync();
+		// if (status.state === 'granted') {
+		// // Periodic background sync can be used.
+		// 	console.log('Periodic Sync available...');
+		// } else {
+		// 	console.log('NO Periodic Sync...')
+		// // Periodic background sync cannot be used.
+		// }
+
+
+
+
 		this.checkCallSyncStoreBackup();
 
 
-		// Check if Geo Location Service is available and start it up
-		if(navigator.geolocation) 
-            {
-				console.log('Geo Location is available...');
-                // this.startGeoLocation();
-            } 
-            else 
-            {
-                console.log('Geo Location not supported by browser');
-				this.stopGeoLocation();
-            }
+		// // Check if Geo Location Service is available and start it up
+		// if(navigator.geolocation) 
+		// {
+		// 	console.log('Geo Location is available...');
+		// 	this.startGeoLocation();
+		// } 
+		// else 
+		// {
+		// 	console.log('Geo Location not supported by browser');
+		// 	this.stopGeoLocation();
+		// }
 		
 
 		// var user_type = localStorage.getItem('user_type');
@@ -223,71 +235,55 @@ export default {
 
 
 
-		startGeoLocation: function() {
+		// startPeriodicSync: async function() {
+		// 	await navigator.permissions.query({
+		// 		name: 'periodic-background-sync',
+		// 	})
+		// 	.then(event => {
+		// 		navigator.serviceWorker.ready.then(async registration => {
+		// 			try {
+		// 				await registration.periodicSync.register('updateLocation', { minInterval: 300000 });
+		// 				console.log('Periodic background sync registered.');
+		// 			} catch (err) {
+		// 				console.error(err.name, err.message);
+		// 			}
+		// 		});
+		// 	})
+		// },
 
-			console.log('Starting Geo Location Service...');
 
-			// Incase an interval is already setup, clear it and start again
-			if(this.geoLocationInterval)
-			{
-				clearInterval(this.geoLocationInterval);
-			}
 
-			// Get initial location
-			this.$store.dispatch('GeoLocation/updateCurrentLocation');
+		// startGeoLocation: function() {
 
-			// Set an interval to get intermittent updates
-			this.geoLocationInterval = setInterval(() => {
-				this.$store.dispatch('GeoLocation/updateCurrentLocation');
-			}, this.geoLocationUpdateTimeMinutes * 1000 * 60)
+		// 	console.log('Starting Geo Location Service...');
+
+		// 	// Incase an interval is already setup, clear it and start again
+		// 	if(this.geoLocationInterval)
+		// 	{
+		// 		clearInterval(this.geoLocationInterval);
+		// 	}
+
+		// 	// Get initial location
+		// 	this.$store.dispatch('GeoLocation/updateCurrentLocation');
+
+		// 	// Set an interval to get intermittent updates
+		// 	// this.geoLocationInterval = setInterval(() => {
+		// 		this.$store.dispatch('GeoLocation/updateCurrentLocation');
+		// 	// }, this.geoLocationUpdateTimeMinutes * 1000 * 60)
 			
-		},
+		// },
 
 
 
-		stopGeoLocation: function() {
-			console.log('Stopping Geo Location Service...');
-			clearInterval(this.geoLocationInterval);
-		},
+		// stopGeoLocation: function() {
+		// 	console.log('Stopping Geo Location Service...');
+		// 	clearInterval(this.geoLocationInterval);
+		// },
 
 
 
 
 
-
-		createUserCredential: async function(reg) {
-
-			if(!this.isAuth) { return }
-
-			var toast = {
-				shown: false,
-				type: 'warning', // ['info', 'warning', 'error', 'okay']
-				heading: 'Re-Authentication not available', // (Optional)
-				body: 'This device does not support biometrics', 
-				time: 4500, // in milliseconds
-				icon: ['fa', 'fingerprint'] // leave blank for default toast type icon
-			}
-
-			if (!window.PublicKeyCredential) 
-			{
-				this.$store.dispatch('StaticResources/canReAuthenticate', false);
-				// this.$store.dispatch('Toast/toast', toast);
-			}
-			else
-			{
-				this.$store.dispatch('StaticResources/canReAuthenticate', true);
-				console.log(window.PublicKeyCredential);
-				toast.type = 'okay';
-				toast.heading = 'Re-Authentication available on device';
-				toast.body = 'If available, register biometrics under menu->settings';
-				toast.time = 6000;
-				// this.$store.dispatch('Toast/toast', toast);
-			}
-
-
-
-			
-		},
 
 
 

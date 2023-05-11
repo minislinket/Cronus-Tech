@@ -102,6 +102,10 @@ const actions = {
         // var transferredParams = {technician_employee_code: user.employeeCode, call_status_id: 2, tech_call_status_id: 9};
         // var getTransferredCalls = dispatch('loadTechnicianCallsFromServer', transferredParams);
 
+        // Completed Calls - for Telephone Support
+        // var transferredParams = {technician_employee_code: user.employeeCode, call_status_id: 2, tech_call_status_id: 9};
+        // var getTransferredCalls = dispatch('loadTechnicianCallsFromServer', transferredParams);
+
         
         // Get all technician calls simultaneously
         var [pendingCalls, receivedCalls, enRouteCalls, reroutedCalls, onSiteCalls, returningCalls, onHoldCalls/* , transferredCalls */] 
@@ -344,7 +348,7 @@ const actions = {
         dispatch('Call/loading', true, { root: true });
         await dispatch('getCallJobCards', call);
         dispatch('updateLocalStorage', call);
-        dispatch('Call/loading', true, { root: false });
+        dispatch('Call/loading', false, { root: true });
     },
 
 

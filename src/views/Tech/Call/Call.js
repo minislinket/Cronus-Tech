@@ -343,12 +343,10 @@ const actions = {
                 type: 'error', // ['info', 'warning', 'error', 'okay']
                 icon: [], // Leave blank for no icon
                 heading: 'Error during upload',
-                body:   'Please make sure you have stable internet, then try the upload again',
-                confirmAction: 'init',
-                actionFrom: '',
-                actionData: '',
-                resolveText: 'Okay',
-                rejectText: ''
+                body:   '<p>Please make sure you have stable internet, then try the upload again</p>'
+                        +'<p>If that still isn\'t working and you are busy uploading photos, please try uploading less at a time.</p>'
+                        +'<br><p>Please note that the server could also be experiencing problems.</p>',
+                
                 
             }
             dispatch('Modal/modal', modal, { root: true });

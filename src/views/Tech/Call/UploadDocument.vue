@@ -208,27 +208,27 @@ export default {
 
 
 
-        emitFiles: function() {
+        emitFiles: async function() {
             var formData = new FormData();
             
-            this.fileList.map(file => {
+            await Promise.all(this.fileList.map(file => {
                 if(this.fileTypeId == 1)
                 {
                     // var compressedImage = await this.compressImage(files[i], 70);
-                    console.log('File to compress: ', file.file)
+                    // console.log('File to compress: ', file.file)
 
                     new Compressor(file.file, {
-                        quality: 0.6,
+                        quality: 0.5,
 
                         // The compression process is asynchronous,
                         // which means you have to access the `result` in the `success` hook function.
                         success(result) {
-                            console.log('Compressed File: ', result);
+                            // console.log('Compressed File: ', result);
                             file.file = result;
                             file.url = URL.createObjectURL(result)
                         },
                         error(err) {
-                            console.log(err.message);
+                            // console.log(err.message);
                         },
                     });
                     
@@ -236,7 +236,7 @@ export default {
                 var fileExtension = file.file.type.split('/')[1];
                 var newFile = new File([file.file], file.name + '.' + fileExtension, { type: file.file.type })
                 formData.append('file', newFile);
-            })
+            }))
 
             // var formObject = JSON.stringify(Object.fromEntries(formData));
             

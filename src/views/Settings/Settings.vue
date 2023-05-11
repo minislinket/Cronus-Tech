@@ -20,6 +20,20 @@
 
         <button :disabled="!online" class="update-static-btn warning" @click="resetApp()"><font-awesome-icon :icon="['fa', 'sync-alt']" size="lg" /> Reset App Data</button>
 
+        <div class="app-permission-wrap">
+            <h4>App Permissions</h4>
+            <div class="app-permissions-settings-wrap">    
+                <p><font-awesome-icon class="icon" :icon="['fa', 'bell']" size="lg" /> Notifications </p>
+                <font-awesome-icon class="icon permission-active" v-if="notificationPermissions" :icon="['far', 'check-circle']" size="lg" />
+                <font-awesome-icon class="icon permission-inactive" v-else :icon="['fa', 'times-circle']" size="lg" />
+                <!-- <input type="checkbox" v-model="notificationPermissions" disabled> -->
+                <p><font-awesome-icon class="icon" :icon="['fa', 'location-dot']" size="lg" /> Location </p>
+                <font-awesome-icon class="icon permission-active" v-if="locationPermissions" :icon="['far', 'check-circle']" size="lg" />
+                <font-awesome-icon class="icon permission-inactive" v-else :icon="['fa', 'times-circle']" size="lg" />
+                <!-- <input type="checkbox" v-model="locationPermissions" disabled> -->
+            </div>
+        </div>
+
     </div>
 </template>
 
@@ -37,7 +51,10 @@ export default {
             pKey: {},
             user: JSON.parse(localStorage.getItem('user')),
 
-            loading: false
+            loading: false,
+
+            notificationPermissions: false,
+            locationPermissions: false
         }
     },
 
@@ -69,6 +86,56 @@ export default {
             },
             deep: true
         },
+    },
+
+
+
+
+    mounted() {
+
+        this.$store.dispatch('Menu/setTitle', { title: 'Settings', icon: ['fa', 'cog'] });
+        // Notification.requestPermission()
+		// .then((permission) => {
+		// 	if (permission === 'granted') {
+		// 		this.notificationPermissions = true;
+		// 	}
+        //     else
+        //     {
+        //         this.notificationPermissions = false;
+        //     }
+		// })
+		// .catch((err) => {
+		// 	// console.log(err);
+        //     this.notificationPermissions = false;
+		// })
+
+        navigator.permissions.query({ name: 'geolocation' })
+		.then(res => {
+			console.log(res);
+            if(res.state === 'granted')
+            {
+                this.locationPermissions = true;
+            }
+            else
+            {
+                this.locationPermissions = false;
+            }
+		})
+        .catch(err => this.locationPermissions = false)
+
+        navigator.permissions.query({ name: 'notifications' })
+		.then(res => {
+			console.log(res);
+            if(res.state === 'granted')
+            {
+                this.notificationPermissions = true;
+            }
+            else
+            {
+                this.notificationPermissions = false;
+            }
+		})
+        .catch(err => this.notificationPermissions = false)
     },
 
 
@@ -292,6 +359,7 @@ export default {
     display: flex;
     flex-direction: column;
     align-items: center;
+    position: relative;
 }
 
 
@@ -312,6 +380,68 @@ export default {
 .refresh-jobs-btn span {
     font-size: 26px;
     margin-right: 5px;
+}
+
+
+
+
+
+
+
+
+
+
+.app-permission-wrap {
+    position: fixed;
+    bottom: -50px;
+    width: 100vw;
+    padding: 5px 10px;
+    background: var(--BlueAlt);
+    height: 250px;
+}
+
+
+
+.app-permission-wrap h4 {
+    margin-bottom: 10px;
+    margin-top: 15px;
+    font-size: 22px;
+}
+
+
+
+.app-permissions-settings-wrap {
+    display: grid;
+    grid-template-columns: 1fr 0.5fr;
+    justify-items: center;
+    width: 100%;
+    padding-bottom: 5px;
+    padding-left: 20px;
+}
+
+
+
+
+.app-permissions-settings-wrap p {
+    display: flex;
+    align-items: center;
+    justify-self: flex-start;
+    margin-bottom: 3px;
+}
+
+
+.app-permissions-settings-wrap .icon {
+    margin-right: 8px;
+}
+
+
+
+.app-permissions-settings-wrap .icon.permission-active {
+    color: var(--OkayGreen);
+}
+
+.app-permissions-settings-wrap .icon.permission-inactive {
+    color: var(--WarningOrange);
 }
 
 </style>
