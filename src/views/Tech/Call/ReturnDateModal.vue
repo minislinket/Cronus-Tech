@@ -6,8 +6,12 @@
             <h4>When are you returning to this Job?</h4>
 
             <div class="return-date-modal-input-wrap">
-                <input type="date" v-model="returnDate" :min="today" @change="showDate()">
-                
+                <input type="date" v-model="returnDate" :min="today">
+            </div>
+
+            <div class="return-date-reason-input-wrap">
+                <h4>Why do you need to return?</h4>
+                <textarea maxlength="500" v-model="reason"></textarea>
             </div>
             
             <div class="return-date-modal-btn-wrap">
@@ -29,7 +33,8 @@ export default {
     data() {
         return {
             returnDate: '',
-            today: new Date().toISOString().split('T')[0]
+            today: new Date().toISOString().split('T')[0],
+            reason: ''
         }
     },
 
@@ -50,7 +55,7 @@ export default {
 
     mounted() {
         this.returnDate = '';
-        console.log(this.today);
+        // console.log(this.today);
     },
 
 
@@ -58,10 +63,6 @@ export default {
 
     methods: {
 
-        showDate: function() {
-            console.log(this.returnDate);
-            console.log(this.today);
-        },
  
         closeReturnDateModal: function() {
             this.$store.dispatch('Call/returnDateModal', false);
@@ -71,7 +72,7 @@ export default {
 
 
         recordReturnDate: function() {
-            this.$emit('recordReturnDate', this.returnDate);
+            this.$emit('recordReturnDate', { returnDate: this.returnDate, reason: this.reason });
             this.closeReturnDateModal();
         }
 
@@ -84,7 +85,7 @@ export default {
 <style>
 
 .return-date-modal {
-    height: 25vh;
+    height: 380px;
     width: 85vw;
 }
 
@@ -124,7 +125,6 @@ export default {
     background: transparent;
     border: none;
     border-bottom: 1px solid var(--OffWhite);
-    margin-right: 20px;
     color: white;
     border-radius: 0;
 }
@@ -142,12 +142,21 @@ export default {
 
 
 
+.return-date-reason-input-wrap textarea {
+    width: 90%;
+    height: 150px;
+    padding: 7px 12px;
+} 
+
+
+
 
 .return-date-modal-btn-wrap {
     display: flex;
     align-items: center;
     justify-content: space-evenly;
     padding: 0 5px;
+    margin-top: 15px;
 }
 
 

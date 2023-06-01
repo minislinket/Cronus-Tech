@@ -32,7 +32,8 @@ import Call from '../views/Tech/Call/Call'
 // Tech Stock
 import TechStock from '../views/Tech/Stock/TechStock'
 
-
+// Document Uploads
+import DocUploads from '../views/Tech/DocUploads/DocUploads'
 
 
 
@@ -85,6 +86,9 @@ export default createStore({
     Calls,
     Call,
     TechStock,
+
+    //Document Uploads
+    DocUploads,
 
 
 

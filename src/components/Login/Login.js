@@ -1,6 +1,7 @@
 import { axiosOffice } from '../../axios/axios'
 import router from '../../router/index'
 const crypto = require('crypto');
+import idb from '../../idb/idb';
 
 // initial state
 const state = () => ({
@@ -241,7 +242,8 @@ const actions = {
                     
                     
 
-
+                    idb.setUserSignature(resp.data.signature);
+                    // dispatch('DocUploads/setUserSignature', resp.data.signature, { root: true });
                     localStorage.setItem('signature', JSON.stringify(resp.data.signature));
                     localStorage.setItem('time_stamp', JSON.stringify(time));
 

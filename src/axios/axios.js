@@ -82,7 +82,7 @@ function backupLogInLocal(err) {
 // Set environment variables according to mode 
 if (process.env.NODE_ENV === 'production') 
 {
-    console.log('Production Mode');
+    // console.log('Production Mode');
 
     var baseURLOffice = '';
     var baseURLMySQL = '';

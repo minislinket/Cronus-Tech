@@ -31,7 +31,7 @@ import Toast from './components/Toast/Toast.vue'
 import Modal from './components/Modal/Modal.vue'
 import Landscape from './components/Landscape/Landscape.vue'
 import { mapGetters } from 'vuex'
-
+import idb from './idb/idb'
 
 export default {
 
@@ -45,7 +45,7 @@ export default {
 		return {
 			isMobile: false,
 			isPortrait: false,
-			geoLocationInterval: ''
+			geoLocationInterval: '',
 		}
 	},
 
@@ -129,6 +129,12 @@ export default {
 
 	mounted() {
 
+		// Wake Lock to keep screen "awake" when app is in foreground
+		// document.addEventListener('visibilitychange', this.handleVisibilityChange());
+		// this.activateWakeLock();
+
+
+
 		// this.startPeriodicSync();
 		// if (status.state === 'granted') {
 		// // Periodic background sync can be used.
@@ -137,8 +143,6 @@ export default {
 		// 	console.log('NO Periodic Sync...')
 		// // Periodic background sync cannot be used.
 		// }
-
-
 
 
 		this.checkCallSyncStoreBackup();
@@ -177,7 +181,9 @@ export default {
 		window.addEventListener('focus', async () => {
 			if(this.isAuth && this.online && this.userType === 1)
 			{
-				this.checkSWBackgroundSyncStore()
+
+				idb.startDocumentUploads();
+				this.checkSWBackgroundSyncStore();
 				// console.log(this.$router.currentRoute._value.path);
 				if(this.$router.currentRoute._value.path.indexOf('/call/') === -1)
 				{
@@ -232,6 +238,45 @@ export default {
 
 
 	methods: {
+
+
+		// handleVisibilityChange: async function() {
+		// 	if (wakeLock !== null && document.visibilityState === 'visible') {
+		// 		await this.activateWakeLock();
+		// 	}
+		// },
+
+
+		// activateWakeLock: async function() {
+		// 	let wakeLock = null;
+
+		// 	const requestWakeLock = async () => {
+		// 	try {
+		// 		wakeLock = await navigator.wakeLock.request('screen');
+
+		// 		wakeLock.addEventListener('release', () => {
+		// 		console.log('Wake Lock was released');
+		// 		});
+		// 		console.log('Wake Lock is active');
+		// 	}
+		// 	catch(err) {
+		// 		console.error(`${err.name}, ${err.message}`);
+		// 	}
+		// 	};
+
+		// 	const releaseWakeLock = () => {
+		// 	console.log('releasing wakeLock');
+
+		// 	wakeLock.release();
+		// 	wakeLock = null;
+		// 	};
+
+		// 	wakeLockSwitch.addEventListener('change', ({detail}) => {
+		// 	const {checked} = detail;
+
+		// 	checked ? requestWakeLock() : releaseWakeLock();
+		// 	}); 
+		// },
 
 
 
@@ -1017,11 +1062,11 @@ button:disabled {
 }
 
 .custom-scroller::-webkit-scrollbar-track {
-	background: rgba(97, 97, 97, 0.95);
+	background: rgba(53, 53, 53, 0.95);
 }
 
 .custom-scroller::-webkit-scrollbar-thumb {
-	background: rgba(46, 168, 255, 0.562);
+	background: rgb(81, 183, 255);
 }
 
 .custom-scroller::-webkit-scrollbar-thumb:hover {

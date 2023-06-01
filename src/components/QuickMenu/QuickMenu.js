@@ -20,6 +20,13 @@ const state = () => ({
         },
         {
             id: 2,
+            icon: ['fa', 'file-arrow-up'],
+            url: '/documents',
+            text: 'Doc Uploads',
+            active: false
+        },
+        {
+            id: 3,
             icon: ['fa', 'box-archive'],
             url: '/stock',
             text: 'Stock',

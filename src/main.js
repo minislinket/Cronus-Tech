@@ -6,6 +6,7 @@ import store from './store'
 import './fontAwesome'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import './FCMNotifications'
+// import idb from './idb/idb'
 
 
 
@@ -13,7 +14,10 @@ import './FCMNotifications'
 
 
 createApp(App)
+// .use(idb)
 .use(store)
 .use(router)
 .component('font-awesome-icon', FontAwesomeIcon)
 .mount('#app')
+
+

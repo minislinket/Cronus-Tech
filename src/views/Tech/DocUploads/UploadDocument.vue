@@ -3,7 +3,7 @@
 
         <div class="upload-documents-modal app-modal-content">
   
-            <h4>Upload Documents</h4>
+            <h4 class="upload-docs-modal-heading">Upload Documents to Call {{ call.id }}</h4>
             
             <select class="select-doc-type-dropdown" v-model="fileTypeId" @change="clearFileList()">
                 <option v-for="type in fileTypes" :key="type.id" :value="type.id">{{ type.name }}</option>
@@ -15,6 +15,8 @@
                 <font-awesome-icon v-if="!verifying" class="upload-docs-verify-jc-icon" :class="{ 'warning-orange' : !jobCardIdVerified, okay : jobCardIdVerified, verifying : verifying }" @click="verifyJobCard()" :icon="['far', 'check-circle']" size="lg" />
                 <font-awesome-icon v-else class="verifying-jc-id-loading-icon" :icon="['fa', 'circle-notch']" size="lg" spin />
             </div>
+
+            <!-- <p v-if="fileTypeId === 19 && jobCard && jobCard.customerCallId && !jobCardIdVerified" class="re-verify-jc-info-text">Please verify the Job Card again...</p> -->
 
             <div class="custom-file-upload-btn-wrap">
                 <label class="custom-file-upload-button" v-if="fileTypeId && fileTypeId !== 19 || fileTypeId && fileTypeId == 19 && jobCardIdVerified == true" >
@@ -53,6 +55,10 @@ import { axiosOffice } from '../../../axios/axios';
 import Compressor from 'compressorjs';
 export default {
 
+
+    // props: ['call'],
+
+
     data() {
         return {
             fileTypes: JSON.parse(localStorage.getItem('document_types')),
@@ -62,6 +68,7 @@ export default {
             verifying: false,
             jobCardIdVerified: false,
             jobCardId: '',
+            jobCard: '',
 
             user: JSON.parse(localStorage.getItem('user')),
         }
@@ -71,8 +78,12 @@ export default {
 
     computed: {
         ...mapGetters({
-            active: ['Call/uploadDocModal'],
-            call: ['Call/call']
+            active: ['DocUploads/uploadDocModal'],
+            selectedDocType: ['DocUploads/selectedDocumentTypeId'],
+            selectedDoc: ['DocUploads/selectedDocument'],
+            call: ['Call/call'],
+            modal: ['Modal/modal'],
+            documents: ['DocUploads/documents']
         })
     },
 
@@ -83,14 +94,27 @@ export default {
             handler: function() {
                 if(this.active)
                 {
-                    this.fileTypeId = '';
+                    this.fileTypeId = this.selectedDocType ? this.selectedDocType : '';
                     this.fileList = [];
                     this.verifying = false;
-                    this.jobCardId = '';
+                    this.jobCardId = this.selectedDocType == 19 && this.selectedDoc.job_card_id ? this.selectedDoc.job_card_id : '';
+                    this.jobCard = '';
                     this.jobCardIdVerified = false;
                 }
             },
             deep: true,
+        },
+
+
+        modal: {
+            handler: function() {
+                if(this.modal.confirmAction === true && this.modal.actionFrom.indexOf('link_JC_to_call'+this.call.id) !== -1)
+                {
+                    this.linkJobCard();             
+                }
+                
+            },
+            deep: true
         }
     },
 
@@ -118,25 +142,50 @@ export default {
 
             this.verifying = true;
 
+            var jcDocument = this.documents.find(doc => doc.job_card_id == this.jobCardId);
+            if(jcDocument && jcDocument.job_card_link_added || jcDocument && jcDocument.job_card_linked) 
+            {
+                this.jobCardIdVerified = true;
+                this.verifying = false; 
+                return 
+            }
+
             axiosOffice.get('job_cards/' + this.jobCardId)
             .then(resp => {
                 if(resp.status == 200)
                 {
+                    this.jobCard = resp.data;
+
                     if(resp.data.allocatedEmployeeCode === this.user.employeeCode)
                     {
                         if(!resp.data.customerCallId)
                         {
 
-                            var toast = {
-                                shown: false,
-                                type: 'warning', // ['info', 'warning', 'error', 'okay']
-                                heading: 'Job Card not linked to a Job/Call', // (Optional)
-                                body: 'Please link your Job Card first', 
-                                time: 5000, // in milliseconds
-                                icon: '' // leave blank for default type icon
+                            var modal = {
+                                active: true, // true to show modal
+                                type: 'info', // ['info', 'warning', 'error', 'okay']
+                                icon: [], // Leave blank for no icon
+                                heading: 'Job Card not linked',
+                                body:   '<p>Would you like to link Job Card '+ this.jobCardId +', to Call '+ this.call.id +'?</p>',
+                                confirmAction: 'init',
+                                actionFrom: 'link_JC_to_call'+this.call.id,
+                                actionData: '',
+                                resolveText: 'Yes',
+                                rejectText: 'No'
+                                
                             }
+                            this.$store.dispatch('Modal/modal', modal);
 
-                            this.$store.dispatch('Toast/toast', toast, {root: true});                            
+                            // var toast = {
+                            //     shown: false,
+                            //     type: 'warning', // ['info', 'warning', 'error', 'okay']
+                            //     heading: 'Job Card not linked to a Job/Call', // (Optional)
+                            //     body: 'Please link your Job Card first', 
+                            //     time: 5000, // in milliseconds
+                            //     icon: '' // leave blank for default type icon
+                            // }
+
+                            // this.$store.dispatch('Toast/toast', toast, {root: true});                            
                             this.jobCardIdVerified = false;
                             this.verifying = false;
                             return
@@ -144,7 +193,27 @@ export default {
                         }
                         else
                         {
-                            this.jobCardIdVerified = true;
+                            if(resp.data.customerCallId !== this.call.id)
+                            {
+                                var toast = {
+                                    shown: false,
+                                    type: 'warning', // ['info', 'warning', 'error', 'okay']
+                                    heading: 'Job Card already linked to Call ' + resp.data.customerCallId, // (Optional)
+                                    body: '', 
+                                    time: 4000, // in milliseconds
+                                    icon: '' // leave blank for default type icon
+                                }
+
+                                this.$store.dispatch('Toast/toast', toast, {root: true});
+                                this.jobCardIdVerified = false;
+                                this.verifying = false;
+                                this.jobCard = '';
+                                return
+                            }
+                            else
+                            {
+                                this.jobCardIdVerified = true;
+                            }                            
                         }
 
 
@@ -163,6 +232,7 @@ export default {
                             this.$store.dispatch('Toast/toast', toast, {root: true});                                
                             this.jobCardIdVerified = false;
                             this.verifying = false;
+                            this.jobCard = '';
                             return
                         }
                         
@@ -181,6 +251,7 @@ export default {
 
                         this.$store.dispatch('Toast/toast', toast, {root: true});                        
                         this.jobCardIdVerified = false;
+                        this.jobCard = '';
                     }
                 }
 
@@ -191,6 +262,7 @@ export default {
                 console.error('Axios Office Error Response: ', err.response);
                 this.verifying = false;
                 this.jobCardIdVerified = false;
+                this.jobCard = '';
             })
 
 
@@ -210,6 +282,7 @@ export default {
 
         emitFiles: async function() {
             var formData = new FormData();
+            var documentList = [];
             
             await Promise.all(this.fileList.map(file => {
                 if(this.fileTypeId == 1)
@@ -218,7 +291,7 @@ export default {
                     // console.log('File to compress: ', file.file)
 
                     new Compressor(file.file, {
-                        quality: 0.5,
+                        quality: 0.4,
 
                         // The compression process is asynchronous,
                         // which means you have to access the `result` in the `success` hook function.
@@ -233,20 +306,27 @@ export default {
                     });
                     
                 }
+                // file.url = URL.createObjectURL(file.file)
                 var fileExtension = file.file.type.split('/')[1];
                 var newFile = new File([file.file], file.name + '.' + fileExtension, { type: file.file.type })
                 formData.append('file', newFile);
+                documentList.push(newFile);
             }))
 
             // var formObject = JSON.stringify(Object.fromEntries(formData));
             
-            this.$emit('uploadDocs', { formData, fileTypeId: this.fileTypeId, jobCardId: this.jobCardId });
+            // this.$emit('uploadDocs', { formData, fileTypeId: this.fileTypeId, jobCardId: this.jobCardId });
+
+            this.$store.dispatch('Loading/setLoading', true);
+            this.$store.dispatch('DocUploads/addLocalDocuments', { documentList, fileTypeId: this.fileTypeId, jobCardId: this.jobCardId, call: this.call });
+            this.closeUploadDocumentsModal();
         },
 
 
 
         closeUploadDocumentsModal: function() {
-            this.$store.dispatch('Call/uploadDocModal', false);
+            this.$store.dispatch('DocUploads/uploadDocModal', false);
+            this.$store.dispatch('DocUploads/selectedDocumentTypeId', '');
         },
 
 
@@ -454,6 +534,67 @@ export default {
 
 
 
+
+
+
+
+        linkJobCard: async function() {
+            var user = JSON.parse(localStorage.getItem('user'));
+            var signature = JSON.parse(localStorage.getItem('signature'));
+
+            this.jobCard.customerCallId = this.call.id;
+
+
+            var data =
+            {
+                call: this.call,
+                jobCards: [this.jobCard],
+                signature,
+                user
+            }
+
+            // Update the call on the users device
+            this.$store.dispatch('Call/linkJobCards', [this.jobCard]);
+            this.$store.dispatch('DocUploads/linkJobCard', { jobCard: this.jobCard, call: this.call });
+            this.jobCardIdVerified = true;
+
+            await this.sendToServiceWorker(data, 'linkJobCard');
+
+        },
+
+
+        sendToServiceWorker: async function(data, type) {
+            if('serviceWorker' in navigator)
+            {
+                return navigator.serviceWorker.getRegistration()
+                .then(async reg => {
+
+                    // Post the data to the SW
+                    data = JSON.stringify(data);
+                    // console.log('Posting SW msg with data: ', data)
+                    reg.active.postMessage({type, data});
+                })
+                .catch(err => {
+                    console.log(err);
+                    this.$store.dispatch('ErrorLog/logError', err);
+                })
+            }
+            else
+            {
+                // No SW found, log error
+                var err = {
+                    user,
+                    data: 'No SW found when updating call ' + call.id
+                }
+                console.log('SW not in navigator...')
+
+                this.$store.dispatch('ErrorLog/logError', err);
+            }
+        }
+
+
+
+
     }
 
 }
@@ -472,6 +613,12 @@ export default {
     width: 90vw;
 }
 
+
+
+.upload-docs-modal-heading {
+    margin-bottom: 15px;
+    font-size: 18px;
+}
 
 
 
@@ -609,6 +756,15 @@ export default {
     display: flex;
     align-items: center;
     justify-content: space-evenly;
+}
+
+
+
+
+.re-verify-jc-info-text {
+    font-size: 14px;
+    margin-top: 15px;
+    color: var(--WarningOrange);
 }
 
 </style>

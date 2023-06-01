@@ -348,6 +348,7 @@ export default {
 .comment-input-wrap textarea {
     width: 80%;
     height: 200px;
+    padding: 7px 12px;
 }
 
 

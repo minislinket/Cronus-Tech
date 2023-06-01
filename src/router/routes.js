@@ -11,6 +11,7 @@ import Dashboard from '../views/Tech/Dashboard/Dashboard.vue'
 import Calls from '../views/Tech/Calls/Calls.vue'
 import Call from '../views/Tech/Call/Call.vue'
 import Stock from '../views/Tech/Stock/Stock.vue'
+import DocUploads from '../views/Tech/DocUploads/DocUploads.vue'
 
 
 // Technician Operation Manager Application Routes
@@ -75,6 +76,15 @@ const routes = [
 		meta: {
 			title: 'Client Call #',
 			icon: ['fa', 'tools']
+		}
+	},
+	{
+		path: '/documents',
+		name: 'Document Uploads',
+		component: DocUploads,
+		meta: {
+			title: 'Document Uploads',
+			icon: ['fa', 'file-arrow-up']
 		}
 	},
 	{

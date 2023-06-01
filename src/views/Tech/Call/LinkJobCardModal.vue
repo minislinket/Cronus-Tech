@@ -43,6 +43,8 @@ import { mapGetters } from 'vuex';
 import { axiosOffice } from '../../../axios/axios';
 export default {
 
+    // props: ['call'],
+
     data() {
         return {
             jobCard: '',
@@ -72,7 +74,7 @@ export default {
     watch: {
         verifying: {
             handler: function() {
-                console.log('verifying?', this.verifying);
+                // console.log('verifying?', this.verifying);
             },
             deep: true,
             immediate: true
@@ -253,6 +255,7 @@ export default {
 
 
         linkJobCards: function() {
+            // this.doLinkJobCards();
             this.$emit('linkJobCards', this.jobCardArray);
             this.$store.dispatch('Call/linkJobCardModal', false);
             setTimeout(() => {
@@ -261,7 +264,58 @@ export default {
                 this.jobCardIdVerified = false;
                 this.verifying = false;
             }, 500);
-        }
+        },
+
+
+
+
+        // doLinkJobCards: async function() {
+        //     var user = JSON.parse(localStorage.getItem('user'));
+        //     var signature = JSON.parse(localStorage.getItem('signature'));
+
+        //     var data =
+        //     {
+        //         call: this.call,
+        //         jobCards: jobCardArray,
+        //         signature,
+        //         user
+        //     }
+
+        //     await this.sendToServiceWorker(data, 'linkJobCard');
+
+        //     // Update the call on the users device
+        //     this.$store.dispatch('Call/linkJobCards', jobCardArray);
+        // },
+
+
+        // sendToServiceWorker: async function(data, type) {
+        //     if('serviceWorker' in navigator)
+        //     {
+        //         return navigator.serviceWorker.getRegistration()
+        //         .then(async reg => {
+
+        //             // Post the data to the SW
+        //             data = JSON.stringify(data);
+        //             // console.log('Posting SW msg with data: ', data)
+        //             reg.active.postMessage({type, data});
+        //         })
+        //         .catch(err => {
+        //             console.log(err);
+        //             this.$store.dispatch('ErrorLog/logError', err);
+        //         })
+        //     }
+        //     else
+        //     {
+        //         // No SW found, log error
+        //         var err = {
+        //             user,
+        //             data: 'No SW found when updating call ' + call.id
+        //         }
+        //         console.log('SW not in navigator...')
+
+        //         this.$store.dispatch('ErrorLog/logError', err);
+        //     }
+        // }
 
     }
 

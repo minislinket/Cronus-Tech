@@ -7,7 +7,7 @@
 
         <div class="toggle-selector-wrap calls">
             <h4>Show Jobs</h4>
-            <div class="selection-toggle-switch" @click="$store.dispatch('Calls/toggleActiveCalls')"> 
+            <div class="selection-toggle-switch" @click="toggleActivePendingCalls()"> 
                 <div class="toggle-slider" :class="{ left : showActiveCalls, right : !showActiveCalls }"></div>
                 <div class="span-wrap active">
                     <span :class="{ active : showActiveCalls }" class="active-calls num-of-calls-subscript">{{ numActiveCalls }}</span>
@@ -27,8 +27,12 @@
             <SectionLoading v-if="(loading || refreshing)" />
 
             <br>
+
+            <div class="calls-search-wrap">
+                <input type="text" v-model="callSearchString" @input="filterCalls()" placeholder="Search Calls...">
+            </div>
             
-            <div class="active-calls-card" v-for="call in showActiveCalls ? activeCalls : pendingCalls" :key="call.id" @click="loadCall(call)">
+            <div class="active-calls-card" v-for="call in filteredCalls" :key="call.id" @click="loadCall(call)" :class="{ 'grey-out' : !finishedOnSite && currentCalls.filter(c => c.id == call.id).length <= 0 }">
                 <!-- <p>Call ID:</p>
                 <span class="bold">{{ call.id }}</span> -->
                 <font-awesome-icon class="call-store-icon" :icon="['fa', 'store-alt']" size="lg" />
@@ -88,7 +92,13 @@ export default {
 
     data(){
         return {
-            refreshing: false
+            refreshing: true,
+
+            currentCalls: [],
+            finishedOnSite: false,
+
+            callSearchString: '',
+            filteredCalls: []
         }
     },
 
@@ -99,9 +109,11 @@ export default {
         ...mapGetters({
             activeCalls: ['Calls/activeCalls'],
             pendingCalls: ['Calls/pendingCalls'],
+            allCalls: ['Calls/allCalls'],
             loading: ['Calls/loading'],
             showActiveCalls: ['Calls/showActiveCalls'],
-            online: ['StaticResources/online']
+            online: ['StaticResources/online'],
+            documents: ['DocUploads/documents']
         }),
 
         numActiveCalls: function() {
@@ -121,26 +133,54 @@ export default {
                 if(this.showActiveCalls)
                 {
                     this.$store.dispatch('Menu/setTitle', { title: 'Active Jobs', icon: ['fa', 'toolbox'] }) 
+                    this.filteredCalls = this.activeCalls;
                 }
                 else
                 { 
                     this.$store.dispatch('Menu/setTitle', { title: 'Pending Jobs', icon: ['fa', 'toolbox'] });
+                    this.filteredCalls = this.pendingCalls;
                     // this.$store.dispatch('Calls/getTechnicianCalls', true);
                 }
             },
             deep: true,
             immediate: true
-        },        
+        },    
+
+
+        // activeCalls: {
+        //     handler: function() {
+                
+        //     }, 
+        // },
+        
+        
+        documents: {
+            handler: function() {
+                this.checkOnSiteTime();
+            },
+            deep: true
+        }
     },
 
 
 
 
     mounted() {
+        
         setTimeout(() => {
             if(this.online)
                 this.$store.dispatch('Calls/getTechnicianCalls');
+                this.checkOnSiteTime();
         }, 150);
+        
+        
+    },
+
+
+
+
+    updated() {
+
     },
 
 
@@ -148,12 +188,102 @@ export default {
 
     methods: {
 
+
+        filterCalls: function() {
+
+            // console.log(this.callSearchString, this.allCalls);
+
+            this.filteredCalls = this.allCalls.filter(call => {
+                // match the call id (which is a number) to the callSearchString (which is a string)
+                if(call.id.toString().indexOf(this.callSearchString) != -1)
+                {
+                    // console.log('ID match, ', call.id)
+                    return call;
+                }
+                if(call.customerStoreName.toLowerCase().indexOf(this.callSearchString.toLowerCase()) != -1)
+                {
+                    // console.log('Store Name match, ', call.customerStoreName);
+                    return call;
+                }
+                if(call.customerStoreBranchCode.toLowerCase().indexOf(this.callSearchString.toLowerCase()) != -1)
+                {
+                    // console.log('Branch Code match, ', call.customerStoreBranchCode);
+                    return call;
+                }
+            })
+
+        },
+
+
+
+        checkOnSiteTime: function() {
+            this.refreshing = true; 
+            this.filteredCalls = this.activeCalls;
+            this.currentCalls = this.activeCalls.filter(c => c.techStateId === 4)
+            // console.log('Checking for On Site Time...', this.currentCalls);
+            var onSiteTimes = [];
+            var oldestOnSiteTime = '';
+            if(this.currentCalls && this.currentCalls.length >= 1 && this.documents && this.documents.length >= 1) 
+            {
+                this.currentCalls.map(call => {
+                    var requiredDoc = this.documents.find(doc => doc.call_id === call.id && doc.required && doc.type == 19 && doc.status == 'document required');
+                    if(requiredDoc)
+                    {
+                        var onSiteTime = new Date(requiredDoc.doc_added);
+                        // console.log('On Site at:' + call.id + ' - ' + onSiteTime);
+                        onSiteTimes.push(onSiteTime);
+                    }
+                    else
+                    {
+                        this.finishedOnSite = true;
+                    }
+                })
+
+                if(onSiteTimes.length >= 1)
+                {
+                    oldestOnSiteTime = new Date(Math.min.apply(null, onSiteTimes)); 
+                    // console.log('Oldest On Site Time: ' + oldestOnSiteTime);
+
+                    // 
+                    var thirtyMinutesAgo = new Date().getTime() - (30 * 60 * 1000);
+                    var thirtyMinutesAgoDate = new Date(thirtyMinutesAgo);
+
+                    thirtyMinutesAgoDate < oldestOnSiteTime ? this.finishedOnSite = true : this.finishedOnSite = false;
+                    // console.log('Finished with documents for site? ' + this.finishedOnSite);
+                    if(!this.finishedOnSite) this.$store.dispatch('Calls/showActiveCalls', true);
+                    // this.$store.dispatch('Calls/setOldestOnSiteTime', oldestOnSiteTime);
+                }
+                
+            }
+            else
+            {
+                this.finishedOnSite = true;
+            }
+            this.refreshing = false; 
+        },
+
+
+
+        toggleActivePendingCalls: function() {
+            if(!this.finishedOnSite) 
+            { 
+                this.$store.dispatch('Calls/showActiveCalls', true);
+                return 
+            }
+            this.$store.dispatch('Calls/toggleActiveCalls');
+        },
+        
+
+
+
         setTechAtOffice: function() {
             this.$store.dispatch('GeoLocation/markTechAtOffice')
         },
 
 
         loadCall: function(call) {
+            var hasCallInCurrentCalls = this.currentCalls.find(c => c.id === call.id);
+            if(!this.finishedOnSite && !hasCallInCurrentCalls) { return }
             this.$store.dispatch('Call/loadCall', call.id);
             this.$router.push('/call/' + call.id);
         },
@@ -161,8 +291,9 @@ export default {
 
         refreshJobs: async function() {
             this.refreshing = true;
-            await this.$store.dispatch('Calls/refreshTechnicianCalls');
+            await this.$store.dispatch('Calls/refreshTechnicianCalls', true); // add true to force a refresh, otherwise the system has a 30 second timer before it will refresh
             this.refreshing = false;
+            this.checkOnSiteTime();
             // this.$router.push('/calls');
         }
         
@@ -201,9 +332,28 @@ export default {
     height: 60vh;
     width: 100%;
     padding: 10px;
-    padding-top: 0px;
+    padding-top: 45px;
     box-shadow: inset 0 -6px 20px 0 rgb(0 0 0 / 40%);
     background: rgba(0,0,40,0.2);
+}
+
+
+
+
+.calls-search-wrap {
+    position: fixed;
+    top: 65px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    z-index: 200;
+}
+
+
+.calls-search-wrap input {
+    width: 85vw;
+    max-width: 400px;
+    margin-right: 7px;
 }
 
 
@@ -233,6 +383,29 @@ export default {
     height: 110px;
     min-height: 110px;
 }
+
+
+
+.active-calls-card.grey-out {
+    background: var(--LightGrey);
+    color: var(--TextOnLightGrey);
+}
+
+
+.active-calls-card.grey-out .tech-state-icon-wrap.pending,
+.active-calls-card.grey-out .tech-state-icon-wrap.received,
+.active-calls-card.grey-out .tech-state-icon-wrap.on-site,
+.active-calls-card.grey-out .tech-state-icon-wrap.en-route,
+.active-calls-card.grey-out .tech-state-icon-wrap.rerouted,
+.active-calls-card.grey-out .tech-state-icon-wrap.returning,
+.active-calls-card.grey-out .tech-state-icon-wrap.completed,
+.active-calls-card.grey-out .tech-state-icon-wrap.on-hold,
+.active-calls-card.grey-out .tech-state-icon-wrap.transferred {
+    background: var(--LightGrey);
+    color: var(--TextOnLightGrey);
+}
+
+
 
 
 

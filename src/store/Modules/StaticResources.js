@@ -1,6 +1,7 @@
 import LZString from "lz-string";
 import { axiosOffice, axiosMySQL } from "../../axios/axios";
 import router from "../../router";
+import idb from "../../idb/idb";
 
 // initial state
 const state = () => ({
@@ -99,6 +100,8 @@ const actions = {
         {
 
             await dispatch('Calls/refreshTechnicianCalls', null, { root: true });
+            idb.startDocumentUploads();
+            // dispatch('DocUploads/startDocumentUploadSync', null, { root: true });
 
             var backupLog = localStorage.getItem('backup_error_log');
             var flag = false;
@@ -149,7 +152,7 @@ const actions = {
         var setBaseResources = dispatch('setBaseResources');
         await Promise.all([getCustomerStores, getCustomerAccounts, setBaseResources]);
         // console.log('User Type: ', userType);
-        userType === 1 ? dispatch('Calls/refreshTechnicianCalls', true, {root: true}) : null;
+        // userType === 1 ? dispatch('Calls/refreshTechnicianCalls', true, {root: true}) : null;
 
     },
 
@@ -167,7 +170,7 @@ const actions = {
         var setBaseResources = dispatch('setBaseResources');
         await Promise.all([getCustomerStores, getCustomerAccounts, setBaseResources]);
         
-        userType === 1 ? dispatch('Calls/refreshTechnicianCalls', false, {root: true}) : null;
+        // userType === 1 ? dispatch('Calls/refreshTechnicianCalls', false, {root: true}) : null;
 
     },
 

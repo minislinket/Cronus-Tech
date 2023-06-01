@@ -7,6 +7,7 @@ const state = () => ({
     pendingCalls: [],
     loading: false,
     showActiveCalls: true,
+    lastUpdated: ''
 })
 
 
@@ -60,13 +61,22 @@ const actions = {
 
 
 
-    async refreshTechnicianCalls({ dispatch, commit, rootGetters }) {
+    async refreshTechnicianCalls({ dispatch, commit, state, rootGetters }, forceReload) {
+
+        // compare state.lastUpdated with the current time and find the difference in seconds
+
+
+        var now = new Date();
+        var diff = Math.abs(state.lastUpdated - now);
+        var seconds = diff / 1000;
+        // console.log('We last updated ' + seconds + ' seconds ago');
 
         var online = rootGetters['StaticResources/online'];
-        if(!online) { return }
+        if(!online || state.loading || seconds < 30 && state.activeCalls.length >= 1 && !forceReload) { return }
 
 
         commit('loading', true);
+        commit('setLastUpdated', new Date());
 
         var user = JSON.parse(localStorage.getItem('user'));
 
@@ -296,6 +306,17 @@ const actions = {
                 }
             }
 
+
+            if(call.jobCards.length >= 1)
+            {
+                // await dispatch('DocUploads/checkForExistingJobCards', { call }, { root: true });
+                // call.jobCards.map(async jobCard => {
+                //     console.log('Checking for existing local doc JC: ', jobCard.id);
+                    
+                //     console.log('Local doc for JC either added or already exists: ', jobCard.id);
+                // });
+            }
+
         }))
               
         
@@ -309,7 +330,7 @@ const actions = {
 
 
 
-    async getCallJobCards({}, call) {
+    async getCallJobCards({ dispatch }, call) {
         var user = JSON.parse(localStorage.getItem('user'));
         // console.log('Getting JC\'s for call: ', call.id)
         return axiosOffice.get('job_cards?allocatedEmployeeCode='+ user.employeeCode +'&customerCallId='+ call.id)
@@ -318,23 +339,25 @@ const actions = {
             if(resp.status === 200)
             {
                 call.jobCards = resp.data;
-                call['allJobCardsHaveCMIS'] = true;
+                call['allDocumentsHaveCMIS'] = true;
                 if(call.jobCards.length >= 1)
                 {
-                    await Promise.all(call.jobCards.map(jc => jc.cmisDocumentId ? null : call.allJobCardsHaveCMIS = false));
+                    await Promise.all(call.jobCards.map(jc => {
+                        jc.cmisDocumentId ? null : call.allDocumentsHaveCMIS = false
+                        // dispatch('DocUploads/addLocalJCFileIfNotExist', { jobCard: jc, call }, { root: true });
+                    }));
                 }
                 else
                 {
-                    call.allJobCardsHaveCMIS = false
+                    call.allDocumentsHaveCMIS = false
                 }
-                
             }
         })
         .catch(err => {
             console.error('Axios_Office Error: ', err);
             console.error('Axios_Office Error Response: ', err.response);
             call.jobCards = [];
-            call.allJobCardsHaveCMIS = false;
+            call.allDocumentsHaveCMIS = false;
         })
     },
 
@@ -345,10 +368,13 @@ const actions = {
 
 
     async refreshCallJobCards({ dispatch }, call) {
-        dispatch('Call/loading', true, { root: true });
-        await dispatch('getCallJobCards', call);
-        dispatch('updateLocalStorage', call);
-        dispatch('Call/loading', false, { root: true });
+        return new Promise(async resolve => {
+            dispatch('Call/loading', true, { root: true });
+            await dispatch('getCallJobCards', call);
+            dispatch('updateLocalStorage', call);
+            dispatch('Call/loading', false, { root: true });
+            resolve();
+        })
     },
 
 
@@ -370,7 +396,7 @@ const actions = {
                 c.techStateName = call.techStateName;
                 c.jobCards = call.jobCards;
                 c.orderNumber = call.orderNumber;
-                c.allJobCardsHaveCMIS = call.allJobCardsHaveCMIS;
+                c.allDocumentsHaveCMIS = call.allDocumentsHaveCMIS;
             }
         });
         // console.log('Call Updated in localStorage...', localCalls);
@@ -648,6 +674,12 @@ const mutations = {
 
     loading(state, toggle) {
         state.loading = toggle;
+    },
+
+
+
+    setLastUpdated(state, date) {
+        state.lastUpdated = date;
     }
 
 }

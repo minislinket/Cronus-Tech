@@ -141,7 +141,7 @@ const actions = {
 
                 axiosOffice.post('customers/stores/'+ customerStoreId +'/location', locationData)
                 .then(resp => {
-                    console.log(resp);
+                    // console.log(resp);
                 })
                 .catch(err => {
                     console.error('Axios Office Error: ', err);
@@ -182,7 +182,7 @@ const actions = {
                     }
                 })
                 .then(resp => {
-                    console.log(resp);
+                    // console.log(resp);
                 })
                 .catch(err => {
                     console.error('Axios Office Error: ', err);
@@ -306,7 +306,7 @@ const mutations = {
 
     location(state, positionData) {
         
-        console.log('Updating position: ', positionData);
+        // console.log('Updating position: ', positionData);
         state.location.accuracy = positionData.coords ? positionData.coords.accuracy : '';
         state.location.long = positionData.coords ? positionData.coords.longitude : '';
         state.location.lat = positionData.coords ? positionData.coords.latitude : '';
@@ -315,7 +315,7 @@ const mutations = {
 
 
         var storedLocations = localStorage.getItem('location');
-        console.log(JSON.parse(storedLocations));
+        // console.log(JSON.parse(storedLocations));
         if(storedLocations)
         {
             storedLocations = JSON.parse(storedLocations);
@@ -324,7 +324,7 @@ const mutations = {
         }
         else
         {
-            console.log('creating storedLocations')
+            // console.log('creating storedLocations')
             localStorage.setItem('location', JSON.stringify([{ long: state.location.long, lat: state.location.lat, accuracy: Math.round(state.location.accuracy).toFixed(2), time: state.location.timeStamp, speed: state.location.speed }]));
         }
     }

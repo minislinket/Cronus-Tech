@@ -22,6 +22,26 @@ workbox.routing.registerNavigationRoute(
 
 
 
+
+
+
+
+
+
+// self.addEventListener('sync', async function(event) {
+// 	console.log('Background sync event: ', event);
+// 	if(event.tag == 'uploadDocuments')
+// 	{
+// 		console.log('Going to start background uploading now...');
+// 		event.waitUntil(prepareDocUploads());
+// 	}
+// });
+
+
+
+
+
+
 // SW Sync Store for Call update data
 let callSyncStore = [];
 let callJobCardLinkStore = [];
@@ -32,6 +52,15 @@ let backgroundSyncActive = false;
 // Listen for messages from the App
 self.addEventListener('message', function (event) {
 	// console.log('Message from app: ', event);
+
+
+
+	if(event.data.type === 'uploadDocuments')
+	{
+		// console.log('Going to start background uploading now...');
+		/* event.waitUntil( */prepareDocUploads()/* ); */
+	}
+
 
 
 
@@ -67,12 +96,6 @@ self.addEventListener('message', function (event) {
 
 
 
-	// if(event.data.type === 'uploadDocuments')
-	// {
-
-	// 	var docData = JSON.parse(event.data.data);
-	// 	console.log('Upload Docs request on SW: ', docData);
-	// }
 
 
 
@@ -110,7 +133,8 @@ self.addEventListener('message', function (event) {
 			
 
 			delete data.orderNumber;
-			data.call.allJobCardsHaveCMIS ? delete data.call.allJobCardsHaveCMIS : null;
+			data.call.allDocumentsHaveCMIS ? delete data.call.allDocumentsHaveCMIS : null;
+			data.call.allJobCardDocumentLinksSent ? delete data.call.allJobCardDocumentLinksSent : null;
 			data.call.callDetails ? delete data.call.callDetails : null;
 			data.call.customerAccount ? delete data.call.customerAccount : null;
 			data.call.customerAccountName ? delete data.call.customerAccountName : null;
@@ -380,15 +404,446 @@ self.addEventListener('message', function (event) {
 
 
 
-// self.addEventListener('sync', function(event) {
-// 	console.log('Background sync event: ', event);
-// 	if(event.tag.indexOf('updateCall_') !== -1)
-// 	{
-// 		var callId = event.tag.split('_')[1];
+const DB_NAME = 'DocUploads';
+const DB_VERSION = 1;
+let DB;
+
+const idb = {
+
+
+	async getDb() {
+		return new Promise((resolve, reject) => {
+
+			if(DB) { return resolve(DB); }
+			// console.log('OPENING DB', DB_NAME, ' - ', DB_VERSION);
+			let request = indexedDB.open(DB_NAME, DB_VERSION);
+			
+			request.onerror = e => {
+				console.error('Error opening db', e);
+				reject('Error');
+			};
+	
+			request.onsuccess = e => {
+				DB = e.target.result;
+				resolve(DB);
+			};
+			
+			request.onupgradeneeded = e => {
+				// console.log('onupgradeneeded');
+				let db = e.target.result;
+				db.createObjectStore("document_uploads", { autoIncrement: true, keyPath:'id' });
+			};
+		});
+	},
+
+
+
+	async deleteDocument(document) {
+
+		var SQLBase = '';
+		if(self.location.origin.indexOf('localhost') !== -1)
+		{ SQLBase = 'http://localhost/cronus-tech/src/api/' }
+		else
+		{ SQLBase = 'https://dev.locksecure.co.za/tech-api/' }
+
+
+
+		let db = await this.getDb();
+
+		return new Promise(resolve => {
+
+            // console.log('Deleting document from IDB: ', documentId);
+
+			let trans = db.transaction(['document_uploads'],'readwrite');
+			let store = trans.objectStore('document_uploads');
+
+			if(document.upload_data_synced == false)
+			{
+				fetch(SQLBase + 'docUploads/docUploads.php', {
+					body: JSON.stringify(document),
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					}
+				})
+				.then(resp => {
+					if(resp.status == 200)
+					{
+						document.upload_data_synced = true;
+					}
+				})
+				.catch(function(err) {
+					document.upload_data_synced = false;
+					// console.error('SW SQL Fetch Error: ', err);
+					// console.error('SW SQL Fetch error response: ', err.response);
+				})
+			}
+
+			var delRequest = store.delete(document.id);
+            delRequest.onsuccess = function(event) {
+                resolve();
+				idb.getDb();
+            }
+		});	
+	},
+
+
+
+	async getDocuments() {
+
+		let db = await this.getDb();
+
+		return new Promise(resolve => {
+
+			let trans = db.transaction(['document_uploads'],'readonly');
+			trans.oncomplete = () => {
+				resolve(documents);
+			};
+			
+			let store = trans.objectStore('document_uploads');
+			let documents = [];
+			
+			store.openCursor().onsuccess = e => {
+				let cursor = e.target.result;
+				if (cursor) {
+					documents.push(cursor.value)
+					cursor.continue();
+				}
+			};
+
+		});
+	},
+
+
+
+
+	async saveDocument(document) {
+		let db = await this.getDb();
+
+		return new Promise(resolve => {
+
+			let trans = db.transaction(['document_uploads'],'readwrite');
+            let objectStore = trans.objectStore('document_uploads');
+
+			var addRequest = objectStore.add(document);
+			addRequest.onerror = e => {
+				console.error('Error opening db', e);
+			};
+			addRequest.onsuccess = function(event) {
+				document.id = event.target.result;
+				resolve(document);
+				idb.getDb();
+			};
+		});
+	},
+
+
+
+	async updateDocument(document) {
+
+		var SQLBase = '';
+		if(self.location.origin.indexOf('localhost') !== -1)
+		{ SQLBase = 'http://localhost/cronus-tech/src/api/' }
+		else
+		{ SQLBase = 'https://dev.locksecure.co.za/tech-api/' }
+
+		let db = await this.getDb();
+
+		return new Promise(resolve => {
+
+			let trans = db.transaction(['document_uploads'],'readwrite');
+            let objectStore = trans.objectStore('document_uploads');
+			var getRequest = objectStore.get(document.id);
+
+			getRequest.onerror = e => {
+				console.error('Error opening db', e);
+			};
+
+			getRequest.onsuccess = function(event) {
+
+				var storedDocument = event.target.result;
+				if(storedDocument) 
+				{
+
+					if(document.upload_data_synced == false)
+					{
+						fetch(SQLBase + 'docUploads/docUploads.php', {
+							body: JSON.stringify(document),
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+							}
+						})
+						.then(resp => {
+							if(resp.status == 200)
+							{
+								document.upload_data_synced = true;
+							}
+						})
+						.catch(function(err) {
+							document.upload_data_synced = false;
+							// console.error('SW SQL Fetch Error: ', err);
+							// console.error('SW SQL Fetch error response: ', err.response);
+						})
+					}
+
+
+					// Update the stored document with the latest data
+					Object.assign(storedDocument, document);
+					var putRequest = objectStore.put(storedDocument);
+
+
+					putRequest.onerror = e => {
+						console.error('Error opening db', e);
+					};
+
+
+					putRequest.onsuccess = function(event) {
+
+						
+						messageApp('refreshDocuments', '', '', '')
+						resolve(storedDocument);
+						idb.getDb();
+					};
+				} 
+			};
+		});
+	
+	},
+
+
+
+    // Get the user's signature from IDB
+    async getUserSignature() {
+
+        let request = indexedDB.open('SignatureDB', 1);
+
+        return new Promise(resolve => {
+			request.onerror = e => {
+				console.error('Error opening db', e);
+			};
+
+			request.onsuccess = e => {
+				var db = e.target.result;
+				let trans = db.transaction(['signature'],'readwrite');
+				let objectStore = trans.objectStore('signature');
+
+				var getRequest = objectStore.get(1);
+				getRequest.onsuccess = function(event) {
+
+					var storedSignature = event.target.result;
+					resolve(storedSignature.signature);
+					
+				};
+
+			};
+		});
+        
+    },
+
+}
+
+
+
+
+
+
+function messageApp(type, title, body, data) {
+	self.clients.matchAll().then(clients => {
+		clients.forEach(client => {
+		  client.postMessage({ type, title, body, data });
+		});
+	});
+}
+
+
+
+
+
+async function prepareDocUploads() {
+
+	var documentsForUpload = await idb.getDocuments();
+	var signature = await idb.getUserSignature();
+
+
+	var SQLBase = '';
+	if(self.location.origin.indexOf('localhost') !== -1)
+	{ SQLBase = 'http://localhost/cronus-tech/src/api/' }
+	else
+	{ SQLBase = 'https://dev.locksecure.co.za/tech-api/' }
+
+
+	await Promise.all(documentsForUpload.map(async document => {
+
+		// Check if the document's upload_data_synced is still false, if so, try to sync it again
+		if(document.upload_data_synced == false){
 		
-// 		backgroundSyncActive = true;
-// 		event.waitUntil(updateCall(callId));
-// 	}
+			fetch(SQLBase + 'docUploads/docUploads.php', {
+				body: JSON.stringify(document),
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				}
+			})
+			.then(resp => {
+				if(resp.status == 200)
+				{
+					if(document.status == 'archived')
+					{
+						document.upload_data_synced = true;
+						idb.deleteDocument(document);
+					}
+					document.upload_data_synced = true;
+					idb.updateDocument(document);
+				}
+			})
+			.catch(function(err) {
+				document.upload_data_synced = false;
+				// console.error('SW SQL Fetch Error: ', err);
+				// console.error('SW SQL Fetch error response: ', err.response);
+			})
+
+		}
+
+
+		// Check if the document has been uploaded already and how old it is
+		// If it is older than 3 days, delete it from IDB and mark it as archived in SQL
+		if(document.upload_completed)
+		{
+			var today = new Date();
+			var uploadDate = new Date(document.upload_completed);
+			var timeDiff = Math.abs(today.getTime() - uploadDate.getTime());
+			var diffDays = Math.floor(timeDiff / (1000 * 3600 * 24));
+
+			// console.log('The document was uploaded ' + diffDays + ' days ago');
+			// console.log('Let\'s check our whole if: ', document.status == 'complete' && Number(diffDays) >= 3);
+
+			if(document.status == 'complete' && Number(diffDays) >= 7)
+			{
+				document.status = 'archived';
+				document.upload_data_synced = false;
+				idb.deleteDocument(document);
+			}
+		}
+		else
+		{ 
+			// Catch documents where the upload might have been cancelled due to a refresh or something similar
+			// get the difference in hours between now and document.upload_started
+			// var today = new Date();
+			// var uploadDate = new Date(document.upload_started);
+			// var timeDiff = Math.abs(today.getTime() - uploadDate.getTime());
+			// var diffHours = Math.floor(timeDiff / (1000 * 3600));
+
+			// // If the document hasn't changed status in the last 3 hours, set it to pending upload so it can try uploading again
+			// // worst case, a document version will be created replacing the old one
+			// if(document.status == 'uploading' && diffHours >= 3)
+			// {
+			// 	document.status = 'pending upload';
+			// 	document.upload_data_synced = false;
+			// 	idb.updateDocument(document);
+			// }
+		}
+
+		var query = '';
+	
+		if(document.type === 19)
+			{ 
+				query = 'job_cards/'+document.job_card_id+'/upload'; 
+				if(!document.job_card_linked) { return } // If the job card is not linked to a customer call yet, don't upload the document
+			}
+		else
+			{ query = 'customers/store/' + document.customer_store_id + '/upload?customer_call_id=' + document.call_id  + '&document_type_id=' + document.type; } 
+
+		
+		if(document.status != 'complete' && document.status != 'uploading' && document.file) 
+		{	
+			// console.log('Sending document for upload: ', document.name);
+			var resp = await doDocumentUpload(query, document, signature)
+			// console.log('Document upload response: ', resp);
+			return resp;
+		}
+		
+
+	}));
+
+}
+
+
+
+
+
+
+
+async function doDocumentUpload(query, document, signature) {
+
+	var queryBase = '';
+
+	if(self.location.origin.indexOf('localhost') !== -1)
+	{ queryBase = 'http://129.232.180.146/cronus/api/' }
+	else
+	{ queryBase = 'https://office.locksecure.co.za/cronus/api/' }
+
+
+	var formData = new FormData();
+	formData.append('file', document.file);
+
+	// Update IDDB document 
+	document.status = 'uploading';
+	document.upload_started = new Date().toISOString();
+	document.upload_attempts++;
+	document.upload_error = '';
+	document.upload_data_synced = false;
+	idb.updateDocument(document);
+
+
+	return fetch(queryBase + query, {
+		method: 'POST', 
+		body: formData,
+		headers: {
+			/* "Content-Type": "multipart/form-data", */ // <- The browser sets this for you because it needs to set the boundary for the multipart request
+			'Accept': 'multipart/form-data',
+			'Authorization': 'Bearer: '+ signature
+		},
+		
+	})
+	.then(async resp => {
+		// console.log('Upload complete: ', resp);
+		if(resp.status == 200)
+		{
+			document.status = 'complete';
+			document.upload_completed = new Date().toISOString();
+			document.file = '';
+			document.upload_data_synced = false;
+			idb.updateDocument(document);
+			return true;
+		}
+		else
+		{
+			document.status = 'pending upload';
+			document.upload_error = JSON.stringify(resp);
+			document.upload_data_synced = false;
+			idb.updateDocument(document);
+			return false;
+		}
+		
+	})
+	.catch(async err => {
+		console.error('Upload error: ', err);
+		console.error('Upload error response: ', err.response);
+		document.status = 'pending upload';
+		document.upload_error = JSON.stringify(err);
+		document.upload_data_synced = false;
+		idb.updateDocument(document);
+
+		return false;
+	})
+
+}
+
+
+
+
+
 
 
 // })
@@ -640,7 +1095,7 @@ async function doFetch(method, query, body, signature, sendData, SQLData, SQLQue
 	if(self.location.origin.indexOf('localhost') !== -1)
 	{
 		queryBase = 'http://129.232.180.146/cronus/api/';
-		SQLBase = 'http://localhost/cronus-tech/src/api/'
+		SQLBase = 'http://localhost/cronus-tech/src/api/';
 	}
 	else
 	{
@@ -674,21 +1129,37 @@ async function doFetch(method, query, body, signature, sendData, SQLData, SQLQue
 		else
 		{
 
-			//Save a log of all tech call updates
-			await fetch(SQLBase + SQLQuery, {
-				body: JSON.stringify(SQLData),
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				}
-			})
-			.catch(function(err) {
-				console.error('SW SQL Fetch Error: ', err);
-				console.error('SW SQL Fetch error response: ', err.response);
-			})
+			// //Save a log of all tech call updates
+			// await fetch(SQLBase + SQLQuery, {
+			// 	body: JSON.stringify(SQLData),
+			// 	method: 'POST',
+			// 	headers: {
+			// 		'Content-Type': 'application/json',
+			// 	}
+			// })
+			// .catch(function(err) {
+			// 	console.error('SW SQL Fetch Error: ', err);
+			// 	console.error('SW SQL Fetch error response: ', err.response);
+			// })
+
+			
 
 			sendData.sending = false;
 			sendData.sent = true;
+
+			if(SQLQuery === 'techUpdates/linkJobCard.php')
+			{
+				var documents = await idb.getDocuments();
+				console.log('Documents: ', documents)
+				var jobCardDocument = documents.filter(doc => Number(doc.job_card_id) === Number(sendData.jobCard.id))[0];
+				if(jobCardDocument)
+				{
+					console.log('Job Card Document: ', jobCardDocument);
+					jobCardDocument.job_card_linked = true;
+					await idb.updateDocument(jobCardDocument);
+				}
+			}
+
 			return flag;
 		}
 

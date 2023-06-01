@@ -5,18 +5,18 @@
             <font-awesome-icon class="loading-lightbox-icon" :icon="['fa','circle-notch']" size="lg" spin />
         </div>
         
-        <div class="call-info-wrap">
+        <div class="call-info-wrap" v-if="call && call.id">
 
             <div class="link-jc-no-order-num-wrap">
                 <div class="link-job-card-wrap" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2">
-                    <button :class="{ 'no-jc' : call.jobCards.length <= 0, 'linked' : call.jobCards.length >= 1 }" @click="openLinkJobCard()"><font-awesome-icon class="link-job-card-icon" :icon="['fa','link']" size="lg" /> </button>
+                    <button :class="{ 'no-jc' : call.jobCards.length <= 0 || !call.allJobCardDocumentLinksSent, 'linked' : call.jobCards.length >= 1 || call.allJobCardDocumentLinksSent }" @click="openLinkJobCard()"><font-awesome-icon class="link-job-card-icon" :icon="['fa','link']" size="lg" /> </button>
                     <span>Link Job Card</span>
                 </div>
                 <p @click="openLinkOrderNumber()" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2"><button class="no-order-number" :class="{ okay : call.orderNumber }"><font-awesome-icon :icon="['fa','exclamation-triangle']" size="lg" /></button> Order Number</p>
             </div>
             <div class="link-jc-no-order-num-wrap">
                 <div class="link-job-card-wrap" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2">
-                    <button :class="{ 'no-jc' : !call.allJobCardsHaveCMIS, 'linked' : call.allJobCardsHaveCMIS }" @click="openUploadDocs()"><font-awesome-icon class="link-job-card-icon" :icon="['fa','file-arrow-up']" size="lg" /> </button>
+                    <button :class="{ 'no-jc' : !call.allDocumentsHaveCMIS, 'linked' : call.allDocumentsHaveCMIS }" @click="openUploadDocs()"><font-awesome-icon class="link-job-card-icon" :icon="['fa','file-arrow-up']" size="lg" /> </button>
                     <span>Upload Docs</span>
                 </div>
                 <div class="refresh-job-card-btn-wrap" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2">
@@ -24,11 +24,23 @@
                     <span>Refresh Docs</span>
                 </div>
             </div>
+            <div class="link-jc-no-order-num-wrap">
+                <div class="link-job-card-wrap" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2">
+                    <button @click="addGeneralCallComment()" class="add-comment-btn"><font-awesome-icon class="add-comment-icon" :icon="['fa','comment-dots']" size="lg" /> </button>
+                    <span>Add Comment</span>
+                </div>
+                <div class="link-job-card-wrap" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2">
+                    <button @click="viewCallComments()" class="view-comments-btn"><font-awesome-icon class="view-comments-icon" :icon="['fa','comments']" size="lg" /> </button>
+                    <span>View Comments</span>
+                </div>
+            </div>
 
 
             <div class="call-info-wrapper job-card-list">
                 <h4>Job Cards</h4>
-                <span style="display: flex; align-items: center;" v-for="(jc, i) in call.jobCards" :key="jc.id">{{ jc.id }}<font-awesome-icon v-if="jc.cmisDocumentId" class="has-doc-upload-icon" :icon="['fa','file-circle-check']" size="lg" /><span v-if="call.jobCards.length - 1 !== i">, </span></span>
+                <div style="display: flex; align-items: center; flex-wrap: wrap;">
+                    <span v-for="(jc, i) in call.jobCards" :key="jc.id"> {{ jc.id }}<font-awesome-icon v-if="jc.cmisDocumentId" class="has-doc-upload-icon" :icon="['fa','file-circle-check']" size="lg" /><span style="margin-right: 5px;" v-if="call.jobCards.length - 1 !== i">,</span></span>
+                </div>
             </div>
 
 
@@ -154,20 +166,27 @@
 
         </div>
 
+        <div v-else class="call-not-found-wrap">
+            <p class="call-not-found-info-text">Call not found...</p>
+            <button class="open-calls-page-btn" @click="refreshAndLoadCalls()">Refresh Jobs</button>
+        </div>
+
     
         <CommentModal @submitComment="submitComment($event)" />
+        <GeneralCommentModal @submitGeneralComment="submitGeneralComment($event)" />
         <LinkJobCardModal @linkJobCards="linkJobCards($event)" />
-        <LinkOrderNumberModal @linkOrderNumber="linkOrderNumber($event)" />
+        <LinkOrderNumberModal @linkOrderNumber="linkOrderNumber($event)" :call="call" />
         <ReturnDateModal @recordReturnDate="recordReturnDate($event)" />
-        <UploadDocument @uploadDocs="uploadDocs($event)"/>
+        <UploadDocument @uploadDocs="uploadDocs($event)" :call="call" />
+        <ViewCallCommentsModal />
 
         <div class="call-button-wrap" >
             <button :disabled="!canUpdateStatus" v-if="call.techStateId === 1" @click="canUpdateCall(2)" class="update-call-btn received"><font-awesome-icon class="update-call-icon accept" :icon="['fa', 'user-check']" size="lg" :class="{ disabled : !canUpdateStatus }" /> Accept Call</button>
             <button :disabled="!canUpdateStatus" v-if="call.techStateId === 2 && call.callTypeId != 6 || call.techStateId >= 5 && call.techStateId <= 7 && call.callTypeId != 6 || call.techStateId == 9 && call.callTypeId != 6" @click="canUpdateCall(3)" class="update-call-btn en-route"><font-awesome-icon class="update-call-icon en-route" :icon="['fa', 'route']" size="lg" :class="{ disabled : !canUpdateStatus }" /> En Route</button>
             <button :disabled="!canUpdateStatus" v-if="call.techStateId === 3 && call.callTypeId != 6" @click="canUpdateCall(4)" class="update-call-btn on-site"><font-awesome-icon class="update-call-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" :class="{ disabled : !canUpdateStatus }" /> On Site</button>
-            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS" v-if="call.techStateId === 4 && call.callTypeId != 6" @click="openCommentsModal()" class="update-call-btn on-hold"><font-awesome-icon class="update-call-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS }" /> On Hold</button>
-            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS" v-if="call.techStateId === 4 && call.callTypeId != 6" @click="captureReturnDate()" class="update-call-btn returning"><font-awesome-icon class="update-call-icon returning" :icon="['fa', 'clock-rotate-left']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS }" /> Returning</button>
-            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS || !call.orderNumber" v-if="call.techStateId === 4 || call.techStateId === 6 || call.techStateId === 2 && call.callTypeId == 6" @click="canUpdateCall(8)" class="update-call-btn completed"><font-awesome-icon class="update-call-icon completed" :icon="['fa', 'clipboard-check']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.orderNumber }" /> Complete</button>
+            <button :disabled="callButtonsDisabled || !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allDocumentsHaveCMIS" v-if="call.techStateId === 4 && call.callTypeId != 6" @click="openCommentsModal()" class="update-call-btn on-hold"><font-awesome-icon class="update-call-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" :class="{ disabled : callButtonsDisabled || !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allDocumentsHaveCMIS }" /> On Hold</button>
+            <button :disabled="callButtonsDisabled || !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allDocumentsHaveCMIS" v-if="call.techStateId === 4 && call.callTypeId != 6" @click="captureReturnDate()" class="update-call-btn returning"><font-awesome-icon class="update-call-icon returning" :icon="['fa', 'clock-rotate-left']" size="lg" :class="{ disabled : callButtonsDisabled || !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allDocumentsHaveCMIS }" /> Returning</button>
+            <button :disabled="callButtonsDisabled || !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allDocumentsHaveCMIS || !call.orderNumber" v-if="call.techStateId === 4 || call.techStateId === 6 || call.techStateId === 2 && call.callTypeId == 6" @click="canUpdateCall(8)" class="update-call-btn completed"><font-awesome-icon class="update-call-icon completed" :icon="['fa', 'clipboard-check']" size="lg" :class="{ disabled : callButtonsDisabled || !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.orderNumber }" /> Complete</button>
         </div>
     </div>
 </template>
@@ -177,10 +196,12 @@
 <script>
 
 import CommentModal from './CommentModal.vue';
+import GeneralCommentModal from './GeneralCommentModal.vue';
 import LinkJobCardModal from './LinkJobCardModal.vue';
 import LinkOrderNumberModal from './LinkOrderNumberModal.vue';
 import ReturnDateModal from './ReturnDateModal.vue'
-import UploadDocument from './UploadDocument.vue';
+import UploadDocument from '../DocUploads/UploadDocument.vue';
+import ViewCallCommentsModal from './ViewCallCommentsModal.vue'
 
 import { mapGetters } from 'vuex'
 
@@ -189,7 +210,13 @@ export default {
 
 
     components: {
-         CommentModal, LinkJobCardModal, LinkOrderNumberModal, ReturnDateModal, UploadDocument
+        CommentModal, 
+        GeneralCommentModal,
+        LinkJobCardModal,
+        LinkOrderNumberModal, 
+        ReturnDateModal, 
+        UploadDocument,
+        ViewCallCommentsModal
     },
 
 
@@ -202,7 +229,8 @@ export default {
             serviceWorker: null,
             user: JSON.parse(localStorage.getItem('user')),
             canUpdateStatus: true,
-            updateCalls: []
+            updateCalls: [],
+            callButtonsDisabled: true
         }
     },
 
@@ -218,7 +246,8 @@ export default {
             modal: ['Modal/modal'],
             online: ['StaticResources/online'],
             commentNextStatusId: ['Call/commentNextStatusId'],
-            commentingOnCalls: ['Call/commentingOnCalls']
+            commentingOnCalls: ['Call/commentingOnCalls'],
+            documents: ['DocUploads/documents'],
         })
     },
 
@@ -229,6 +258,8 @@ export default {
     watch: {
         '$route.params.callId': {
             handler: function() {
+
+                this.callButtonsDisabled = true;
 
                 if(this.$route.params.callId)
                 {
@@ -248,6 +279,13 @@ export default {
                     
                 }
 
+                setTimeout(() => {
+                    this.callButtonsDisabled = false;
+                }, 500);
+
+
+                this.runLocalDocumentComparison();
+
             },
             deep:true,
             immediate: true
@@ -256,15 +294,22 @@ export default {
 
 
 
-        call: {
+        documents: {
             handler: function() {
-                if(this.call && this.call.techStateId === 8)
-                {
-                    this.$router.push('/calls');
-                }
+
+                console.log('Checking call\'s docs...');
+                // setTimeout(() => {
+                    this.runLocalDocumentComparison();    
+                // }, 500);
+                
+
+                // if(this.call && this.call.techStateId === 8)
+                // {
+                //     this.$router.push('/calls');
+                // }
             },
-            deep: true,
-            immediate: true
+            // deep: true,
+            // immediate: true
         },
 
 
@@ -275,6 +320,7 @@ export default {
             handler: function() {
                 if(this.call)
                     this.$store.dispatch('Call/loadCall', this.call.id);
+                    
             },
             deep: true,
             immediate: true
@@ -305,6 +351,7 @@ export default {
 
     mounted() {
         this.$route.params.callId ? this.$store.dispatch('Call/loadCall', this.$route.params.callId) : null;
+        !this.documents || this.documents.length <= 0 ? this.$store.dispatch('DocUploads/getDocuments') : null;
     },
 
 
@@ -313,35 +360,66 @@ export default {
 
     methods: {
 
+
+
+        viewCallComments: function() {
+            this.$store.dispatch('Call/viewCallCommentsModalActive', true);
+        },
+
+
+
+
+        addGeneralCallComment: function() {
+            this.$store.dispatch('Call/generalCommentModal', true);
+        },
+
+
+
+
+
+        
+
+
+
+        refreshAndLoadCalls: function() {
+            this.$store.dispatch('Calls/refreshTechnicianCalls', true);
+            this.$router.push('/calls');
+        },
+
         
             
 
 
-        refreshCallDocs: function() {
-            this.$store.dispatch('Calls/refreshCallJobCards', this.call);
+        refreshCallDocs: async function() {
+            // console.log('local Doc compare says: ', this.runLocalDocumentComparison());
+            
+            if(this.runLocalDocumentComparison() === true) { return }
+
+            await this.$store.dispatch('Calls/refreshCallJobCards', this.call);
+            this.runLocalDocumentComparison();
         },
 
 
 
 
         openUploadDocs: function() {
-            this.$store.dispatch('Call/uploadDocModal', true);
+            this.$store.dispatch('DocUploads/uploadDocModal', true);
         },
 
 
-        uploadDocs: async function(payload) {   
-            // console.log(payload);
+        // uploadDocs: async function(payload) {   
+        //     // console.log(payload);
 
-            var data =
-            {
-                fileTypeId: payload.fileTypeId,
-                call: this.call,
-                jobCardId: payload.jobCardId,
-                formData: payload.formData,
-            }
+        //     var data =
+        //     {
+        //         fileTypeId: payload.fileTypeId,
+        //         call: this.call,
+        //         jobCardId: payload.jobCardId,
+        //         formData: payload.formData,
+        //     }
 
-            this.$store.dispatch('Call/uploadDocuments', data);
-        },
+        //     this.$store.dispatch('Call/uploadDocuments', data);
+        // },
 
 
 
@@ -358,11 +436,19 @@ export default {
             var user = JSON.parse(localStorage.getItem('user'));
             var signature = JSON.parse(localStorage.getItem('signature'));
 
+            var returnDate = data.returnDate;
+            var reason = data.reason;
+
             var comment = {
-                comment: 'Returning to site on '+data,
+                comment: 'Returning on: ' + returnDate,
                 customerCallId: this.call.id,
                 employeeCode: user.employeeCode,
                 resolved: false
+            }
+
+            if(reason)
+            {
+                comment.comment += '<br>' + reason;
             }
 
             var data =
@@ -467,7 +553,10 @@ export default {
             await this.sendToServiceWorker(data, 'addCallComment');
 
             // Update the call on the users device
-            this.updateCall(6, this.call);
+            if(type !== 'general')
+            {
+                this.updateCall(6, this.call);
+            }
 
 
             // }))
@@ -496,10 +585,14 @@ export default {
                 user
             }
 
-            await this.sendToServiceWorker(data, 'linkJobCard');
-
             // Update the call on the users device
             this.$store.dispatch('Call/linkJobCards', jobCardArray);
+
+            await Promise.all(jobCardArray.map(async jc => {
+                await this.$store.dispatch('DocUploads/linkJobCard', { jobCard: jc, call: this.call });
+            }))
+
+            await this.sendToServiceWorker(data, 'linkJobCard');
 
         },
 
@@ -512,6 +605,22 @@ export default {
 
 
         updateCall: async function(nextStatusId, call) {
+
+            if(nextStatusId === 4)
+            {
+                var payload = {
+                    call,
+                    fileTypeId: 19
+                }
+                this.$store.dispatch('DocUploads/addRequiredJobCard', { jobCard: '', call: this.call });
+            }
+
+
+            if(nextStatusId === 7)
+            {
+                this.$store.dispatch('DocUploads/checkExistingRequiredDocsOnRerouted', call);
+            }
+
 
             var user = JSON.parse(localStorage.getItem('user'));
             var signature = JSON.parse(localStorage.getItem('signature'));
@@ -577,6 +686,13 @@ export default {
             // this.$store.dispatch('Call/commentingOnCalls', calls);
             // this.$store.dispatch('Call/commentNextStatusId', nextStatusId);
             this.$store.dispatch('Call/commentModal', true);
+        },
+
+
+
+
+        submitGeneralComment: function(comment) {
+            this.addCallComment(comment, 'general');
         },
 
 
@@ -763,7 +879,142 @@ export default {
             }
 
             return returnDetails;
-        }
+        },
+
+
+
+
+
+
+
+
+        runLocalDocumentComparison: function() {
+
+                if(this.call && this.call.id)
+                {
+                    this.call['allJobCardDocumentLinksSent'] = true;
+                }
+            
+                // console.log('Running local document comparison...', this.call);
+                if(this.call && this.call.id && this.documents && this.documents.length >= 1 || this.call && this.call.id && this.call.jobCards && this.call.jobCards.length >= 1)
+                {
+                    var callDocs = this.documents.filter(doc => doc.call_id === this.call.id);
+                    // console.log('Got the call\'s documents: ', callDocs);
+
+                    // if(callDocs && callDocs.length >= 1)
+                    // {
+                    this.call.allDocumentsHaveCMIS = true;
+                    
+
+                    if(this.call.jobCards.length >= 1)
+                    {
+                        //check the jc for a cmisDocumentId
+                        this.call.jobCards.map(jc => {
+
+                            var jcDoc = callDocs.find(doc => doc.job_card_id === jc.id);
+                            // console.log('Got a jc Doc: ', jcDoc);
+
+                            if(jc.cmisDocumentId === null)
+                            {
+                                if(jcDoc)
+                                {
+                                    if(jcDoc.status != 'document required')
+                                    {
+                                        // console.log('Not making changes to allDocumentsHaveCMIS, document has been added for upload...');
+                                        
+                                    }
+                                    else
+                                    {
+                                        // console.log('JC Doc says it still requires a document...')
+                                        this.call.allDocumentsHaveCMIS = false;
+                                    }
+                                }
+                                else
+                                {
+                                    this.call.allDocumentsHaveCMIS = false;
+                                }
+                                
+                            }
+
+
+                            if(!jc.customerCallId)
+                            {
+                                if(jcDoc)
+                                {
+                                    if(jcDoc.job_card_link_added)
+                                    {
+                                        this.call.allJobCardDocumentLinksSent = true;
+                                    }
+                                }
+                                else
+                                {
+                                    this.call.allJobCardDocumentLinksSent = false;
+                                }
+
+                            }
+                        })
+
+
+                        if(callDocs.length >= 1)
+                        {
+                            callDocs.map(doc => {
+                            
+                                if(doc.required && !doc.size && !doc.name)
+                                {
+                                    this.call.allDocumentsHaveCMIS = false;
+                                }
+
+                            })
+                        }
+
+                        if(this.call.allDocumentsHaveCMIS === true)
+                        {
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        // console.log('No Job Cards found...')
+                        if(callDocs.length >= 1)
+                        {
+                            callDocs.map(doc => {
+                            
+                                if(doc.required && !doc.size && !doc.name)
+                                {
+                                    this.call.allDocumentsHaveCMIS = false;
+                                }
+
+                                if(doc.required && !doc.job_card_link_added)
+                                {
+                                    this.call.allJobCardDocumentLinksSent = false;
+                                }
+                            })
+                        }
+                        else
+                        {
+                            this.call.allDocumentsHaveCMIS = false;
+                            this.call.allJobCardDocumentLinksSent = false;
+                        }
+
+                        if(this.call.allDocumentsHaveCMIS === true)
+                        {
+                            return true;
+                        }
+                    }
+
+ 
+                }
+                else
+                {
+                    if(this.call.id)
+                    {
+                        this.call.allDocumentsHaveCMIS = false;
+                        this.call.allJobCardDocumentLinksSent = false;
+                    }
+
+                }
+            
+        },
 
     }
 
@@ -1293,8 +1544,8 @@ export default {
 
 
 .link-jc-no-order-num-wrap {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     align-items: center;
     margin-bottom: 10px;
 }
@@ -1333,6 +1584,25 @@ export default {
 }
 
 
+.add-comment-btn {
+    background: var(--Comments);
+}
+
+.add-comment-icon {
+    color: var(--OffWhite);
+}
+
+
+.view-comments-btn {
+    background: var(--Comments);
+}
+
+
+.view-comments-icon {
+    color: var(--OffWhite);
+}
+
+
 
 .refresh-job-card-btn-wrap {
 
@@ -1364,5 +1634,25 @@ export default {
     background: var(--ReceivedLight);
 }
 
+
+
+
+.call-not-found-wrap {
+
+}
+
+
+.call-not-found-info-text {
+    font-weight: 700;
+    font-size: 18px;
+    margin-top: 100px;
+    margin-bottom: 120px;
+}
+
+
+
+.open-calls-page-btn {
+
+}
 
 </style>

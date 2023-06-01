@@ -56,7 +56,7 @@ export default {
     watch: {
         verifying: {
             handler: function() {
-                console.log('verifying?', this.verifying);
+                // console.log('verifying?', this.verifying);
                 if(!this.verifying && this.axiosController)
                 {
 

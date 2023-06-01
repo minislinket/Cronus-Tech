@@ -68,6 +68,12 @@ import {
   faLocationDot,
   faFileCircleCheck,
   faMapLocationDot,
+  faFile,
+  faFilePdf,
+  faPlusCircle,
+  faCaretRight,
+  faCheckCircle,
+  faCommentDots,
 } from '@fortawesome/free-solid-svg-icons'
 
 
@@ -137,6 +143,7 @@ library.add(
   farTimesCircle,
   faComment,
   faComments,
+  faCommentDots,
   faRotateLeft,
   faClockRotateLeft,
   faShuffle,
@@ -148,5 +155,11 @@ library.add(
   faBell,
   faLocationDot,
   faFileCircleCheck,
-  faMapLocationDot
+  faMapLocationDot,
+  faFile,
+  faFilePdf,
+  faClockRotateLeft,
+  faPlusCircle,
+  faCaretRight,
+  faCheckCircle,
 )

@@ -116,6 +116,22 @@ if (process.env.NODE_ENV === 'production') {
 			// 	return 
 			// }
 
+			// if(event.data && event.data.type && event.data.type === 'jobCardLinked')
+			// {
+			// 	var data = event.data.data;
+			// 	console.log('Received some data for an IDB update: ', data);
+			// 	return
+			// }
+
+
+			// Intercept updates for Document Uploads
+			if(event.data && event.data.type && event.data.type === 'refreshDocuments')
+			{
+				console.log('Updating Document Uploads from SW...')
+				store.dispatch('DocUploads/getDocuments');
+				return
+			}
+
 
 			// Intercept Push Notification Clicks and redirect user to desired page
 			if (event.data && event.data.type && event.data.type === 'FCM') 
