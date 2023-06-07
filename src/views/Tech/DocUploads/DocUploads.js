@@ -234,6 +234,7 @@ const actions = {
         commit('updateDocument', updateDocument);
         dispatch('loading', false);
         dispatch('updateOrAddServerDocument', updateDocument);
+        idb.startDocumentUploads();
     },
 
 
@@ -245,6 +246,7 @@ const actions = {
         await dispatch('findAndUpdateLinkedJobCard', payload);
         dispatch('Loading/setLoading', false, { root: true });
         dispatch('loading', false);
+        idb.startDocumentUploads();
     },
 
 
@@ -402,19 +404,21 @@ const actions = {
 
 
 
-    async getDocuments({ state, commit, dispatch }) {
-        if(state.lastDocumentRefresh) {
+    async getDocuments({ state, commit, dispatch }, bypassWait) {
+        if(state.lastDocumentRefresh && !bypassWait) {
             var now = new Date();
             var diff = now - state.lastDocumentRefresh;
             if(diff < 1000) {
+                console.log('not refreshing documents, too soon');
                 return;
             }
         }
+        console.log('refreshing documents');
         state.lastDocumentRefresh = new Date();
         var documents = await idb.getDocuments();
         await Promise.all(documents.map(async doc => doc.file = '')); // remove the file if there is one, saves memory
         documents = documents.filter(doc => doc.status != 'archived' || doc.status.indexOf('delete') == -1);
-        // console.log('Documents from IDB: ', documents);
+        console.log('Documents from IDB: ', documents);
         commit('documents', documents);
     },
 
@@ -545,6 +549,75 @@ const actions = {
             return false;
             // best effort service here for now, if it fails often we'll build a retry mechanism
         })
+    },
+
+
+
+
+
+
+
+
+
+
+    async getApprovedRemovals({ state, dispatch }) {
+
+        dispatch('loading', true);
+
+        var user = JSON.parse(localStorage.getItem('user'));
+
+        await axiosMySQL.post('docUploads/getApprovedRemovals.php', user.employeeCode)
+        .then(async resp => {
+            console.log('getApprovedRemovals: ', resp.data);
+            if(resp.status == 200 && resp.data && resp.data.length >= 1)
+            {
+                var removals = resp.data;
+                await dispatch('getDocuments', true);
+                console.log(state.documents);
+                removals.map(async removal => {
+                    var document = state.documents.find(doc => doc.employee_code === removal.technician_employee_code && Number(doc.call_id) === Number(removal.call_id) && doc.status == 'document required');
+                    console.log('Found matching doc in state: ', document);
+                    if(document)
+                    {
+                        document.status = 'can delete';
+                        await dispatch('updateDocument', document);
+                        await dispatch('updateDocAdminStatus', { call_id: document.call_id, employee_code: document.employee_code, status: 'delete received' });
+                    }
+                })
+            }
+            dispatch('loading', false);
+        })
+        .catch(err => {
+            console.log('getApprovedRemovals error: ', err);
+            dispatch('loading', false);
+        })
+
+    },
+
+
+
+
+
+    async removeAdminApprovedDoc({ dispatch }, document) {
+
+        if(document)
+        {
+            document.status = 'deleted admin';
+            await dispatch('updateDocAdminStatus', { call_id: document.call_id, employee_code: document.employee_code, status: 'deleted' });
+            await dispatch('removeServerDocument', document);
+            await dispatch('removeDocument', document);
+        }
+
+    },
+
+
+
+
+
+    async updateDocAdminStatus({ dispatch }, document) {
+
+        await axiosMySQL.post('docUploads/updateDocAdminStatus.php', document)
+
     },
 
 

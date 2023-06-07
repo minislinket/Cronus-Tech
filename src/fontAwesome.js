@@ -74,6 +74,7 @@ import {
   faCaretRight,
   faCheckCircle,
   faCommentDots,
+  faFileShield,
 } from '@fortawesome/free-solid-svg-icons'
 
 
@@ -162,4 +163,5 @@ library.add(
   faPlusCircle,
   faCaretRight,
   faCheckCircle,
+  faFileShield
 )

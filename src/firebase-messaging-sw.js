@@ -688,12 +688,17 @@ async function prepareDocUploads() {
 			.then(resp => {
 				if(resp.status == 200)
 				{
+
+					document.upload_data_synced = true;
+
+
 					if(document.status == 'archived')
 					{
-						document.upload_data_synced = true;
 						idb.deleteDocument(document);
+						return
 					}
-					document.upload_data_synced = true;
+
+					
 					idb.updateDocument(document);
 				}
 			})

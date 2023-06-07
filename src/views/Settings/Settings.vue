@@ -16,6 +16,8 @@
 
         <button v-if="availableUserRoles.includes(2)" @click="switchProfile()"><font-awesome-icon :icon="['fa', 'retweet']" size="lg" /> Switch to {{ userType === 1 ? 'Ops-Admin' : 'Tech' }}</button>
 
+        <button @click="checkForDocRemovals()"><font-awesome-icon :icon="['fa', 'file-shield']" size="lg" /> Docs Admin</button>
+
         <button :disabled="!online" @click="checkRefreshJobData()" class="refresh-jobs-btn"><span class="material-symbols-outlined">cloud_sync</span> Refresh Job Data</button>
 
         <button :disabled="!online" class="update-static-btn warning" @click="resetApp()"><font-awesome-icon :icon="['fa', 'sync-alt']" size="lg" /> Reset App Data</button>
@@ -142,6 +144,14 @@ export default {
 
 
     methods: {
+
+
+        checkForDocRemovals: function() {
+            this.$store.dispatch('DocUploads/getApprovedRemovals');
+            this.$router.push('/documents');
+        },
+
+
 
 
         checkRefreshJobData: function() {

@@ -24,23 +24,29 @@ $status = isset($data['status']) ? $data['status'] : '';
 $type = isset($data['type']) ? $data['type'] : '';
 $doc_added = isset($data['doc_added']) ? $data['doc_added'] : '';
 $upload_attempts = isset($data['upload_attempts']) ? $data['upload_attempts'] : '';
-$upload_completed = isset($data['upload_completed']) ? $data['upload_completed'] : '';
-$upload_started = isset($data['upload_started']) ? $data['upload_started'] : '';
+$upload_completed = isset($data['upload_completed']) ? $data['upload_completed'] : NULL;
+$upload_started = isset($data['upload_started']) ? $data['upload_started'] : NULL;
 $upload_error = isset($data['upload_error']) ? $data['upload_error'] : '';
 $user = isset($data['employee_code']) ? $data['employee_code'] : '';
-$job_card_link_added = isset($data['job_card_link_added']) ? $data['job_card_link_added'] : '';
-$job_card_linked = isset($data['job_card_linked']) ? $data['job_card_linked'] : '';
-$required = isset($data['required']) ? $data['required'] : '';
+$job_card_link_added = isset($data['job_card_link_added']) ? ($data['job_card_link_added'] === true ? 1 : 0) : 0;
+$job_card_linked = isset($data['job_card_linked']) ? ($data['job_card_linked'] === true ? 1 : 0) : 0;
+$required = isset($data['required']) ? ($data['required'] === true ? 1 : 0) : 0;
 $id = isset($data['id']) ? $data['id'] : '';
 $db_id = $id.'_'.$user.'_'.$doc_added;
 
-echo $db_id.'\n';
+$upload_completed === '' ? $upload_completed = NULL : $upload_completed = $upload_completed;
+$upload_started === '' ? $upload_started = NULL : $upload_started = $upload_started;
+
+// echo $upload_completed.' \n'.$upload_started.'/n';
 
 try {
 
-    $query = "SELECT * from `doc_uploads_log`";
+    $query = "SELECT * from `doc_uploads_log` where `user_employee_code` = :user";
 
     $stmt = $pdo->prepare($query);
+
+    $stmt->bindValue(':user', $user);
+
     $stmt->execute();
     $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

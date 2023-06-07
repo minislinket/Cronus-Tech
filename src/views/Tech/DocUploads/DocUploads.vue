@@ -22,7 +22,8 @@
                 <div class="call-documents-grid-scroll-section custom-scroller" v-if="call.showCallDocuments" :class="{ 'extra-bottom' : call.documents.length > 1 }">
                     <p class="no-docs-info-text" v-if="call.documents.length <= 0">No documents yet...</p>
                     <p class="no-docs-info-text" v-if="call.documents.length <= 0">You can add a document by clicking on the green "+" plus icon next to the store's name where you would like to upload the document. If it's not available, you haven't been On Site yet.</p>
-                    <div class="call-documents-grid" v-for="doc in call.documents" :key="doc.name" @click="uploadRequiredDocument(doc)">
+                    <div class="call-documents-grid" v-for="doc in call.documents" :key="doc.name">
+                        <div class="call-documents-upload-button-invisible" @click="uploadRequiredDocument(doc)"></div>
                         <img class="upload-thumbnail align-center" :src="doc.thumbnail_url" v-if="doc.thumbnail">
                         <font-awesome-icon class="pdf-document-thumbnail-icon align-center" v-else :icon="['fa', 'file-pdf']" size="lg" />
                         <p v-if="!doc.job_card_id" class="small-text">{{ doc.size ? (doc.size / 1000).toFixed(2) + ' kB' : '--' }}</p>
@@ -30,10 +31,11 @@
                         <p>{{ getDocumentTypeName(doc.type) }}</p>
                         <p>{{ doc.status }}</p>
                         <font-awesome-icon class="doc-upload-icon required align-center" v-if="doc.status == 'document required'"  :icon="['fa', 'file-circle-exclamation']" size="lg" />
-                        <font-awesome-icon class="doc-upload-icon pending align-center" v-if="doc.status == 'pending upload'" :icon="['fa', 'clock-rotate-left']" size="lg" />
+                        <font-awesome-icon @click="startDocumentUploads()" class="doc-upload-icon pending align-center" v-if="doc.status == 'pending upload'" :icon="['fa', 'clock-rotate-left']" size="lg" />
                         <font-awesome-icon @click="retryDocUpload(doc)" class="doc-upload-icon uploading align-center" v-if="doc.status == 'uploading'" :icon="['fa', 'file-arrow-up']" size="lg" />
                         <font-awesome-icon class="doc-upload-icon complete align-center" v-if="doc.status == 'complete'" :icon="['fa', 'check-circle']" size="lg" />
                         <font-awesome-icon class="doc-upload-icon retrying align-center" v-if="doc.status == 'retrying'" :icon="['fa', 'sync-alt']" size="lg" />
+                        <font-awesome-icon @click="removeDocument(doc)" class="doc-upload-icon can-delete align-center warning" v-if="doc.status == 'can delete'" :icon="['fa', 'trash']" size="lg" />
                         
                     </div>
                 </div>
@@ -260,6 +262,15 @@ export default {
     methods: {
 
 
+
+
+        removeDocument: function(doc) {
+            this.$store.dispatch('DocUploads/removeAdminApprovedDoc', doc);
+        },
+
+
+
+
         checkCanArchiveDocs: function(callId) {
             var modal = {
                 active: true, // true to show modal
@@ -294,6 +305,7 @@ export default {
         retryDocUpload: function(doc) {
             doc.status = 'retrying';
             this.$store.dispatch('DocUploads/updateDocument', doc);
+            this.startDocumentUploads(); 
         },
 
 
@@ -464,6 +476,7 @@ export default {
     align-items: center;
     border-bottom: 1px dashed rgba(255,255,255,0.2);
     padding: 3px 0;
+    position: relative;
 }
 
 .call-documents-grid:last-child {
@@ -473,6 +486,21 @@ export default {
 .call-documents-grid .align-center {
     justify-self: center;
 }
+
+
+
+.call-documents-upload-button-invisible {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    color: transparent;
+    z-index: 9;
+}
+
+
 
 .upload-thumbnail {
     max-width: 60px;
@@ -504,6 +532,10 @@ export default {
 
 .doc-upload-icon {
 
+}
+
+.doc-upload-icon.can-delete {
+    z-index: 10;
 }
 
 

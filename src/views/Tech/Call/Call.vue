@@ -7,29 +7,29 @@
         
         <div class="call-info-wrap" v-if="call && call.id">
 
-            <div class="link-jc-no-order-num-wrap">
-                <div class="link-job-card-wrap" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2">
+            <div class="link-jc-no-order-num-wrap" v-if="call.techStateId >= 4 && call.techStateId !== 5 && call.techStateId !== 7 || call.callTypeId == 6 && call.techStateId >= 2">
+                <div class="link-job-card-wrap">
                     <button :class="{ 'no-jc' : call.jobCards.length <= 0 || !call.allJobCardDocumentLinksSent, 'linked' : call.jobCards.length >= 1 || call.allJobCardDocumentLinksSent }" @click="openLinkJobCard()"><font-awesome-icon class="link-job-card-icon" :icon="['fa','link']" size="lg" /> </button>
                     <span>Link Job Card</span>
                 </div>
-                <p @click="openLinkOrderNumber()" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2"><button class="no-order-number" :class="{ okay : call.orderNumber }"><font-awesome-icon :icon="['fa','exclamation-triangle']" size="lg" /></button> Order Number</p>
+                <p @click="openLinkOrderNumber()"><button class="no-order-number" :class="{ okay : call.orderNumber }"><font-awesome-icon :icon="['fa','exclamation-triangle']" size="lg" /></button> Order Number</p>
             </div>
-            <div class="link-jc-no-order-num-wrap">
-                <div class="link-job-card-wrap" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2">
+            <div class="link-jc-no-order-num-wrap" v-if="call.techStateId >= 4 && call.techStateId !== 5 && call.techStateId !== 7 || call.callTypeId == 6 && call.techStateId >= 2">
+                <div class="link-job-card-wrap">
                     <button :class="{ 'no-jc' : !call.allDocumentsHaveCMIS, 'linked' : call.allDocumentsHaveCMIS }" @click="openUploadDocs()"><font-awesome-icon class="link-job-card-icon" :icon="['fa','file-arrow-up']" size="lg" /> </button>
                     <span>Upload Docs</span>
                 </div>
-                <div class="refresh-job-card-btn-wrap" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2">
+                <div class="refresh-job-card-btn-wrap" v-if="call.techStateId >= 4 && call.techStateId !== 5 && call.techStateId !== 7 || call.callTypeId == 6 && call.techStateId >= 2">
                     <button class="refresh-call-jcs-btn" @click="refreshCallDocs()"><font-awesome-icon class="refresh-job-cards-icon" :icon="['fa','sync-alt']" size="lg" /> </button>
                     <span>Refresh Docs</span>
                 </div>
             </div>
-            <div class="link-jc-no-order-num-wrap">
-                <div class="link-job-card-wrap" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2">
+            <div class="link-jc-no-order-num-wrap" v-if="call.techStateId >= 4 && call.techStateId !== 5 && call.techStateId !== 7 || call.callTypeId == 6 && call.techStateId >= 2">
+                <div class="link-job-card-wrap">
                     <button @click="addGeneralCallComment()" class="add-comment-btn"><font-awesome-icon class="add-comment-icon" :icon="['fa','comment-dots']" size="lg" /> </button>
                     <span>Add Comment</span>
                 </div>
-                <div class="link-job-card-wrap" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2">
+                <div class="link-job-card-wrap" v-if="call.techStateId >= 4 && call.techStateId !== 5 && call.techStateId !== 7 || call.callTypeId == 6 && call.techStateId >= 2">
                     <button @click="viewCallComments()" class="view-comments-btn"><font-awesome-icon class="view-comments-icon" :icon="['fa','comments']" size="lg" /> </button>
                     <span>View Comments</span>
                 </div>
@@ -633,7 +633,7 @@ export default {
             // console.log('Build a time_stamp: ', time_stamp);
 
             // Data to be sent
-            var data = {call: call, nextStatusId, user, signature, time_stamp };
+            var data = { call: call, nextStatusId, user, signature, time_stamp };
 
             await this.sendToServiceWorker(data, 'updateCall');
 
