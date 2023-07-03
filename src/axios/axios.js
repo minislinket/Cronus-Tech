@@ -4,6 +4,7 @@ import store from '../store';
 
 const axiosOffice = axios.create();
 const axiosMySQL = axios.create();
+const axiosSSE = axios.create();
 // const axiosOldDB = axios.create();
 
 var online = true;
@@ -86,22 +87,25 @@ if (process.env.NODE_ENV === 'production')
 
     var baseURLOffice = '';
     var baseURLMySQL = '';
+    var baseURLSSE = '';
 
     if(window.location.hostname === 'localhost')
     {
         baseURLOffice = 'http://129.232.180.146/cronus/api/';
         baseURLMySQL = 'http://localhost/cronus-tech/src/api/';
+        baseURLSSE = 'http://localhost:3000/';
     }
     else
     {
         baseURLOffice = 'https://office.locksecure.co.za/cronus/api/';
         baseURLMySQL = 'https://dev.locksecure.co.za/tech-api/';
+        baseURLSSE = 'https://dev.locksecure.co.za/tech-sse/';
     }
 
 
     axiosOffice.defaults.baseURL = baseURLOffice;
     axiosMySQL.defaults.baseURL = baseURLMySQL;
-      
+    axiosSSE.defaults.baseURL = baseURLSSE;
 
 }
 
@@ -121,6 +125,7 @@ export {
     axiosOffice,
     axiosMySQL,
     // axiosOldDB
+    axiosSSE
 }
 
 

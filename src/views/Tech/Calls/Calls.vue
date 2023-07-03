@@ -148,9 +148,9 @@ export default {
 
     methods: {
 
-        setTechAtOffice: function() {
-            this.$store.dispatch('GeoLocation/markTechAtOffice')
-        },
+        // setTechAtOffice: function() {
+        //     this.$store.dispatch('GeoLocation/markTechAtOffice')
+        // },
 
 
         loadCall: function(call) {

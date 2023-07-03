@@ -22,6 +22,55 @@ workbox.routing.registerNavigationRoute(
 
 
 
+// const eventSource = new EventSource("http://localhost:3000/connect_sse");
+
+// eventSource.onerror = function (event) {
+// 	eventSource.close();
+// }
+
+// eventSource.onmessage = function (event) {
+//     console.log('Caught SSE in SW', event);
+// 	if(event.data == 'update')
+// 	{
+// 		messageApp('checkForUpdates', '', '', '');
+// 	}
+
+// 	if(event.data == 'heartbeat')
+// 	{
+// 		messageApp('heartbeat', '', '', '');
+// 	}
+//     // if('serviceWorker' in navigator)
+//     // {
+        
+
+//     // }
+//     // navigator.geolocation.getCurrentPosition(positionData => {
+//     //     console.log(positionData);
+//     // })
+// }
+
+
+// self.addEventListener('message', function (event) {
+
+// 	messageApp('wakeUp', 'wake up', '', '');
+
+// })
+
+
+function messageApp(type, title, body, data) {
+	self.clients.matchAll().then(clients => {
+		clients.forEach(client => {
+		  client.postMessage({ type, title, body, data });
+		});
+	});
+}
+
+
+
+
+
+
+
 // SW Sync Store for Call update data
 let callSyncStore = [];
 let callJobCardLinkStore = [];
@@ -896,21 +945,23 @@ importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js');
 
 firebase.initializeApp({
-	apiKey: "AIzaSyDHWX85q8abA_JWstCMF-dh6KBXh6qWzJA",
-	authDomain: "cronus-9b5c7.firebaseapp.com",
-	projectId: "cronus-9b5c7",
-	storageBucket: "cronus-9b5c7.appspot.com",
-	messagingSenderId: "389452364454",
-	appId: "1:389452364454:web:141cb993218b2b06e39267",
-	measurementId: "G-PCP78HSTH5"
+	apiKey: "AIzaSyBJAgqionFEDEqR7VHSIhWTyptLQK2prYs",
+	authDomain: "cronus-tech.firebaseapp.com",
+	projectId: "cronus-tech",
+	storageBucket: "cronus-tech.appspot.com",
+	messagingSenderId: "333542988931",
+	appId: "1:333542988931:web:e34b780716fb213605cfb6",
+	measurementId: "G-3SFDH87HNK"
+	
 });
 
 
 // Retrieve an instance of Firebase Messaging so that it can handle background messages.
 const messaging = firebase.messaging()
 
-messaging.setBackgroundMessageHandler(function (payload) {
+messaging.onBackgroundMessage((payload) => {
 	console.log('[firebase-messaging-sw.js] Received background message ', payload);
+	// messageApp('checkForUpdates', '', '', '');
 	// Customize notification here
 	const msgTitle = 'Cronus Tech Notification';
 	const msgOptions = {
@@ -926,3 +977,22 @@ messaging.setBackgroundMessageHandler(function (payload) {
 
 	return self.registration.showNotification(notificationTitle, notificationOptions);
 });
+
+// onBackgroundMessageHandler(messaging, function (payload) {
+// 	console.log('[firebase-messaging-sw.js] Received background message ', payload);
+// 	messageApp('checkForUpdates', '', '', '');
+// 	// Customize notification here
+// 	const msgTitle = 'Cronus Tech Notification';
+// 	const msgOptions = {
+// 		body: 'You have a new notification from Cronus Tech...',
+// 		icon: './img/icons/android-chrome-maskable-192x192.png',
+// 		vibrate: [200, 100, 200, 100, 200, 100, 200],
+// 		tag: 'Notification-example',
+// 		data: {
+// 			payload,
+// 			url: '/'
+// 		}
+// 	}
+
+// 	return self.registration.showNotification(notificationTitle, notificationOptions);
+// });

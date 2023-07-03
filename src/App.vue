@@ -118,7 +118,7 @@ export default {
 
 	created() {
 
-		navigator.serviceWorker.getRegistration().then(reg => { this.listenForWaitingServiceWorker(reg, this.promptUserToRefresh) }); 
+		navigator.serviceWorker.getRegistration().then(reg => { this.listenForWaitingServiceWorker(reg, this.refreshServiceWorker) }); 
 		navigator.serviceWorker.addEventListener('controllerchange', function() { window.location.reload() });
 
 	},
@@ -129,6 +129,12 @@ export default {
 
 	mounted() {
 
+		console.log('The App should auto refresh and load the new service worker')
+		console.log('Making a change that the app can auto load because of a server message...');
+
+		// this.removeIndexedDB()
+
+		
 		// this.startPeriodicSync();
 		// if (status.state === 'granted') {
 		// // Periodic background sync can be used.
@@ -232,6 +238,28 @@ export default {
 
 
 	methods: {
+
+
+		removeIndexedDB: function() {
+
+			var databases = ['DocUploads', 'SignatureDB'];
+
+
+			databases.map(db => {
+
+				var req = indexedDB.deleteDatabase(db);
+				req.onsuccess = function () {
+					console.log("Deleted database successfully");
+				};
+				req.onerror = function () {
+					console.log("Couldn't delete database");
+				};
+				req.onblocked = function () {
+					console.log("Couldn't delete database due to the operation being blocked");
+				};
+				
+			});
+		},
 
 
 

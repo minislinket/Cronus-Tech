@@ -1,4 +1,4 @@
-import { axiosOffice } from '../../axios/axios'
+import { axiosMySQL, axiosOffice, axiosSSE } from '../../axios/axios'
 import router from '../../router/index'
 const crypto = require('crypto');
 
@@ -68,6 +68,8 @@ const actions = {
 
 
     checkLogin({ commit, dispatch, rootGetters }) {
+
+        // console.log('Checking login...');
 
         const signature = JSON.parse(localStorage.getItem('signature'));
         const time_stamp = JSON.parse(localStorage.getItem('time_stamp'));
@@ -213,6 +215,7 @@ const actions = {
 
 
                     var roles = data['cronus-roles'];
+                    var employeeCode = data['sub'];
                     // console.log(roles);
                     if(roles && roles.length >= 1)
                     {
@@ -239,6 +242,8 @@ const actions = {
                     }
 
                     
+
+                    
                     
 
 
@@ -247,6 +252,12 @@ const actions = {
 
                     commit('signature', resp.data.signature);
                     axiosOffice.defaults.headers.common['Authorization'] = 'Bearer: ' + resp.data.signature.toString();
+
+
+
+                    dispatch('setUserDevice', employeeCode);
+
+
 
                     // console.log('Started loading static resources...')
                     await dispatch('StaticResources/loadStaticResources', null, {root: true});
@@ -313,6 +324,27 @@ const actions = {
             })
     },
 
+
+
+
+
+
+    setUserDevice({ }, employeeCode) {
+
+        // var device = {
+        //     firebaseToken: localStorage.getItem('msgToken'),
+        //     userAgent: navigator.userAgent,
+        //     employeeCode
+        // }
+
+        axiosSSE.post('updateSSEClientCode', {clientId: localStorage.getItem('msgToken'), employeeCode})
+		.then(resp => {
+			console.log(resp);
+		})
+		.catch(err => {
+			console.log(err);
+		})
+    },
 
 
 
