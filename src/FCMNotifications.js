@@ -215,13 +215,13 @@ if (process.env.NODE_ENV === 'production') {
 	// TODO: Replace the following with your app's Firebase project configuration
 	// See: https://firebase.google.com/docs/web/learn-more#config-object
 	const firebaseConfig = {
-		apiKey: "AIzaSyBJAgqionFEDEqR7VHSIhWTyptLQK2prYs",
-		authDomain: "cronus-tech.firebaseapp.com",
-		projectId: "cronus-tech",
-		storageBucket: "cronus-tech.appspot.com",
-		messagingSenderId: "333542988931",
-		appId: "1:333542988931:web:e34b780716fb213605cfb6",
-		measurementId: "G-3SFDH87HNK"
+		apiKey: "AIzaSyDHWX85q8abA_JWstCMF-dh6KBXh6qWzJA",
+		authDomain: "cronus-9b5c7.firebaseapp.com",
+		projectId: "cronus-9b5c7",
+		storageBucket: "cronus-9b5c7.appspot.com",
+		messagingSenderId: "389452364454",
+		appId: "1:389452364454:web:141cb993218b2b06e39267",
+		measurementId: "G-PCP78HSTH5"
 	};
 
 	// Initialize Firebase
@@ -246,7 +246,7 @@ if (process.env.NODE_ENV === 'production') {
 
 
 			
-			messaging.getToken({ vapidKey: 'BI4w7gKj2FBSL-4dvg0WkOveVZb14YsEWjt9_KCSmpwbh7t3O25kz_AHeUWliWEx3EwmbKGFCdJBoUJvDMRjG2A', serviceWorkerRegistration: serviceWorker })
+			messaging.getToken({ vapidKey: 'BOHgZUNY-YqD6PiRcMNpxU_K1xhBzOhs6hkd_-tCoWKxCefyEM0iLwJG3RAoogFludrC0dt19VJguyPDRAd10ls', serviceWorkerRegistration: serviceWorker })
 			.then((currentToken) => {
 				if (currentToken) {
 					console.log('FCM Connected!');
@@ -255,14 +255,14 @@ if (process.env.NODE_ENV === 'production') {
 				} else {
 					store.dispatch('Toast/toast', toast);
 					console.log('No registration token available. Request permission to generate one.');
-					localStorage.removeItem('msgToken', currentToken);
+					localStorage.removeItem('msgToken');
 				}
 				store.dispatch('Login/loadingFirebaseToken', false);
 			}).catch((err) => {
 				store.dispatch('Toast/toast', toast);
 				console.log('An error occurred while retrieving token. ', err);
 				store.dispatch('Login/loadingFirebaseToken', false);
-				localStorage.removeItem('msgToken', currentToken);
+				localStorage.removeItem('msgToken');
 			})
 
 

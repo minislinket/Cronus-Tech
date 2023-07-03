@@ -614,7 +614,7 @@ export default {
             }
             else if(type == 'order')
             {
-                comment = reason.toString();
+                comment = reason.toString(); // reason = Awaiting Order!
             }
 
             // console.log('Comment is: ', comment);
