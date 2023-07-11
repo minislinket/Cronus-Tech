@@ -94,7 +94,7 @@ socket.on('control', (data) => {
                 }
                 else if(reg.waiting)
                 {
-                    store.dispatch('Control/checkingForUpdates', false);
+                    // store.dispatch('Control/checkingForUpdates', false);
                     localStorage.setItem('showUpdateMessage', true);
                     localStorage.setItem('canUpdate', false);
                     reg.waiting.postMessage({type: 'skipWaiting'});

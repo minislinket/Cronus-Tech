@@ -23,12 +23,14 @@ if (process.env.NODE_ENV === 'production') {
 		},
 		registered() {
 			console.log('Service worker has been registered.');
-
+			
+			
 			setTimeout(() => {
 				store.dispatch('Control/checkingForUpdates', false);
 				localStorage.setItem('updating', false);
 				store.dispatch('Control/initUpdates');
 			}, 1500);
+				
 
 			
 		},
@@ -37,7 +39,7 @@ if (process.env.NODE_ENV === 'production') {
 		},
 		
 		updated() {
-			store.dispatch('Control/updateCompleted');
+			
 			localStorage.setItem('updating', true);
 			store.dispatch('Control/initUpdates');
 			console.log('New content is available; please refresh.')

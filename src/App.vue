@@ -3,7 +3,7 @@
 	<Modal />
 
 	<Loading />
-	<!-- <Control /> -->
+	<Control />
 
 	<Menu :online="online" v-if="isAuth" />
 	<QuickMenu v-if="isAuth" />
@@ -116,10 +116,10 @@ export default {
 		
 
 		// this.$store.dispatch('Control/initUpdates');
-		// this.$store.dispatch('Updates/checkingForUpdates', true);
+		this.$store.dispatch('Control/checkingForUpdates', true);
 
 
-		console.log('The App should auto refresh and load the new service worker')
+		// console.log('The App should auto refresh and load the new service worker')
 		console.log('Making a change that the app can auto load because of a server message...');
 
 		this.checkCallSyncStoreBackup();
