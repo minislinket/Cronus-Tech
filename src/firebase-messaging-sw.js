@@ -945,13 +945,13 @@ importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
 importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js');
 
 firebase.initializeApp({
-	apiKey: "AIzaSyBJAgqionFEDEqR7VHSIhWTyptLQK2prYs",
-	authDomain: "cronus-tech.firebaseapp.com",
-	projectId: "cronus-tech",
-	storageBucket: "cronus-tech.appspot.com",
-	messagingSenderId: "333542988931",
-	appId: "1:333542988931:web:e34b780716fb213605cfb6",
-	measurementId: "G-3SFDH87HNK"
+	apiKey: "AIzaSyDHWX85q8abA_JWstCMF-dh6KBXh6qWzJA",
+	authDomain: "cronus-9b5c7.firebaseapp.com",
+	projectId: "cronus-9b5c7",
+	storageBucket: "cronus-9b5c7.appspot.com",
+	messagingSenderId: "389452364454",
+	appId: "1:389452364454:web:141cb993218b2b06e39267",
+	measurementId: "G-PCP78HSTH5"
 	
 });
 

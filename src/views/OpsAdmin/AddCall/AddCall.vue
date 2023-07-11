@@ -11,6 +11,8 @@
         <PreviousCall />
         <LogCallForm :resetCall="resetCall" />
 
+        <CombineCallModal />
+
 
         <button class="submit-call-btn" @click="submitCall()" v-if="customerStore" :disabled="!canSubmitCall" :class="{ disabled : !canSubmitCall }">Submit Call</button>
         
@@ -28,6 +30,7 @@ const LZString = require('lz-string');
 import CustomerDetail from './CustomerDetail.vue'
 import PreviousCall from './PreviousCall.vue';
 import LogCallForm from './LogCallForm.vue'
+import CombineCallModal from './CombineCallModal.vue'
 
 export default {
 
@@ -35,7 +38,8 @@ export default {
         SearchSelect,
         CustomerDetail,
         PreviousCall,
-        LogCallForm
+        LogCallForm,
+        CombineCallModal
     },
 
 
@@ -78,9 +82,13 @@ export default {
 
         modal: {
             handler: function() {
-                if(this.modal.confirmAction === true && this.modal.actionFrom.indexOf('checkSubmitNewCall') !== -1)
+                if(this.modal.confirmAction === false && this.modal.actionFrom.indexOf('checkSubmitNewCall') !== -1)
                 {
                     this.$store.dispatch('AddCall/submitCall');
+                }
+                else if(this.modal.confirmAction === true && this.modal.actionFrom.indexOf('checkSubmitNewCall') !== -1)
+                {
+                    this.$store.dispatch('AddCall/callCombineModal', true);
                 }
             },
             deep: true
@@ -214,8 +222,6 @@ export default {
     align-items: center;
     padding-top: 10px;
 }
-
-
 
 .add-call-search-select {
     margin-bottom: 15px;

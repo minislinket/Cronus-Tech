@@ -1,10 +1,9 @@
 <template>
-
-
 	<Toast />
 	<Modal />
 
 	<Loading />
+	<!-- <Control /> -->
 
 	<Menu :online="online" v-if="isAuth" />
 	<QuickMenu v-if="isAuth" />
@@ -14,8 +13,6 @@
 	<template v-if="!isPortrait && isMobile">
 		<Landscape />
 	</template>
-
-
 </template>
 
 
@@ -26,18 +23,20 @@
 import Menu from './components/Menu/Menu.vue'
 import QuickMenu from './components/QuickMenu/QuickMenu.vue'
 import Loading from './components/Loading/Loading.vue'
+import Control from './components/Control/Control.vue'
 import Login from './components/Login/Login.vue'
 import Toast from './components/Toast/Toast.vue'
 import Modal from './components/Modal/Modal.vue'
 import Landscape from './components/Landscape/Landscape.vue'
 import { mapGetters } from 'vuex'
 
+import { socket } from './socket_io'
 
 export default {
 
 
 	components: {
-		Menu, Login, Toast, Modal, QuickMenu, Loading, Landscape
+		Menu, Login, Toast, Modal, QuickMenu, Loading, Landscape, Control
 	},
 
 
@@ -69,15 +68,6 @@ export default {
 
 
 	watch: {
-		
-
-
-
-		isAuth: function() {
-            
-        },
-
-
 
 		modal: {
             handler: function() {
@@ -97,19 +87,11 @@ export default {
 		},
 
 
-		// stopGeoLocationService: {
-		// 	handler: function() {
-		// 		// this.stopGeoLocationService == true ? this.stopGeoLocation() : null;
-		// 	},
-		// 	deep: true,
-		// },
+		isAuth: function() {
+			socket.emit('user_login_status', localStorage.getItem('socketUUID'), this.isAuth);
+		},
+		deep: true
 
-		// startGeoLocationService: {
-		// 	handler: function() {
-		// 		// this.startGeoLocationService == true ? this.startGeoLocation() : null;
-		// 	},
-		// 	deep: true,
-		// },
 	},
 
 
@@ -129,50 +111,21 @@ export default {
 
 	mounted() {
 
+		console.log('App version: ', process.env.PACKAGE_VERSION);
+		localStorage.setItem('version', process.env.PACKAGE_VERSION);
+		
+
+		// this.$store.dispatch('Control/initUpdates');
+		// this.$store.dispatch('Updates/checkingForUpdates', true);
+
+
 		console.log('The App should auto refresh and load the new service worker')
 		console.log('Making a change that the app can auto load because of a server message...');
-
-		// this.removeIndexedDB()
-
-		
-		// this.startPeriodicSync();
-		// if (status.state === 'granted') {
-		// // Periodic background sync can be used.
-		// 	console.log('Periodic Sync available...');
-		// } else {
-		// 	console.log('NO Periodic Sync...')
-		// // Periodic background sync cannot be used.
-		// }
-
-
-
 
 		this.checkCallSyncStoreBackup();
 
 
-		// // Check if Geo Location Service is available and start it up
-		// if(navigator.geolocation) 
-		// {
-		// 	console.log('Geo Location is available...');
-		// 	this.startGeoLocation();
-		// } 
-		// else 
-		// {
-		// 	console.log('Geo Location not supported by browser');
-		// 	this.stopGeoLocation();
-		// }
-		
-
-		// var user_type = localStorage.getItem('user_type');
-		// if(user_type)
-		// {
-		// 	this.$store.dispatch('UserRole/setUserRole', user_type);
-		// }
-
-
 		// console.log('🍱: ' , window.location);
-
-		
 
 		// window.addEventListener('error', (event) => {
 		// 	console.log('⛔ GLOBAL error event: ', event  );
@@ -239,86 +192,6 @@ export default {
 
 	methods: {
 
-
-		removeIndexedDB: function() {
-
-			var databases = ['DocUploads', 'SignatureDB'];
-
-
-			databases.map(db => {
-
-				var req = indexedDB.deleteDatabase(db);
-				req.onsuccess = function () {
-					console.log("Deleted database successfully");
-				};
-				req.onerror = function () {
-					console.log("Couldn't delete database");
-				};
-				req.onblocked = function () {
-					console.log("Couldn't delete database due to the operation being blocked");
-				};
-				
-			});
-		},
-
-
-
-		// startPeriodicSync: async function() {
-		// 	await navigator.permissions.query({
-		// 		name: 'periodic-background-sync',
-		// 	})
-		// 	.then(event => {
-		// 		navigator.serviceWorker.ready.then(async registration => {
-		// 			try {
-		// 				await registration.periodicSync.register('updateLocation', { minInterval: 300000 });
-		// 				console.log('Periodic background sync registered.');
-		// 			} catch (err) {
-		// 				console.error(err.name, err.message);
-		// 			}
-		// 		});
-		// 	})
-		// },
-
-
-
-		// startGeoLocation: function() {
-
-		// 	console.log('Starting Geo Location Service...');
-
-		// 	// Incase an interval is already setup, clear it and start again
-		// 	if(this.geoLocationInterval)
-		// 	{
-		// 		clearInterval(this.geoLocationInterval);
-		// 	}
-
-		// 	// Get initial location
-		// 	this.$store.dispatch('GeoLocation/updateCurrentLocation');
-
-		// 	// Set an interval to get intermittent updates
-		// 	// this.geoLocationInterval = setInterval(() => {
-		// 		this.$store.dispatch('GeoLocation/updateCurrentLocation');
-		// 	// }, this.geoLocationUpdateTimeMinutes * 1000 * 60)
-			
-		// },
-
-
-
-		// stopGeoLocation: function() {
-		// 	console.log('Stopping Geo Location Service...');
-		// 	clearInterval(this.geoLocationInterval);
-		// },
-
-
-
-
-
-
-
-
-
-
-
-
 		checkCallSyncStoreBackup: function() {
 
 			navigator.serviceWorker.getRegistration().then(reg => {
@@ -341,17 +214,33 @@ export default {
 
 
 		listenForWaitingServiceWorker: function (reg, callback) {
+			var this2 = this;
+			// if(!canUpdate) { return }
 
 			function awaitStateChange() {
+				
+				
+
 				reg.installing.addEventListener('statechange', function() {
-					if (this.state === 'installed') callback(reg);
+					if (this.state === 'installed') callback(reg)
 				});
 			}
 
+			var canUpdate = JSON.parse(localStorage.getItem('canUpdate'));
+			// console.log('canUpdate: ', canUpdate);
+			if (!canUpdate) return;
 			if (!reg) return;
 			if (reg.waiting) return callback(reg);
-			if (reg.installing) awaitStateChange();
-			reg.addEventListener('updatefound', awaitStateChange);
+			if (reg.installing) {
+				localStorage.setItem('updating', true);
+				this2.$store.dispatch('Control/initUpdates');
+				awaitStateChange();
+			}
+			reg.addEventListener('updatefound', () => {
+				localStorage.setItem('updating', true);
+				this2.$store.dispatch('Control/initUpdates');
+				awaitStateChange();
+			});
 
 		},
 
@@ -391,8 +280,11 @@ export default {
 
 
 		refreshServiceWorker: function() {
+			console.log('Refreshing the service worker');
 			navigator.serviceWorker.getRegistration().then(reg => {
+				localStorage.setItem('showUpdateMessage', true);
 				reg.waiting.postMessage({type: 'skipWaiting'});
+				localStorage.setItem('canUpdate', false);
 			})
 		},
 
@@ -803,6 +695,23 @@ button:disabled {
 	top: 0;
 	left: 0;
 	height: calc(100vh - 60px);
+	width: 100vw;
+	background: rgba(0, 0, 0, 0.65);
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding-bottom: 100px;
+}
+
+
+.loading-lightbox-fullscreen {
+	z-index: 1500;
+
+	position: fixed;
+	top: 0;
+	left: 0;
+	height: 100vh;
 	width: 100vw;
 	background: rgba(0, 0, 0, 0.65);
 

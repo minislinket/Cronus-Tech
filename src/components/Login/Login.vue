@@ -1,7 +1,7 @@
 <template>
     <div class="login-wrap">
 
-        <div class="loading-lightbox-wrap" v-if="loading">
+        <div class="loading-lightbox-fullscreen" v-if="loading">
             <font-awesome-icon class="loading-lightbox-icon" :icon="['fa','circle-notch']" size="lg" spin />
         </div>
 

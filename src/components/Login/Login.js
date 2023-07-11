@@ -1,5 +1,6 @@
 import { axiosMySQL, axiosOffice, axiosSSE } from '../../axios/axios'
 import router from '../../router/index'
+import { socket } from '../../socket_io'
 const crypto = require('crypto');
 
 // initial state
@@ -329,21 +330,39 @@ const actions = {
 
 
 
-    setUserDevice({ }, employeeCode) {
+    setUserDevice({ state }, employeeCode) {
 
-        // var device = {
-        //     firebaseToken: localStorage.getItem('msgToken'),
-        //     userAgent: navigator.userAgent,
-        //     employeeCode
-        // }
+        var token = state.firebaseToken;
+        // console.log('Got the token, registering device now...', token);
 
-        axiosSSE.post('updateSSEClientCode', {clientId: localStorage.getItem('msgToken'), employeeCode})
-		.then(resp => {
-			console.log(resp);
-		})
-		.catch(err => {
-			console.log(err);
-		})
+        var device = {
+            firebaseToken: token,
+            userAgent: navigator.userAgent,
+            employeeCode,
+            socketUUID: localStorage.getItem('socketUUID')
+        }
+
+        // console.log(device);
+
+        // axiosSSE.post('updateSSEClientCode', {clientId: localStorage.getItem('msgToken'), employeeCode})
+		// .then(resp => {
+		// 	console.log(resp);
+		// })
+		// .catch(err => {
+		// 	console.log(err);
+		// })
+        
+
+        socket.emit('add_user_employee_code', {clientId: localStorage.getItem('msgToken'), employeeCode});
+
+        axiosMySQL.post('user/device.php', device)
+        .then(resp => {
+            console.log(resp);
+        })
+        .catch(err => {
+            console.error('Axios MySQL Error: ', err);
+            console.error('Axios MySQL Error Response: ', err.response);
+        })
     },
 
 
@@ -365,8 +384,11 @@ const actions = {
 
 
     resetApp({ commit }) {
-
+        var msgToken = localStorage.getItem('msgToken');
+        var socketUUID = localStorage.getItem('socketUUID');
         localStorage.clear();
+        localStorage.setItem('msgToken', msgToken);
+        localStorage.setItem('socketUUID', socketUUID);
         commit('isAuth', false);
         router.push('/');
 
