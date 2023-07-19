@@ -36,7 +36,8 @@ try
         $query = "UPDATE `devices` SET 
         `firebase_mobile_registration_token` = :firebase_mobile_registration_token, 
         `user_agent_browser` = :user_agent_browser,
-        `employee_code` = :employee_code
+        `employee_code` = :employee_code,
+        `last_updated` = :last_updated
         WHERE `socket_uuid` = :socket_uuid";
 
         $stmt = $pdo->prepare($query);
@@ -45,6 +46,7 @@ try
         $stmt->bindValue(':user_agent_browser', $user_agent_browser);
         $stmt->bindValue(':employee_code', $employee_code);
         $stmt->bindValue(':socket_uuid', $socket_uuid);
+        $stmt->bindValue(':last_updated', date('Y-m-d H:i:s'));
 
         $stmt->execute();
         $lastInsertedId = $pdo->lastInsertId();
@@ -54,8 +56,8 @@ try
     }
 
 
-    $query = "INSERT INTO `devices`(`firebase_mobile_registration_token`, `user_agent_browser`, `employee_code`, `socket_uuid`) 
-    VALUES (:firebase_mobile_registration_token, :user_agent_browser, :employee_code, :socket_uuid)";
+    $query = "INSERT INTO `devices`(`firebase_mobile_registration_token`, `user_agent_browser`, `employee_code`, `socket_uuid`, `last_updated`) 
+    VALUES (:firebase_mobile_registration_token, :user_agent_browser, :employee_code, :socket_uuid, :last_updated)";
 
     $stmt = $pdo->prepare($query);
 
@@ -63,6 +65,7 @@ try
     $stmt->bindValue(':user_agent_browser', $user_agent_browser);
     $stmt->bindValue(':employee_code', $employee_code);
     $stmt->bindValue(':socket_uuid', $socket_uuid);
+    $stmt->bindValue(':last_updated', date('Y-m-d H:i:s'));
 
     $stmt->execute();
     $lastInsertedId = $pdo->lastInsertId();

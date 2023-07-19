@@ -184,7 +184,7 @@ import UploadDocument from './UploadDocument.vue';
 
 import { mapGetters } from 'vuex'
 
-
+import { socket } from '../../../socket_io'
 export default {
 
 
@@ -545,6 +545,22 @@ export default {
             {
                 return navigator.serviceWorker.getRegistration()
                 .then(async reg => {
+
+                    var techLatestUpdate = data.time_stamp ? new Date(data.time_stamp).toISOString().split('.')[0].replace('T', ' ') : new Date().toISOString().split('.')[0].replace('T', ' ');
+                    var linkedJobCards = data.jobCards ? data.jobCards.map(jc => jc.id) : null;
+
+                    var socketData = {
+                        callId: data.call.id,
+                        technicianEmployeeCode: data.user.employeeCode,
+                        nextStatusId: data.nextStatusId ? data.nextStatusId : null,
+                        type,
+                        latestUpdate: techLatestUpdate,
+                        orderNumber: data.orderNumber ? data.orderNumber : null,
+                        jobCards: linkedJobCards,
+                        comment: data.comment ? data.comment : null,
+                    }
+
+                    socket.emit('techUpdate', socketData);
 
                     // Post the data to the SW
                     data = JSON.stringify(data);

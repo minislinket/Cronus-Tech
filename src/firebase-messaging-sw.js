@@ -18,7 +18,7 @@ workbox.routing.registerNavigationRoute(
 
 
 
-
+const SW_VERSION = '1.0.0';
 
 
 
@@ -81,6 +81,12 @@ let backgroundSyncActive = false;
 // Listen for messages from the App
 self.addEventListener('message', function (event) {
 	// console.log('Message from app: ', event);
+
+
+
+	// Force new App data to load with user triggered event
+	if(event.data.type === 'skipWaiting') 
+	{ return skipWaiting() }
 
 
 
@@ -395,8 +401,7 @@ self.addEventListener('message', function (event) {
 
 
 
-	// Force new App data to load with user triggered event
-	if(event.data.type === 'skipWaiting') { return skipWaiting() }
+	
 
 
 
@@ -956,11 +961,61 @@ firebase.initializeApp({
 });
 
 
+
+
+function awaitStateChange() {
+	self.registration.addEventListener('statechange', function() {
+		if (this.state === 'installed') self.skipWaiting();
+	});
+}
+
+
+
 // Retrieve an instance of Firebase Messaging so that it can handle background messages.
 const messaging = firebase.messaging()
 
 messaging.onBackgroundMessage((payload) => {
 	console.log('[firebase-messaging-sw.js] Received background message ', payload);
+
+
+
+	if(payload.notification && payload.notification.title && payload.notification.title == 'Update Cronus Tech App')
+	{
+		self.registration.update().then(reg => {
+			console.log('Update event: ', reg);
+			if(reg.installing)
+			{
+				reg.installing.postMessage({type: 'skipWaiting'});
+			}
+			if(reg.waiting)
+			{
+				reg.waiting.postMessage({type: 'skipWaiting'});
+			}
+		});
+		// self.addEventListener('statechange', () => {
+		// 	console.log('Service Worker state changed...');
+		// 	if(self.registration.waiting)
+		// 	{
+		// 		const worker = self.registration.waiting;
+		// 		console.log('Got a waiting worker: ', worker);
+		// 		worker.postMessage({ type: 'skipWaiting' });
+		// 		self.registration.waiting.skipWaiting();
+		// 	}
+
+		// })
+		self.addEventListener('updatefound', () => {
+			// const worker = self.registration.waiting;
+			// worker.skipWaiting();
+			// worker.addEventListener('statechange', () => {
+			// 	if (worker.state === 'installed') {
+			// 		messageApp('checkForUpdates', '', '', '');
+			// 	}
+			// });
+		})
+	}
+
+
+
 	// messageApp('checkForUpdates', '', '', '');
 	// Customize notification here
 	const msgTitle = 'Cronus Tech Notification';
@@ -975,7 +1030,7 @@ messaging.onBackgroundMessage((payload) => {
 		}
 	}
 
-	return self.registration.showNotification(notificationTitle, notificationOptions);
+	// return self.registration.showNotification(msgTitle, msgOptions);
 });
 
 // onBackgroundMessageHandler(messaging, function (payload) {
@@ -994,5 +1049,5 @@ messaging.onBackgroundMessage((payload) => {
 // 		}
 // 	}
 
-// 	return self.registration.showNotification(notificationTitle, notificationOptions);
+// 	return self.registration.showNotification(msgTitle, msgOptions);
 // });

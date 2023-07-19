@@ -112,14 +112,29 @@ export default {
 	mounted() {
 
 		console.log('App version: ', process.env.PACKAGE_VERSION);
-		localStorage.setItem('version', process.env.PACKAGE_VERSION);
+		console.log('Local App version: ', localStorage.getItem('version'));
+		if(localStorage.getItem('version') !== process.env.PACKAGE_VERSION)
+		{
+			var toast = {
+                shown: false,
+                type: 'okay', // ['info', 'warning', 'error', 'okay']
+                heading: 'App updated to version ' + process.env.PACKAGE_VERSION, // (Optional)
+                body: '', 
+                time: 3500, // in milliseconds
+                icon: '' // leave blank for default type icon
+            }
+
+            this.$store.dispatch('Toast/toast', toast, {root: true});
+			localStorage.setItem('version', process.env.PACKAGE_VERSION);
+		}
+		
 		
 
 		// this.$store.dispatch('Control/initUpdates');
-		this.$store.dispatch('Control/checkingForUpdates', true);
+		this.$store.dispatch('Control/checkingForUpdates', 'App - mounted');
 
 
-		// console.log('The App should auto refresh and load the new service worker')
+		console.log('The App should auto refresh and load the new service worker')
 		console.log('Making a change that the app can auto load because of a server message...');
 
 		this.checkCallSyncStoreBackup();
@@ -214,31 +229,17 @@ export default {
 
 
 		listenForWaitingServiceWorker: function (reg, callback) {
-			var this2 = this;
-			// if(!canUpdate) { return }
 
 			function awaitStateChange() {
-				
-				
-
 				reg.installing.addEventListener('statechange', function() {
 					if (this.state === 'installed') callback(reg)
 				});
 			}
-
-			var canUpdate = JSON.parse(localStorage.getItem('canUpdate'));
-			// console.log('canUpdate: ', canUpdate);
-			if (!canUpdate) return;
+			
 			if (!reg) return;
 			if (reg.waiting) return callback(reg);
-			if (reg.installing) {
-				localStorage.setItem('updating', true);
-				this2.$store.dispatch('Control/initUpdates');
-				awaitStateChange();
-			}
+			if (reg.installing) awaitStateChange();
 			reg.addEventListener('updatefound', () => {
-				localStorage.setItem('updating', true);
-				this2.$store.dispatch('Control/initUpdates');
 				awaitStateChange();
 			});
 
@@ -280,11 +281,22 @@ export default {
 
 
 		refreshServiceWorker: function() {
+			var canUpdate = JSON.parse(localStorage.getItem('canUpdate'));
+			// console.log('canUpdate: ', canUpdate);
+			if (!canUpdate) return;
+
+			var this2 = this;
+
 			console.log('Refreshing the service worker');
 			navigator.serviceWorker.getRegistration().then(reg => {
+				
+				localStorage.setItem('updating', true);
+				this2.$store.dispatch('Control/initUpdates');
+				localStorage.setItem('checkingForUpdates', false);
+                this2.$store.dispatch('Control/checkingForUpdates', 'App - refresh service worker');
 				localStorage.setItem('showUpdateMessage', true);
-				reg.waiting.postMessage({type: 'skipWaiting'});
 				localStorage.setItem('canUpdate', false);
+				reg.waiting.postMessage({ type: 'skipWaiting' });
 			})
 		},
 

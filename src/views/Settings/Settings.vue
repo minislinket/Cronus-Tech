@@ -16,7 +16,17 @@
 
         <button v-if="availableUserRoles.includes(2)" @click="switchProfile()"><font-awesome-icon :icon="['fa', 'retweet']" size="lg" /> Switch to {{ userType === 1 ? 'Ops-Admin' : 'Tech' }}</button>
 
-        <button v-if="swReg.waiting" @click="installUpdate()" class="install-update-btn"><span class="material-symbols-outlined">system_update</span> Install Update</button>
+        
+        <button v-if="!updateAvailable" @click="checkForUpdates()" class="check-update-btn">
+            
+            <span class="material-symbols-outlined">update</span>
+            Check for Updates
+        </button>
+        <button v-if="updateAvailable" @click="installUpdate()" class="install-update-btn">
+            <span class="update-btn-icon-badge"></span>
+            <span class="material-symbols-outlined">system_update</span> 
+            Install Update
+        </button>
 
         <button :disabled="!online" @click="checkRefreshJobData()" class="refresh-jobs-btn"><span class="material-symbols-outlined">cloud_sync</span> Refresh Job Data</button>
 
@@ -57,7 +67,8 @@ export default {
 
             notificationPermissions: false,
             locationPermissions: false,
-            swReg: ''
+            swReg: '',
+            // updateAvailable: false,
         }
     },
 
@@ -69,7 +80,8 @@ export default {
             online: ['StaticResources/online'],
             userType: ['UserRole/currentUserRole'],
             availableUserRoles: ['UserRole/availableRoles'],
-            modal: ['Modal/modal']
+            modal: ['Modal/modal'],
+            updateAvailable: ['Settings/updateAvailable']
         })
     },
 
@@ -89,6 +101,14 @@ export default {
             },
             deep: true
         },
+
+
+        swReg: {
+            handler: function() {
+
+            },
+            deep: true
+        }
     },
 
 
@@ -98,6 +118,20 @@ export default {
 
         navigator.serviceWorker.getRegistration().then(reg => {
             this.swReg = reg;
+
+            // localStorage.setItem('checkingForUpdates', false);
+            // this.$store.dispatch('Control/checkingForUpdates');
+
+            reg.addEventListener('updatefound', () => {
+                // console.log('Update Found!');
+                this.swReg = reg;
+                this.$store.dispatch('Settings/updateAvailable', true);
+            })
+
+            if(reg.waiting)
+            {
+                this.$store.dispatch('Settings/updateAvailable', true);
+            }
         })
 
         this.$store.dispatch('Menu/setTitle', { title: 'Settings', icon: ['fa', 'cog'] });
@@ -118,7 +152,7 @@ export default {
 
         navigator.permissions.query({ name: 'geolocation' })
 		.then(res => {
-			console.log(res);
+			// console.log(res);
             if(res.state === 'granted')
             {
                 this.locationPermissions = true;
@@ -132,7 +166,7 @@ export default {
 
         navigator.permissions.query({ name: 'notifications' })
 		.then(res => {
-			console.log(res);
+			// console.log(res);
             if(res.state === 'granted')
             {
                 this.notificationPermissions = true;
@@ -152,7 +186,33 @@ export default {
 
 
 
+
+        checkForUpdates: function() {
+
+            localStorage.setItem('checkingForUpdates', true);
+            this.$store.dispatch('Control/checkingForUpdates', 'Settings - checkForUpdates');
+
+            localStorage.setItem('canUpdate', false);
+
+            // navigator.serviceWorker.getRegistration().then(sw => {
+                this.swReg.update().then(res => {
+                    localStorage.setItem('checkingForUpdates', false);
+                    this.$store.dispatch('Control/checkingForUpdates', 'Settings - sw.update()');
+                }).catch(err => {
+                    localStorage.setItem('checkingForUpdates', false);
+                    this.$store.dispatch('Control/checkingForUpdates', 'Settings - sw.update().error');
+                    this.$store.dispatch('Settings/updateAvailable', false);
+                });
+            // })
+        },
+
+
+
         installUpdate: function() {
+            localStorage.setItem('updating', true);
+			this.$store.dispatch('Control/initUpdates');
+            localStorage.setItem('showUpdateMessage', true);
+            localStorage.setItem('canUpdate', false);
             this.swReg.waiting.postMessage({type: 'skipWaiting'});
         },
 
@@ -210,7 +270,7 @@ export default {
 			}
 			this.$store.dispatch('Modal/modal', modal);
 
-            console.log('Asking to reset...')
+            // console.log('Asking to reset...')
 
 
         },
@@ -241,7 +301,7 @@ export default {
             var challenge = await this.getChallenge();
             var userId = Uint8Array.from((user.employeeCode+user.branchId), c => c.charCodeAt(0));
 
-            console.log('Registering Device for Biometrics with user: ', user.employeeCode, ', user ID:', userId ,' and challenge: ', challenge);
+            // console.log('Registering Device for Biometrics with user: ', user.employeeCode, ', user ID:', userId ,' and challenge: ', challenge);
             
 
             this2.pKey = {
@@ -386,9 +446,25 @@ export default {
 
 
 
-.install-update-btn {
+.install-update-btn, 
+.check-update-btn {
     display: flex;
     align-items: center;
+}
+
+
+.install-update-btn {
+    position: relative;
+}
+
+.update-btn-icon-badge {
+    position: absolute;
+    top: 10px;
+    left: -11px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgb(255, 122, 14);
 }
 
 

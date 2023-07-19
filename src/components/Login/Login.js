@@ -1,6 +1,7 @@
 import { axiosMySQL, axiosOffice, axiosSSE } from '../../axios/axios'
 import router from '../../router/index'
 import { socket } from '../../socket_io'
+import { socketState } from '../../socket_io'
 const crypto = require('crypto');
 
 // initial state
@@ -332,6 +333,11 @@ const actions = {
 
     setUserDevice({ state }, employeeCode) {
 
+        if(!socketState.connected)
+        {
+            socket.connect();
+        }
+
         var token = state.firebaseToken;
         // console.log('Got the token, registering device now...', token);
 
@@ -353,7 +359,7 @@ const actions = {
 		// })
         
 
-        socket.emit('add_user_employee_code', {clientId: localStorage.getItem('msgToken'), employeeCode});
+        socket.emit('add_user_employee_code', localStorage.getItem('socketUUID'), employeeCode );
 
         axiosMySQL.post('user/device.php', device)
         .then(resp => {
@@ -391,7 +397,6 @@ const actions = {
         localStorage.setItem('socketUUID', socketUUID);
         commit('isAuth', false);
         router.push('/');
-
     }
 
 }

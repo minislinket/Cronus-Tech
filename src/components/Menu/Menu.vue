@@ -12,10 +12,18 @@
             <span>offline</span>
         </div>
 
-        <font-awesome-icon @click="userMenuActive = !userMenuActive" class="user-menu-icon" :class="{ active : userMenuActive }" :icon="['fa', 'user-circle']" size="lg" />
+        <div class="menu-icon-wrap">
+            <span v-if="updateAvailable" class="menu-icon-badge"></span>
+            <font-awesome-icon @click="userMenuActive = !userMenuActive" class="user-menu-icon" :class="{ active : userMenuActive }" :icon="['fa', 'user-circle']" size="lg" />
+        </div>
         <div id="UserMenu" class="user-menu-wrap" :class="{ active : userMenuActive }">
-            <font-awesome-icon @click="$router.push('/settings'), userMenuActive = false" class="settings-icon" :icon="['fa', 'cog']" size="lg" />
-            <font-awesome-icon @click="$store.dispatch('Login/logout')" class="logout-icon" :icon="['fa', 'power-off']" size="lg" />
+            <div class="settings-icon-wrapper user-menu-icon-wrapper">
+                <span v-if="updateAvailable" class="user-menu-icon-badge"></span>
+                <font-awesome-icon @click="$router.push('/settings'), userMenuActive = false" class="settings-icon" :icon="['fa', 'cog']" size="lg" />
+            </div>
+            <div class="logout-icon-wrapper user-menu-icon-wrapper">
+                <font-awesome-icon @click="confirmLogout()" class="logout-icon" :icon="['fa', 'power-off']" size="lg" />
+            </div>
         </div>
 
     </div>
@@ -47,7 +55,9 @@ export default {
             menuItems: ['QuickMenu/menuItems'],
             titleIcon: ['Menu/titleIcon'],
             titleText: ['Menu/titleText'],
-            isAuth: ['Login/isAuth']
+            isAuth: ['Login/isAuth'],
+            updateAvailable: ['Settings/updateAvailable'],
+            modal: ['Modal/modal']
         })
     },
 
@@ -70,6 +80,14 @@ export default {
             },
             deep: true,
             immediate: true
+        },
+
+        modal: {
+            handler: function() {
+                if(this.modal.confirmAction === true && this.modal.actionFrom.indexOf('confirm_logout') !== -1)
+                    this.$store.dispatch('Login/logout')
+            },
+            deep: true
         }
     },
 
@@ -87,15 +105,33 @@ export default {
 
     methods: {
 
+
+
+        confirmLogout: function() {
+            var modal = {
+                active: true, // true to show modal
+				type: 'info', // ['info', 'warning', 'error', 'okay']
+				icon: [], // Leave blank for no icon
+				heading: 'Logout',
+				body: 'Are you sure you want to logout of Cronus Tech?.',
+
+				// Optional add on for when user needs to confirm or deny an action
+				confirmAction: 'init',
+				actionFrom: 'confirm_logout',
+				resolveText: 'Logout',
+				rejectText: 'Cancel'
+            }
+
+            this.$store.dispatch('Modal/modal', modal);
+        },
+
+
+
         hideMenu: function(e) {
             var userMenu = document.getElementById('UserMenu');
             if(userMenu && !userMenu.contains(e.target))
                 this.userMenuActive = false;
         },
-
-
-
-        
 
     },
 
@@ -199,19 +235,22 @@ export default {
 
 
 
-
-
-
-.user-menu-icon {
+.menu-icon-wrap {
     position: absolute;
-    right: 15px;
+    right: 12.5px;
     top: 0;
     bottom: 0;
     margin: auto 0;
+    z-index: 801;
+    display: flex;
+    align-items: center;
+}
+
+
+.user-menu-icon {
     color: var(--BlueLight);
     cursor: pointer;
     font-size: 28px;
-    z-index: 801;
     transition: color 250ms ease-in;
 }
 
@@ -265,13 +304,14 @@ export default {
     top: 0px;
     right: -500px;
     height: 50px;
-    min-width: 100px;
+    width: 152px;
     background: var(--BlueMid);
     z-index: 800;
     padding-right: 50px;
-    display: flex;
+    display: grid;
     align-items: center;
     justify-content: center;
+    grid-template-columns: 50px 50px;
     border-bottom-left-radius: 3px;
     animation: slide-user-menu-out 500ms ease;
 }
@@ -283,17 +323,65 @@ export default {
 }
 
 
+
+
+
+
+
+.menu-icon-badge {
+    position: absolute;
+    top: 8px;
+    right: -5px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgb(255, 122, 14);
+    z-index: 802;
+}
+
+
+
+
+.user-menu-icon-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* background: var(--GunMetal); */
+    width: 50px;
+    position: relative;
+    border-right: 3px solid rgba(0,0,0,0.15);
+}
+
+
+.user-menu-icon-badge {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgb(255, 122, 14);
+    z-index: 802;
+}
+
+
+.user-menu-icon-wrapper.settings-icon-wrapper {
+    /* background: var(--Spunk); */
+    
+}
+
+
 .settings-icon {
-    color: var(--Spunk);
-    font-size: 20px;
-    padding-right: 7px;
-    padding-left: 15px;
+    color: var(--DarkBlue);
+    font-size: 24px;    
 }
 
 
 .logout-icon {
     color: rgb(200,0,0);
-    font-size: 20px;
+    font-size: 22px;
     padding: 0 10px;
 }
 

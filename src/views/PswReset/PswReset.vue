@@ -35,7 +35,7 @@
         <button @click="setNewPassword()"><font-awesome-icon :icon="['fa', 'user-lock']" size="lg" /> Reset Password</button>
 
 
-        <button v-if="!isAuth" class="back-to-login-btn" @click="$router.push('/')"><font-awesome-icon :icon="['fa', 'angle-left']" size="lg" /> Back to Login</button>
+        <button class="back-to-previous-page-btn" @click="$router.go(-1)"><font-awesome-icon :icon="['fa', 'angle-left']" size="lg" /> Back</button>
     </div>
 
 </template>
@@ -328,7 +328,7 @@ export default {
 
 
 
-.back-to-login-btn {
+.back-to-previous-page-btn {
     position: fixed;
     bottom: 30px;
     left: 0;

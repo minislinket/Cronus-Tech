@@ -1,6 +1,8 @@
 import { axiosOffice } from "../../../axios/axios";
 import router from "../../../router";
 
+import { socket } from '../../../socket_io';
+
 
 // initial state
 const state = () => ({
@@ -277,6 +279,7 @@ const actions = {
     uploadDocuments({ dispatch }, payload) {
         dispatch('loading', true);
 
+        var user = JSON.parse(localStorage.getItem('user'));
         var query = '';
 
         if(payload.fileTypeId == 19)
@@ -313,6 +316,17 @@ const actions = {
                 dispatch('loading', false);
                 // payload.call.allJobCardsHaveCMIS = true;
                 dispatch('Calls/updateLocalStorage', payload.call, { root: true });
+
+                if(payload.fileTypeId == 19)
+                {
+                    var data = {
+                        callId: payload.call.id,
+                        jobCardId: payload.jobCardId,
+                        type: 'job_card_uploaded',
+                        technicianEmployeeCode: user.employeeCode,
+                    }
+                    socket.emit('techUpdate', data);
+                }
             }
         })
         .catch(err => {

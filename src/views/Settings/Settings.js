@@ -1,6 +1,6 @@
 // initial state
 const state = () => ({
-
+    updateAvailable: false
 })
 
 
@@ -9,7 +9,7 @@ const state = () => ({
 
 // getters
 const getters = {
-    
+    updateAvailable: state => state.updateAvailable,
 }
 
 
@@ -18,7 +18,9 @@ const getters = {
 
 // actions
 const actions = {
-
+    updateAvailable({ commit }, toggle) {
+        commit('updateAvailable', toggle);
+    }
 }
 
 
@@ -27,7 +29,9 @@ const actions = {
 
 // mutations
 const mutations = {
-
+    updateAvailable(state, toggle) {
+        state.updateAvailable = toggle;
+    }
 }
 
 

@@ -1,21 +1,29 @@
 <template>
-    <div class="lightbox" v-if="active || checkingForUpdates || resettingApp || syncingJobData">
+    <div class="lightbox" v-if="active || checkingForUpdates || resettingApp || syncingJobData || loggingOut">
         <div class="checking-for-updates-wrap" :class="{ fade : active }" v-if="checkingForUpdates">
-            <p>Checking for updates, please wait...</p>
+            <h2>Checking for updates.</h2>
+            <p>Please wait...</p>
         </div>
         <div class="installing-updates-wrap" v-if="active">
-            <h2>Installing Update...</h2>
-            <p>Your app might flash during installation.</p>
+            <h2>Installing Update.</h2>
+            <p>Please wait...</p>
             <font-awesome-icon class="loading-icon" :style="{ color: 'rgb('+r+','+g+','+b+')' }" :icon="['fa', 'circle-notch']" size="lg" spin />
         </div>
 
 
         <div class="resetting-app-wrap" v-if="resettingApp">
-            <h2>Resetting your App. Please wait...</h2>
+            <h2>Resetting your App.</h2>
+            <p>Please wait...</p>
         </div>
 
         <div class="syncing-job-data-wrap" v-if="syncingJobData">
-            <h2>Syncing Job Data with the server, please wait...</h2>
+            <h2>Syncing Job Data with the server.</h2>
+            <p>Please wait...</p>
+        </div>
+
+        <div class="log-out-wrap" v-if="loggingOut">
+            <h2>You are being logged out of your app.</h2>
+            <p>Please wait...</p>
         </div>
         
     </div>
@@ -46,7 +54,8 @@ export default {
             active: ['Control/updating'],
             checkingForUpdates: ['Control/checkingForUpdates'],
             resettingApp: ['Control/resettingApp'],
-            syncingJobData: ['Control/syncingJobData']
+            syncingJobData: ['Control/syncingJobData'],
+            loggingOut: ['Control/loggingOut']
         })
     },
 
@@ -112,12 +121,13 @@ export default {
     left: 0;
     height: 100vh;
     width: 100vw;
-    background: rgba(0,0,0,0.65);
+    background: rgba(0,0,0,0.85);
 
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
+    padding: 0 10px;
     padding-bottom: 100px;
 }
 

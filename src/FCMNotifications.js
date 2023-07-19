@@ -56,7 +56,10 @@ async function catchAndRouteMessage(title, body, data) {
 	console.log('We think we want to go to: ', route);
 	if(route) 
 	{
-		store.dispatch('Calls/refreshTechnicianCalls');
+		if(store.getters['Login/isAuth'])
+		{
+			store.dispatch('Calls/refreshTechnicianCalls');
+		}
 		// console.log(router.currentRoute._value.path, route);
 		if(route === router.currentRoute._value.path)
 		{
@@ -89,15 +92,15 @@ if (process.env.NODE_ENV === 'production') {
 
 
 	Notification.requestPermission()
-		.then((permission) => {
-			if (permission === 'granted') {
-				// console.log('Notification permission granted.');
-				// getFCMToken();
-			}
-		})
-		.catch((err) => {
-			console.log(err);
-		})
+	.then((permission) => {
+		if (permission === 'granted') {
+			// console.log('Notification permission granted.');
+			// getFCMToken();
+		}
+	})
+	.catch((err) => {
+		console.log(err);
+	})
 
 
 
@@ -162,7 +165,9 @@ if (process.env.NODE_ENV === 'production') {
 			// Listen for Foreground Push Notifications and show them using the Service Worker
 			messaging.onMessage(async function (payload) {
 
-				// console.log('Msg received while window was in foreground: ', payload);
+				console.log('Msg received while window was in foreground: ', payload);
+
+				if(payload && payload.title && payload.title == 'Update Cronus Tech App') { return }
 
 
 				var title = payload && payload.notification && payload.notification.title ? payload.notification.title : 'Cronus Tech';
@@ -242,40 +247,33 @@ if (process.env.NODE_ENV === 'production') {
 
 
 	navigator.serviceWorker.ready
-		.then(function (serviceWorker) {
-
-
-			
-			messaging.getToken({ vapidKey: 'BOHgZUNY-YqD6PiRcMNpxU_K1xhBzOhs6hkd_-tCoWKxCefyEM0iLwJG3RAoogFludrC0dt19VJguyPDRAd10ls', serviceWorkerRegistration: serviceWorker })
-			.then((currentToken) => {
-				if (currentToken) {
-					console.log('FCM Connected!');
-					store.dispatch('Login/firebaseToken', currentToken);
-					var storedToken = localStorage.getItem('msgToken');
-					if (storedToken !== currentToken) 
-					{
-						localStorage.setItem('msgToken', currentToken);
-					}
-				} else {
-					store.dispatch('Toast/toast', toast);
-					console.log('No registration token available. Request permission to generate one.');
-					localStorage.removeItem('msgToken', currentToken);
+	.then(function (serviceWorker) {
+		
+		messaging.getToken({ vapidKey: 'BOHgZUNY-YqD6PiRcMNpxU_K1xhBzOhs6hkd_-tCoWKxCefyEM0iLwJG3RAoogFludrC0dt19VJguyPDRAd10ls', serviceWorkerRegistration: serviceWorker })
+		.then((currentToken) => {
+			if (currentToken) {
+				console.log('FCM Connected!');
+				store.dispatch('Login/firebaseToken', currentToken);
+				var storedToken = localStorage.getItem('msgToken');
+				if (storedToken !== currentToken) 
+				{
+					localStorage.setItem('msgToken', currentToken);
 				}
-				store.dispatch('Login/loadingFirebaseToken', false);
-			}).catch((err) => {
+			} else {
 				store.dispatch('Toast/toast', toast);
-				console.log('An error occurred while retrieving token. ', err);
-				store.dispatch('Login/loadingFirebaseToken', false);
+				console.log('No registration token available. Request permission to generate one.');
 				localStorage.removeItem('msgToken', currentToken);
-			})
-
-
-
-
-
-
-
+			}
+			store.dispatch('Login/loadingFirebaseToken', false);
+		}).catch((err) => {
+			store.dispatch('Toast/toast', toast);
+			console.log('An error occurred while retrieving token. ', err);
+			store.dispatch('Login/loadingFirebaseToken', false);
+			if(localStorage.getItem('msgToken'))
+				localStorage.removeItem('msgToken', currentToken);
 		})
+
+	})
 
 }
 

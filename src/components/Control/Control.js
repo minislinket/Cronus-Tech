@@ -5,7 +5,8 @@ const state = () => ({
     updating: false,
     checkingForUpdates: false,
     resettingApp: false,
-    syncingJobData: false
+    syncingJobData: false,
+    loggingOut: false
 })
 
 
@@ -28,6 +29,10 @@ const getters = {
 
     syncingJobData: (state) => {
         return state.syncingJobData;
+    },
+
+    loggingOut: (state) => {
+        return state.loggingOut;
     }
 }
 
@@ -58,32 +63,33 @@ const actions = {
 
 
     updateCompleted({ commit, dispatch }) {
-        var showUpdateMessage = JSON.parse(localStorage.getItem('showUpdateMessage'));
+        // var showUpdateMessage = JSON.parse(localStorage.getItem('showUpdateMessage'));
 
-        console.log('showing update message: ', showUpdateMessage);
+        // // console.log('showing update message: ', showUpdateMessage);
 
-        if(showUpdateMessage)
-        {
-            var toast = {
-                shown: false,
-                type: 'okay', // ['info', 'warning', 'error', 'okay']
-                heading: 'App updated to version ' + process.env.PACKAGE_VERSION, // (Optional)
-                body: '', 
-                time: 3500, // in milliseconds
-                icon: '' // leave blank for default type icon
-            }
+        // if(showUpdateMessage)
+        // {
+        //     var toast = {
+        //         shown: false,
+        //         type: 'okay', // ['info', 'warning', 'error', 'okay']
+        //         heading: 'App updated to version ' + process.env.PACKAGE_VERSION, // (Optional)
+        //         body: '', 
+        //         time: 3500, // in milliseconds
+        //         icon: '' // leave blank for default type icon
+        //     }
 
-            dispatch('Toast/toast', toast, {root: true});
-            localStorage.setItem('showUpdateMessage', false);
-        }
+        //     dispatch('Toast/toast', toast, {root: true});
+        //     localStorage.setItem('showUpdateMessage', false);
+        // }
     },
 
 
 
-    checkingForUpdates({ commit }, toggle) {
-        console.log('🧷🧷🧷 - Checking For Updates: ', toggle);  
-        commit('checkingForUpdates', toggle);
-        socket.emit('checking_for_updates', localStorage.getItem('socketUUID'), toggle);
+    checkingForUpdates({ commit }, where) {
+        var toggle = JSON.parse(localStorage.getItem('checkingForUpdates'));
+        // console.log(where + ' 🧷🧷🧷 - Checking For Updates: ', toggle);  
+        commit('checkingForUpdates', toggle ? true : false);
+        socket.emit('checking_for_updates', localStorage.getItem('socketUUID'), toggle ? true : false);
     },
 
 
@@ -99,6 +105,10 @@ const actions = {
 
     syncingJobData({ commit }, toggle) {
         commit('syncingJobData', toggle);
+    },
+
+    loggingOut({ commit }, toggle) {
+        commit('loggingOut', toggle);
     }
 
 }
@@ -125,6 +135,10 @@ const mutations = {
 
     syncingJobData(state, toggle) {
         state.syncingJobData = toggle;
+    },
+
+    loggingOut(state, toggle) {
+        state.loggingOut = toggle;
     }
 }
 
