@@ -10,6 +10,9 @@
 
         <br><br>
 
+        
+        
+
         <!-- <button :disabled="!online" v-if="canReAuthenticate" class="register-biometrics-btn" @click="registerBiometrics()" ><font-awesome-icon :icon="['fa', 'fingerprint']" size="lg" /> Register Biometrics</button> -->
 
         <button :disabled="!online" @click="$router.push('/psw-reset')" ><font-awesome-icon :icon="['fa', 'key']" size="lg" /> Reset Password</button>
@@ -52,7 +55,7 @@ export default {
         return {
             pKey: {},
             user: JSON.parse(localStorage.getItem('user')),
-
+            firebaseToken: localStorage.getItem('msgToken'),
             loading: false,
 
             notificationPermissions: false,
