@@ -68,6 +68,7 @@ export default {
             notificationPermissions: false,
             locationPermissions: false,
             swReg: '',
+            fireBaseToken: localStorage.getItem('fireBaseToken') 
             // updateAvailable: false,
         }
     },
@@ -118,37 +119,12 @@ export default {
 
         navigator.serviceWorker.getRegistration().then(reg => {
             this.swReg = reg;
-
-            // localStorage.setItem('checkingForUpdates', false);
-            // this.$store.dispatch('Control/checkingForUpdates');
-
             reg.addEventListener('updatefound', () => {
-                // console.log('Update Found!');
                 this.swReg = reg;
-                this.$store.dispatch('Settings/updateAvailable', true);
             })
-
-            if(reg.waiting)
-            {
-                this.$store.dispatch('Settings/updateAvailable', true);
-            }
         })
 
         this.$store.dispatch('Menu/setTitle', { title: 'Settings', icon: ['fa', 'cog'] });
-        // Notification.requestPermission()
-		// .then((permission) => {
-		// 	if (permission === 'granted') {
-		// 		this.notificationPermissions = true;
-		// 	}
-        //     else
-        //     {
-        //         this.notificationPermissions = false;
-        //     }
-		// })
-		// .catch((err) => {
-		// 	// console.log(err);
-        //     this.notificationPermissions = false;
-		// })
 
         navigator.permissions.query({ name: 'geolocation' })
 		.then(res => {
@@ -213,7 +189,27 @@ export default {
 			this.$store.dispatch('Control/initUpdates');
             localStorage.setItem('showUpdateMessage', true);
             localStorage.setItem('canUpdate', false);
-            this.swReg.waiting.postMessage({type: 'skipWaiting'});
+            if(this.swReg && this.swReg.waiting)
+            {
+                this.swReg.waiting.postMessage({type: 'skipWaiting'});
+            }
+            else if(this.swReg && this.swReg.installing)
+            {
+                this.swReg.installing.postMessage({type: 'skipWaiting'});
+            }
+            else 
+            {
+                navigator.serviceWorker.getRegistration().then(reg => {
+                    if(reg && reg.waiting)
+                    {
+                        reg.waiting.postMessage({type: 'skipWaiting'});
+                    }
+                    else if(reg && reg.installing)
+                    {
+                        reg.installing.postMessage({type: 'skipWaiting'});
+                    }
+                })
+            }
         },
 
 

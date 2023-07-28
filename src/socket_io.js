@@ -10,7 +10,7 @@ export const socketState = reactive({
 });
 
 // "undefined" means the URL will be computed from the `window.location` object
-const URL = window.location.href.indexOf('localhost') == -1 ? undefined : "http://localhost:3000";
+const URL = window.location.href.indexOf('localhost') == -1 ? undefined : "http://localhost:3000/";
 
 export const socket = io(URL, { transports: ["websocket", 'polling', 'flashsocket'] });
 

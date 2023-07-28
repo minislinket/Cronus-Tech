@@ -16,10 +16,14 @@ $error = json_decode($error, true);
 
 
 $user = isset($error['user']) ? $error['user'] : null;
-$user = $user['employeeCode'];
+$user = isset($user['employeeCode']) ? $user['employeeCode'] : null;
 $error = $error;
 
 
+if(!$user)
+{
+    die('No user found');
+}
 
 
 try

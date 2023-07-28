@@ -112,6 +112,10 @@ export default {
 	mounted() {
 
 		console.log('App version: ', process.env.PACKAGE_VERSION);
+
+		if(localStorage.getItem('socketUUID'))
+			socket.emit('app_version', localStorage.getItem('socketUUID') ,process.env.PACKAGE_VERSION);
+
 		console.log('Local App version: ', localStorage.getItem('version'));
 		if(localStorage.getItem('version') !== process.env.PACKAGE_VERSION)
 		{
@@ -126,6 +130,7 @@ export default {
 
             this.$store.dispatch('Toast/toast', toast, {root: true});
 			localStorage.setItem('version', process.env.PACKAGE_VERSION);
+			
 		}
 		
 		
@@ -237,9 +242,13 @@ export default {
 			}
 			
 			if (!reg) return;
-			if (reg.waiting) return callback(reg);
+			if (reg.waiting) {
+				this.$store.dispatch('Settings/updateAvailable', true);	
+				return callback(reg);
+			}
 			if (reg.installing) awaitStateChange();
 			reg.addEventListener('updatefound', () => {
+				this.$store.dispatch('Settings/updateAvailable', true);
 				awaitStateChange();
 			});
 

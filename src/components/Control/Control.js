@@ -49,7 +49,7 @@ const actions = {
         if(updating == null || updating == undefined) { 
             localStorage.setItem('updating', false);
             commit('updating', false);
-            socket.emit('updating', false);    
+            // socket.emit('updating', false);    
             return 
         }
         updating = updating == 'true' ? true : false;
