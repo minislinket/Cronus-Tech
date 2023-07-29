@@ -30,7 +30,7 @@ import Modal from './components/Modal/Modal.vue'
 import Landscape from './components/Landscape/Landscape.vue'
 import { mapGetters } from 'vuex'
 
-import { socket } from './socket_io'
+// import { socket } from './socket_io'
 
 export default {
 
@@ -87,10 +87,10 @@ export default {
 		},
 
 
-		isAuth: function() {
-			socket.emit('user_login_status', localStorage.getItem('socketUUID'), this.isAuth);
-		},
-		deep: true
+		// isAuth: function() {
+		// 	// socket.emit('user_login_status', localStorage.getItem('socketUUID'), this.isAuth);
+		// },
+		// deep: true
 
 	},
 

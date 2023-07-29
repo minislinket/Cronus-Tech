@@ -1,6 +1,6 @@
 import { axiosMySQL, axiosOffice, axiosSSE } from '../../axios/axios'
 import router from '../../router/index'
-import { socket } from '../../socket_io'
+// import { socket } from '../../socket_io'
 const crypto = require('crypto');
 
 // initial state
@@ -256,7 +256,7 @@ const actions = {
 
 
 
-                    dispatch('setUserDevice', employeeCode);
+                    // dispatch('setUserDevice', employeeCode);
 
 
 
@@ -385,10 +385,10 @@ const actions = {
 
     resetApp({ commit }) {
         var msgToken = localStorage.getItem('msgToken');
-        var socketUUID = localStorage.getItem('socketUUID');
+        // var socketUUID = localStorage.getItem('socketUUID');
         localStorage.clear();
         localStorage.setItem('msgToken', msgToken);
-        localStorage.setItem('socketUUID', socketUUID);
+        // localStorage.setItem('socketUUID', socketUUID);
         commit('isAuth', false);
         router.push('/');
 
