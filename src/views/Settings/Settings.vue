@@ -12,7 +12,7 @@
 
         
         <button class="intent-btn">
-            <a class="a-link-for-intent" :href="'intent://track/#Intent;package=za.co.locksecure.cronustracking;action=CRONUS_TRACK;firebaseToken='+firebaseToken+';end'"><font-awesome-icon :icon="['fa', 'street-view']" size="lg" /> Start Tracking </a>
+            <a class="a-link-for-intent" :href="'intent://track/#Intent;package=za.co.locksecure.cronustracking;action=CRONUS_TRACK;S.firebaseToken='+firebaseToken+';end'"><font-awesome-icon :icon="['fa', 'street-view']" size="lg" /> Start Tracking </a>
             </button>
         
 
