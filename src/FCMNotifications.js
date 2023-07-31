@@ -34,6 +34,9 @@ async function catchAndRouteMessage(title, body, data) {
 	// console.log('Data: ', data);
 
 
+	
+
+
 	// Ignore auto-routing when Ops Admin
 	if(store.getters['UserRole/currentUserRole'] === 2) { return }
 
@@ -136,6 +139,49 @@ if (process.env.NODE_ENV === 'production') {
 			// Intercept Push Notification Clicks and redirect user to desired page
 			if (event.data && event.data.type && event.data.type === 'FCM') 
 			{
+				if(event.data.title == 'Update Cronus Tech App') 
+				{
+					navigator.serviceWorker.getRegistration().then(reg => {
+						if (!reg || !reg.waiting) {
+							// no service worker waiting, so just refresh
+							localStorage.setItem('checkingForUpdates', true);
+							store.dispatch('Control/checkingForUpdates', 'SocketIO - update high priority');
+							reg.update().then(res => {
+								// console.log('Result from calling update on sw: ', res)
+								// console.log('Our current sw: ', reg)
+								if(!reg.waiting && !reg.installing)
+								{
+									localStorage.setItem('checkingForUpdates', false);
+									store.dispatch('Control/checkingForUpdates', 'SocketIO - reg !waiting && !installing');
+									localStorage.setItem('canUpdate', false);
+								}
+							});
+							return;
+						}
+						else if(reg.waiting)
+						{
+							// Mark that we are not checking for updates, there is one available (reg.waiting)
+							localStorage.setItem('checkingForUpdates', false);
+							store.dispatch('Control/checkingForUpdates', 'SocketIO - reg waiting');
+
+							// Mark that we are installing the new update
+							localStorage.setItem('updating', true);
+							store.dispatch('Control/initUpdates');
+
+							// Show an update message after update is complete
+							localStorage.setItem('showUpdateMessage', true);
+							
+							// Stop the app from auto updating
+							localStorage.setItem('canUpdate', false);
+							
+							// Skip waiting on the sw and install the latest version
+							reg.waiting.postMessage({type: 'skipWaiting'});
+							// window.location.reload();
+						}
+					});
+					return 
+				}
+
 				await catchAndRouteMessage(event.data.title, event.data.body, event.data.data);
 			}
 

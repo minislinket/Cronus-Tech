@@ -348,18 +348,8 @@ const actions = {
             socketUUID: localStorage.getItem('socketUUID')
         }
 
-        // console.log(device);
 
-        // axiosSSE.post('updateSSEClientCode', {clientId: localStorage.getItem('msgToken'), employeeCode})
-		// .then(resp => {
-		// 	console.log(resp);
-		// })
-		// .catch(err => {
-		// 	console.log(err);
-		// })
-        
-
-        socket.emit('add_user_employee_code', localStorage.getItem('socketUUID'), employeeCode );
+        socket.emit('add_user_employee_code', localStorage.getItem('socketUUID'), employeeCode, token );
 
         axiosMySQL.post('user/device.php', device)
         .then(resp => {
