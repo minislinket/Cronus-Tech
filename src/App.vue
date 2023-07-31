@@ -140,7 +140,7 @@ export default {
 
 
 		console.log('The App should auto refresh and load the new service worker')
-		// console.log('Making a change that the app can auto load because of a server message...');
+		console.log('Making a change that the app can auto load because of a server message...');
 
 		this.checkCallSyncStoreBackup();
 
