@@ -23,7 +23,7 @@
 import Menu from './components/Menu/Menu.vue'
 import QuickMenu from './components/QuickMenu/QuickMenu.vue'
 import Loading from './components/Loading/Loading.vue'
-import Control from './components/Control/Control.vue'
+// import Control from './components/Control/Control.vue'
 import Login from './components/Login/Login.vue'
 import Toast from './components/Toast/Toast.vue'
 import Modal from './components/Modal/Modal.vue'
@@ -36,7 +36,7 @@ export default {
 
 
 	components: {
-		Menu, Login, Toast, Modal, QuickMenu, Loading, Landscape, Control
+		Menu, Login, Toast, Modal, QuickMenu, Loading, Landscape, // Control
 	},
 
 
@@ -100,7 +100,7 @@ export default {
 
 	created() {
 
-		navigator.serviceWorker.getRegistration().then(reg => { this.listenForWaitingServiceWorker(reg, this.refreshServiceWorker) }); 
+		navigator.serviceWorker.getRegistration().then(reg => { this.listenForWaitingServiceWorker(reg, this.promptUserToRefresh) }); 
 		navigator.serviceWorker.addEventListener('controllerchange', function() { window.location.reload() });
 
 	},
@@ -226,19 +226,19 @@ export default {
 				});
 			}
 
-			var canUpdate = JSON.parse(localStorage.getItem('canUpdate'));
+			// var canUpdate = JSON.parse(localStorage.getItem('canUpdate'));
 			// console.log('canUpdate: ', canUpdate);
-			if (!canUpdate) return;
+			// if (!canUpdate) return;
 			if (!reg) return;
 			if (reg.waiting) return callback(reg);
 			if (reg.installing) {
-				localStorage.setItem('updating', true);
-				this2.$store.dispatch('Control/initUpdates');
+				// localStorage.setItem('updating', true);
+				// this2.$store.dispatch('Control/initUpdates');
 				awaitStateChange();
 			}
 			reg.addEventListener('updatefound', () => {
-				localStorage.setItem('updating', true);
-				this2.$store.dispatch('Control/initUpdates');
+				// localStorage.setItem('updating', true);
+				// this2.$store.dispatch('Control/initUpdates');
 				awaitStateChange();
 			});
 
@@ -282,9 +282,9 @@ export default {
 		refreshServiceWorker: function() {
 			console.log('Refreshing the service worker');
 			navigator.serviceWorker.getRegistration().then(reg => {
-				localStorage.setItem('showUpdateMessage', true);
+				// localStorage.setItem('showUpdateMessage', true);
 				reg.waiting.postMessage({type: 'skipWaiting'});
-				localStorage.setItem('canUpdate', false);
+				// localStorage.setItem('canUpdate', false);
 			})
 		},
 

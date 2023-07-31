@@ -11,6 +11,9 @@
         <br><br>
 
         
+        <button class="intent-btn">
+            <a class="a-link-for-intent" :href="'intent://track/#Intent;package=za.co.locksecure.cronustracking;action=CRONUS_TRACK;firebaseToken='+firebaseToken+';end'"><font-awesome-icon :icon="['fa', 'street-view']" size="lg" /> Start Tracking </a>
+            </button>
         
 
         <!-- <button :disabled="!online" v-if="canReAuthenticate" class="register-biometrics-btn" @click="registerBiometrics()" ><font-awesome-icon :icon="['fa', 'fingerprint']" size="lg" /> Register Biometrics</button> -->
@@ -469,4 +472,16 @@ export default {
     color: var(--WarningOrange);
 }
 
+
+
+
+
+.intent-btn {
+
+}
+
+.a-link-for-intent {
+    text-decoration: none;
+    color: var(--BlueMid);
+}
 </style>

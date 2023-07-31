@@ -7,7 +7,7 @@
 
         <div class="toggle-selector-wrap calls">
             <h4>Show Jobs</h4>
-            <div class="selection-toggle-switch" @click="$store.dispatch('Calls/toggleActiveCalls')"> 
+            <div class="selection-toggle-switch" @click="toggleActiveCalls()"> 
                 <div class="toggle-slider" :class="{ left : showActiveCalls, right : !showActiveCalls }"></div>
                 <div class="span-wrap active">
                     <span :class="{ active : showActiveCalls }" class="active-calls num-of-calls-subscript">{{ numActiveCalls }}</span>
@@ -24,37 +24,47 @@
 
         <div class="active-calls-scroll-section" :class="{ 'custom-scroller' : showActiveCalls ? activeCalls.length >= 4 : pendingCalls.length >= 4 }">
 
-            <SectionLoading v-if="(loading || refreshing)" />
+            <div class="active-calls-scroll-section-inner-wrapper">
 
-            <br>
-            
-            <div class="active-calls-card" v-for="call in showActiveCalls ? activeCalls : pendingCalls" :key="call.id" @click="loadCall(call)">
-                <!-- <p>Call ID:</p>
-                <span class="bold">{{ call.id }}</span> -->
-                <font-awesome-icon class="call-store-icon" :icon="['fa', 'store-alt']" size="lg" />
-                <span class="bold call-info" v-if="call.customerStoreName">{{ call.customerStoreName + ' (' + call.customerStoreBranchCode + ')' }}</span>
-                <span v-else></span>
-                <font-awesome-icon class="call-store-icon" :icon="['fa', 'toolbox']" size="lg" />
-                <span class="bold call-info">Client Call # {{ call.id }}</span>
-                <font-awesome-icon class="call-store-icon" :icon="['fa', 'info-circle']" size="lg" />
-                <span class="call-info call-detail bold">{{ call.callDetails.length <= 30 ? call.callDetails : call.callDetails.substring(0,30) + '...' }}</span>
-                <div class="tech-state-icon-wrap" :class="{ pending : call.techStateId === 1, received : call.techStateId === 2, 'en-route' : call.techStateId === 3, 'on-site' : call.techStateId === 4, 'returning' : call.techStateId === 5, 'on-hold' : call.techStateId === 6, 'rerouted' : call.techStateId == 7, 'transferred' : call.techStateId == 9 }">
-                    <div>
-                        <span v-if="call.techStateId === 1" class="material-symbols-outlined tech-state-icon pending material" >pending_actions</span>
-                        <font-awesome-icon v-if="call.techStateId === 2" class="tech-state-icon received" :icon="['fa', 'user-check']" size="lg" />
-                        <font-awesome-icon v-if="call.techStateId === 3" class="tech-state-icon en-route" :icon="['fa', 'route']" size="lg" />
-                        <font-awesome-icon v-if="call.techStateId === 4" class="tech-state-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" />
-                        <font-awesome-icon v-if="call.techStateId === 5" class="tech-state-icon returning" style="transform: scaleX(-1);" :icon="['fa', 'clock-rotate-left']" size="lg" />
-                        <font-awesome-icon v-if="call.techStateId === 6" class="tech-state-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" />
-                        <font-awesome-icon v-if="call.techStateId === 9" class="tech-state-icon transferred" :icon="['fa', 'shuffle']" size="lg" />
-                        <span v-if="call.techStateId === 7" class="material-symbols-outlined tech-state-icon rerouted material" >alt_route</span>
-                        <span class="tech-state-name">{{ call.techStateName }}</span>
-                    </div>
+                <SectionLoading v-if="(loading || refreshing)" />
 
+                <br>
+
+                <div class="calls-search-wrap">
+                    <input type="text" v-model="callSearchString" @input="filterCalls()" placeholder="Search Calls...">
                 </div>
                 
+                <div class="call-cards-wrap">
+                    <div class="active-calls-card" v-for="call in filteredCalls" :key="call.id" @click="loadCall(call)">
+                        <!-- <p>Call ID:</p>
+                        <span class="bold">{{ call.id }}</span> -->
+                        <font-awesome-icon class="call-store-icon" :icon="['fa', 'store-alt']" size="lg" />
+                        <span class="bold call-info" v-if="call.customerStoreName">{{ call.customerStoreName + ' (' + call.customerStoreBranchCode + ')' }}</span>
+                        <span v-else></span>
+                        <font-awesome-icon class="call-store-icon" :icon="['fa', 'toolbox']" size="lg" />
+                        <span class="bold call-info">Client Call # {{ call.id }}</span>
+                        <font-awesome-icon class="call-store-icon" :icon="['fa', 'info-circle']" size="lg" />
+                        <span class="call-info call-detail bold">{{ call.callDetails.length <= 30 ? call.callDetails : call.callDetails.substring(0,30) + '...' }}</span>
+                        <div class="tech-state-icon-wrap" :class="{ pending : call.techStateId === 1, received : call.techStateId === 2, 'en-route' : call.techStateId === 3, 'on-site' : call.techStateId === 4, 'returning' : call.techStateId === 5, 'on-hold' : call.techStateId === 6, 'rerouted' : call.techStateId == 7, 'transferred' : call.techStateId == 9 }">
+                            <div>
+                                <span v-if="call.techStateId === 1" class="material-symbols-outlined tech-state-icon pending material" >pending_actions</span>
+                                <font-awesome-icon v-if="call.techStateId === 2" class="tech-state-icon received" :icon="['fa', 'user-check']" size="lg" />
+                                <font-awesome-icon v-if="call.techStateId === 3" class="tech-state-icon en-route" :icon="['fa', 'route']" size="lg" />
+                                <font-awesome-icon v-if="call.techStateId === 4" class="tech-state-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" />
+                                <font-awesome-icon v-if="call.techStateId === 5" class="tech-state-icon returning" style="transform: scaleX(-1);" :icon="['fa', 'clock-rotate-left']" size="lg" />
+                                <font-awesome-icon v-if="call.techStateId === 6" class="tech-state-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" />
+                                <font-awesome-icon v-if="call.techStateId === 9" class="tech-state-icon transferred" :icon="['fa', 'shuffle']" size="lg" />
+                                <span v-if="call.techStateId === 7" class="material-symbols-outlined tech-state-icon rerouted material" >alt_route</span>
+                                <span class="tech-state-name">{{ call.techStateName }}</span>
+                            </div>
+
+                        </div>
+                    </div>
+                    
+                </div>
+
             </div>
-            
+
         </div>
 
 
@@ -72,7 +82,7 @@
 
 
 <script>
-import SectionLoading from '../../../components/Loading/LoadingSection.vue'
+import SectionLoading from './LoadingSection.vue'
 import { mapGetters } from 'vuex'
 
 
@@ -88,7 +98,9 @@ export default {
 
     data(){
         return {
-            refreshing: false
+            refreshing: false,
+            callSearchString: '',
+            filteredCalls: []
         }
     },
 
@@ -99,6 +111,7 @@ export default {
         ...mapGetters({
             activeCalls: ['Calls/activeCalls'],
             pendingCalls: ['Calls/pendingCalls'],
+            allCalls: ['Calls/allCalls'],
             loading: ['Calls/loading'],
             showActiveCalls: ['Calls/showActiveCalls'],
             online: ['StaticResources/online']
@@ -121,16 +134,38 @@ export default {
                 if(this.showActiveCalls)
                 {
                     this.$store.dispatch('Menu/setTitle', { title: 'Active Jobs', icon: ['fa', 'toolbox'] }) 
+                    // this.filteredCalls = this.activeCalls;
                 }
                 else
                 { 
                     this.$store.dispatch('Menu/setTitle', { title: 'Pending Jobs', icon: ['fa', 'toolbox'] });
-                    // this.$store.dispatch('Calls/getTechnicianCalls', true);
+                    // this.filteredCalls = this.pendingCalls;
                 }
             },
             deep: true,
             immediate: true
-        },        
+        },    
+        
+        
+        activeCalls: {
+            handler: function() {
+                if(this.showActiveCalls)
+                this.filteredCalls = this.activeCalls;
+                else
+                    this.filteredCalls = this.pendingCalls;
+            },
+            deep: true
+        },
+
+        pendingCalls: {
+            handler: function() {
+                if(!this.showActiveCalls)
+                    this.filteredCalls = this.pendingCalls;
+                else
+                    this.filteredCalls = this.activeCalls;
+            },
+            deep: true
+        }
     },
 
 
@@ -141,12 +176,53 @@ export default {
             if(this.online)
                 this.$store.dispatch('Calls/getTechnicianCalls');
         }, 150);
+
+        this.showActiveCalls ? this.filteredCalls = this.activeCalls : this.filteredCalls = this.pendingCalls;
     },
 
 
 
 
     methods: {
+
+
+
+
+        toggleActiveCalls: function() {
+            this.$store.dispatch('Calls/toggleActiveCalls');
+            if(this.showActiveCalls)
+                this.filteredCalls = this.activeCalls;
+            else
+                this.filteredCalls = this.pendingCalls;
+        },
+
+
+
+
+        filterCalls: function() {
+
+            // console.log(this.callSearchString, this.allCalls);
+
+            this.filteredCalls = this.allCalls.filter(call => {
+                // match the call id (which is a number) to the callSearchString (which is a string)
+                if(call.id.toString().indexOf(this.callSearchString) != -1)
+                {
+                    // console.log('ID match, ', call.id)
+                    return call;
+                }
+                if(call.customerStoreName.toLowerCase().indexOf(this.callSearchString.toLowerCase()) != -1)
+                {
+                    // console.log('Store Name match, ', call.customerStoreName);
+                    return call;
+                }
+                if(call.customerStoreBranchCode.toLowerCase().indexOf(this.callSearchString.toLowerCase()) != -1)
+                {
+                    // console.log('Branch Code match, ', call.customerStoreBranchCode);
+                    return call;
+                }
+            })
+
+        },
 
         // setTechAtOffice: function() {
         //     this.$store.dispatch('GeoLocation/markTechAtOffice')
@@ -189,21 +265,49 @@ export default {
 
 
 .active-calls-scroll-section {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-
-    position: relative;
-
     overflow-y: scroll;
     max-height: 60vh;
     min-height: 30vh;
     height: 60vh;
     width: 100%;
-    padding: 10px;
-    padding-top: 0px;
-    box-shadow: inset 0 -6px 20px 0 rgb(0 0 0 / 40%);
     background: rgba(0,0,40,0.2);
+}
+
+
+.active-calls-scroll-section-inner-wrapper {
+    position: relative;
+    padding: 10px;
+    padding-top: 0;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    box-shadow: inset 0 -6px 20px 0 rgb(0 0 0 / 40%);
+}
+
+
+
+
+.calls-search-wrap {
+    position: fixed;
+    top: 65px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    z-index: 200;
+}
+
+
+.calls-search-wrap input {
+    width: 85vw;
+    max-width: 400px;
+    margin-right: 7px;
+}
+
+
+
+
+.call-cards-wrap {
+    padding-top: 45px;
 }
 
 
