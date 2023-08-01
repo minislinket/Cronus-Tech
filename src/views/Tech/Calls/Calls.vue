@@ -237,7 +237,7 @@ export default {
 
         refreshJobs: async function() {
             this.refreshing = true;
-            await this.$store.dispatch('Calls/refreshTechnicianCalls');
+            await this.$store.dispatch('Calls/refreshTechnicianCalls', true);
             this.refreshing = false;
             // this.$router.push('/calls');
         }

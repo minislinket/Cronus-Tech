@@ -135,7 +135,7 @@ const actions = {
             call = await dispatch('getCallFromCalls', callId);               
             if(!call)
             {
-                await dispatch('Calls/refreshTechnicianCalls', null, { root :true });
+                await dispatch('Calls/refreshTechnicianCalls', true, { root :true });
                 call = await dispatch('getCallFromCalls', callId);
             }
         }
