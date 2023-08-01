@@ -18,13 +18,13 @@ export const socket = io(URL, { transports: ["websocket", 'polling', 'flashsocke
 
 socket.on("connect", () => {
 	console.log('Socket connected: ', socket.connected); // true
-    // var isAuth = store.getters['Login/isAuth'];
-    // var uuid = localStorage.getItem('socketUUID');
+    var isAuth = store.getters['Login/isAuth'];
+    var uuid = localStorage.getItem('socketUUID');
     // console.log('Lets see if isAuth is defined: ', isAuth);
-    // if(isAuth !== undefined && uuid !== undefined)
-    // {
-    //     socket.emit('app_version', localStorage.getItem('socketUUID'), process.env.PACKAGE_VERSION);
-    // }
+    if(isAuth !== undefined && uuid !== undefined)
+    {
+        socket.emit('user_login_status', localStorage.getItem('socketUUID'), isAuth);
+    }
 });
   
 socket.on("disconnect", () => {
@@ -56,6 +56,8 @@ socket.on('sendClientUUID', (uuid, replyToServer) => {
         return
     }
 	replyToServer(clientInfo);
+    var isAuth = store.getters['Login/isAuth'];
+    socket.emit('user_login_status', localStorage.getItem('socketUUID'), isAuth);
 })
 
 
@@ -198,6 +200,8 @@ function awaitMsgToken(replyToServer) {
             return
         }
         replyToServer(clientInfo);
+        var isAuth = store.getters['Login/isAuth'];
+        socket.emit('user_login_status', localStorage.getItem('socketUUID'), isAuth);
     }, 3000);
 }
 

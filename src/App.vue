@@ -88,6 +88,7 @@ export default {
 
 
 		isAuth: function() {
+			// console.log('Telling sockets we are logged in: ', this.isAuth);
 			socket.emit('user_login_status', localStorage.getItem('socketUUID'), this.isAuth);
 		},
 		deep: true
