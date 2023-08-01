@@ -7,6 +7,7 @@ const state = () => ({
     pendingCalls: [],
     loading: false,
     showActiveCalls: true,
+    lastUpdated: ''
 })
 
 
@@ -66,7 +67,17 @@ const actions = {
         if(!online) { return }
 
 
+        var now = new Date();
+        var diff = Math.abs(state.lastUpdated - now);
+        var seconds = diff / 1000;
+        // console.log('We last updated ' + seconds + ' seconds ago');
+
+        var online = rootGetters['StaticResources/online'];
+        if(!online || state.loading || seconds < 30 && state.activeCalls.length >= 1 && !forceReload) { return }
+
+
         commit('loading', true);
+        commit('setLastUpdated', new Date());
 
         var user = JSON.parse(localStorage.getItem('user'));
 
@@ -643,7 +654,9 @@ const mutations = {
     },
 
 
-
+    setLastUpdated(state, date) {
+        state.lastUpdated = date;
+    },
 
 
     loading(state, toggle) {
