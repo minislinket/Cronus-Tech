@@ -70,6 +70,11 @@ socket.on('sendClientUUID', (uuid, replyToServer) => {
 	replyToServer(clientInfo);
     var isAuth = store.getters['Login/isAuth'];
     socket.emit('user_login_status', localStorage.getItem('socketUUID'), isAuth);
+    var appVersion = localStorage.getItem('version');
+    if(appVersion !== undefined)
+    {
+        socket.emit('app_version', uuid, appVersion);
+    }
 })
 
 
@@ -214,6 +219,11 @@ function awaitMsgToken(replyToServer) {
         replyToServer(clientInfo);
         var isAuth = store.getters['Login/isAuth'];
         socket.emit('user_login_status', localStorage.getItem('socketUUID'), isAuth);
+        var appVersion = localStorage.getItem('version');
+        if(appVersion !== undefined)
+        {
+            socket.emit('app_version', uuid, appVersion);
+        }
     }, 3000);
 }
 

@@ -1,5 +1,6 @@
 import { axiosOffice } from "../../../axios/axios";
 import router from "../../../router";
+import { socket } from "../../../socket_io";
 
 // initial state
 const state = () => ({
@@ -371,6 +372,14 @@ const actions = {
                     icon: "" // leave blank for default type icon
                 };
                 dispatch("Toast/toast", toast, { root: true });
+
+                var data = {
+                    call: resp.data.id,
+                    type: 'addNewCall'
+                }
+                console.log('Socket emitting desktopUpdate: ', data)
+                socket.emit('desktopUpdate', data);
+
                 resp.data['customerStore'] = state.customerStore;
                 resp.data['customerAccount'] = state.customerAccount;
                 var data = JSON.parse(JSON.stringify(resp.data));

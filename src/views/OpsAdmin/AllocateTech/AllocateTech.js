@@ -2,6 +2,7 @@ import axios from "axios";
 import LZString from "lz-string";
 import { axiosOffice } from "../../../axios/axios";
 import StaticResources from "../../../store/Modules/StaticResources";
+import { socket } from "../../../socket_io";
 
 // initial state
 const state = () => ({
@@ -606,18 +607,21 @@ const actions = {
 
 
 
-    removeTech({ state, dispatch, commit }, employeeCode) {
+    async removeTech({ state, dispatch, commit }, employeeCode) {
 
         console.log('Remove this tech: ', employeeCode);
         
 
         dispatch('loading', true);
 
+        
+
         axiosOffice.delete('calls/'+ state.call.id + '/techs?employee_code=' + employeeCode)
-        .then(resp => {
+        .then(async resp => {
             if(resp.status === 200)
             {
-                dispatch('loadCallTechs');
+                await dispatch('loadCallTechs');
+                var isLastTech = state.techList.length === 0 ? true : false;
                 var toast = {
                     shown: false,
                     type: "okay",
@@ -627,6 +631,18 @@ const actions = {
                     icon: "" // leave blank for default type icon
                 };
                 dispatch("Toast/toast", toast, { root: true });
+
+                var data = {
+                    callId: state.call.id,
+                    employeeCode: employeeCode,
+                    lastTech: isLastTech,
+                    type: 'removeCallTechnician'
+                }
+                socket.emit('desktopUpdate', data);
+
+                if(isLastTech)
+                    state.call.callStatusId = 1;
+
                 dispatch('loadStoreCalls', state.customerStore);
             }
             dispatch('loading', false);
@@ -657,7 +673,7 @@ const actions = {
 
     async allocateTechToCall({ state, dispatch, commit }, tech) {
 
-        console.log('Loading call techs...');
+        console.log('Loading call techs...', JSON.parse(JSON.stringify(state.call)));
         await dispatch('loadCallTechs');
         console.log('State call tech list: ', state.techList);
 
@@ -695,6 +711,31 @@ const actions = {
                     icon: "" // leave blank for default type icon
                 };
                 dispatch("Toast/toast", toast, { root: true });
+
+                console.log(state.call);
+
+                if(state.call.callStatusId === 1)
+                {
+                    var data = {
+                        type: 'updateCallStatus',
+                        callId: state.call.id,
+                        callStatusId: 2,
+                    }
+                    socket.emit('desktopUpdate', data);
+                    state.call.callStatusId = 2;
+                }
+
+                var data = {
+                    callId: state.call.id,
+                    employeeCode: tech.employeeCode,
+                    type: 'addCallTechnician'
+                }
+                socket.emit('desktopUpdate', data);
+
+
+                
+
+
                 dispatch('loadStoreCalls', state.customerStore);
                 dispatch('assignTechActive', false);
             }
@@ -741,6 +782,14 @@ const actions = {
                     icon: "" // leave blank for default type icon
                 };
                 dispatch("Toast/toast", toast, { root: true });
+
+                var data = {
+                    type: 'updateCallStatus',
+                    callId: state.call.id,
+                    callStatusId: state.call.callStatusId,
+                }
+                socket.emit('desktopUpdate', data);
+
                 dispatch('loadStoreCalls', 'reload');
             }
             dispatch('loading', false);
@@ -802,6 +851,18 @@ const actions = {
                     icon: "" // leave blank for default type icon
                 };
                 dispatch("Toast/toast", toast, { root: true });
+
+                var data = {
+                    type: 'updateCallDetails',
+                    callId: state.call.id,
+                    orderNumber: '',
+                    callTypeId: '',
+                    callSubTypeId: '',
+                    callDetails: callDetails,
+                }
+
+                socket.emit('desktopUpdate', data);
+
                 dispatch('viewCallEventsModal', false);
                 dispatch('loadCallById', state.call.id);
                 
@@ -867,6 +928,17 @@ const actions = {
                     icon: "" // leave blank for default type icon
                 };
                 dispatch("Toast/toast", toast, { root: true });
+
+                var data = {
+                    type: 'updateCallTypes',
+                    callId: state.call.id,
+                    orderNumber: '',
+                    callTypeId: callTypeId,
+                    callSubTypeId: callSubTypeId,
+                    callDetails: '',
+                }
+                socket.emit('desktopUpdate', data);
+                
                 dispatch('editCallTypesModal', false);
                 dispatch('loadCallById', state.call.id);
                 
