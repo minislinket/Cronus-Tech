@@ -49,6 +49,7 @@ const actions = {
         if(updating == null || updating == undefined) { 
             localStorage.setItem('updating', false);
             commit('updating', false);
+            localStorage.setItem('checkingForUpdates', false);
             // socket.emit('updating', false);    
             return 
         }
@@ -56,7 +57,8 @@ const actions = {
         // console.log('Setting updating to: ', updating);
 
         commit('updating', updating);
-        dispatch('updateCompleted');
+        // dispatch('updateCompleted');
+        localStorage.setItem('checkingForUpdates', false);
         socket.emit('updating', localStorage.getItem('socketUUID'), updating);
     },
 

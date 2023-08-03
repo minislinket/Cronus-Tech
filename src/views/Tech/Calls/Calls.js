@@ -61,11 +61,7 @@ const actions = {
 
 
 
-    async refreshTechnicianCalls({ dispatch, commit, rootGetters }) {
-
-        var online = rootGetters['StaticResources/online'];
-        if(!online) { return }
-
+    async refreshTechnicianCalls({ state, dispatch, commit, rootGetters }, forceReload) {
 
         var now = new Date();
         var diff = Math.abs(state.lastUpdated - now);

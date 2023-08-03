@@ -68,6 +68,7 @@ import {
   faLocationDot,
   faFileCircleCheck,
   faMapLocationDot,
+  faStreetView,
 } from '@fortawesome/free-solid-svg-icons'
 
 
@@ -148,5 +149,6 @@ library.add(
   faBell,
   faLocationDot,
   faFileCircleCheck,
-  faMapLocationDot
+  faMapLocationDot,
+  faStreetView
 )

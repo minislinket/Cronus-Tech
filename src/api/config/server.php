@@ -5,7 +5,7 @@
     if($_SERVER['HTTP_HOST'] === 'localhost') 
     {
 
-        $host = '127.0.0.1';
+        $host = '127.0.0.1:8005';
         $db = 'cronus_tech';
         $user = 'root';
         $password = '';

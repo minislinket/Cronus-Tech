@@ -18,12 +18,24 @@ export const socket = io(URL, { transports: ["websocket", 'polling', 'flashsocke
 
 socket.on("connect", () => {
 	console.log('Socket connected: ', socket.connected); // true
-    var isAuth = store.getters['Login/isAuth'];
     var uuid = localStorage.getItem('socketUUID');
+
+    var isAuth = store.getters['Login/isAuth'];
+    var user = localStorage.getItem('user');
+    var appVersion = localStorage.getItem('version');
+
     // console.log('Lets see if isAuth is defined: ', isAuth);
-    if(isAuth !== undefined && uuid !== undefined)
+    if(uuid !== undefined)
     {
-        socket.emit('user_login_status', localStorage.getItem('socketUUID'), isAuth);
+        if(isAuth !== undefined)
+        {
+            socket.emit('user_login_status', uuid, isAuth);
+        }
+
+        if(appVersion !== undefined)
+        {
+            socket.emit('app_version', uuid, appVersion);
+        }
     }
 });
   

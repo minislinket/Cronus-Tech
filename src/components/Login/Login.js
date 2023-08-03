@@ -341,15 +341,16 @@ const actions = {
         var token = state.firebaseToken;
         // console.log('Got the token, registering device now...', token);
 
+        socket.emit('add_user_employee_code', localStorage.getItem('socketUUID'), employeeCode, token );
+        socket.emit('user_last_login', localStorage.getItem('socketUUID'));
+
+        
         var device = {
             firebaseToken: token,
             userAgent: navigator.userAgent,
             employeeCode,
             socketUUID: localStorage.getItem('socketUUID')
         }
-
-
-        socket.emit('add_user_employee_code', localStorage.getItem('socketUUID'), employeeCode, token );
 
         axiosMySQL.post('user/device.php', device)
         .then(resp => {

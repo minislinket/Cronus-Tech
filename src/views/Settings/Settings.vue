@@ -10,6 +10,12 @@
 
         <br><br>
 
+        <button><a class="a-link-for-intent" :href="trackingAppLocation">Install Tracking App</a></button>
+
+        <button class="intent-btn">
+            <a class="a-link-for-intent" :href="'cronus://track?firebaseToken='+firebaseToken"><font-awesome-icon :icon="['fa', 'street-view']" size="lg" /> Start Tracking </a>
+        </button>
+
         <!-- <button :disabled="!online" v-if="canReAuthenticate" class="register-biometrics-btn" @click="registerBiometrics()" ><font-awesome-icon :icon="['fa', 'fingerprint']" size="lg" /> Register Biometrics</button> -->
 
         <button :disabled="!online" @click="$router.push('/psw-reset')" ><font-awesome-icon :icon="['fa', 'key']" size="lg" /> Reset Password</button>
@@ -62,14 +68,14 @@ export default {
         return {
             pKey: {},
             user: JSON.parse(localStorage.getItem('user')),
-
+            firebaseToken: localStorage.getItem('msgToken'),
             loading: false,
 
             notificationPermissions: false,
             locationPermissions: false,
             swReg: '',
-            fireBaseToken: localStorage.getItem('fireBaseToken') 
             // updateAvailable: false,
+            trackingAppLocation: window.location.href.indexOf('localhost') !== -1 ? 'http://localhost:8087/cronus-tracking.apk' : 'https://dev.locksecure.co.za/cronus-tech/cronus-tracking.apk'
         }
     },
 
@@ -536,6 +542,19 @@ export default {
 
 .app-permissions-settings-wrap .icon.permission-inactive {
     color: var(--WarningOrange);
+}
+
+
+
+
+
+.intent-btn {
+
+}
+
+.a-link-for-intent {
+    text-decoration: none;
+    color: var(--BlueMid);
 }
 
 </style>
