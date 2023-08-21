@@ -75,7 +75,7 @@ export default {
             locationPermissions: false,
             swReg: '',
             // updateAvailable: false,
-            trackingAppLocation: window.location.href.indexOf('localhost') !== -1 ? 'http://localhost:8087/cronus-tracking.apk' : 'https://dev.locksecure.co.za/cronus-tech/cronus-tracking.apk'
+            trackingAppLocation: window.location.href.indexOf('localhost') !== -1 ? 'http://localhost:8087/cronus-track.apk' : 'https://dev.locksecure.co.za/cronus-tech/cronus-track.apk'
         }
     },
 
