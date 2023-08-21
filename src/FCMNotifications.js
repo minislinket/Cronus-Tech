@@ -242,40 +242,40 @@ if (process.env.NODE_ENV === 'production') {
 
 
 	navigator.serviceWorker.ready
-		.then(function (serviceWorker) {
+	.then(function (serviceWorker) {
 
 
-			
-			messaging.getToken({ vapidKey: 'BOHgZUNY-YqD6PiRcMNpxU_K1xhBzOhs6hkd_-tCoWKxCefyEM0iLwJG3RAoogFludrC0dt19VJguyPDRAd10ls', serviceWorkerRegistration: serviceWorker })
-			.then((currentToken) => {
-				if (currentToken) {
-					console.log('FCM Connected!');
-					store.dispatch('Login/firebaseToken', currentToken);
-					var storedToken = localStorage.getItem('msgToken');
-					if (storedToken !== currentToken) 
-					{
-						localStorage.setItem('msgToken', currentToken);
-					}
-				} else {
-					store.dispatch('Toast/toast', toast);
-					console.log('No registration token available. Request permission to generate one.');
-					localStorage.removeItem('msgToken', currentToken);
+		
+		messaging.getToken({ vapidKey: 'BOHgZUNY-YqD6PiRcMNpxU_K1xhBzOhs6hkd_-tCoWKxCefyEM0iLwJG3RAoogFludrC0dt19VJguyPDRAd10ls', serviceWorkerRegistration: serviceWorker })
+		.then((currentToken) => {
+			if (currentToken) {
+				console.log('FCM Connected!');
+				store.dispatch('Login/firebaseToken', currentToken);
+				var storedToken = localStorage.getItem('msgToken');
+				if (storedToken !== currentToken) 
+				{
+					localStorage.setItem('msgToken', currentToken);
 				}
-				store.dispatch('Login/loadingFirebaseToken', false);
-			}).catch((err) => {
+			} else {
 				store.dispatch('Toast/toast', toast);
-				console.log('An error occurred while retrieving token. ', err);
-				store.dispatch('Login/loadingFirebaseToken', false);
+				console.log('No registration token available. Request permission to generate one.');
 				localStorage.removeItem('msgToken', currentToken);
-			})
-
-
-
-
-
-
-
+			}
+			store.dispatch('Login/loadingFirebaseToken', false);
+		}).catch((err) => {
+			store.dispatch('Toast/toast', toast);
+			console.log('An error occurred while retrieving token. ', err);
+			store.dispatch('Login/loadingFirebaseToken', false);
+			localStorage.removeItem('msgToken', currentToken);
 		})
+
+
+
+
+
+
+
+	})
 
 }
 
