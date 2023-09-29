@@ -1365,9 +1365,9 @@ export default {
 }
 
 
-.link-job-card-icon {
+/* .link-job-card-icon {
 
-}
+} */
 
 
 

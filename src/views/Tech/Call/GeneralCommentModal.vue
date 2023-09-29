@@ -21,7 +21,7 @@
             <h5 class="gc-for-calls-heading">Commenting on Call: <span>{{ call.id }}</span></h5>
 
             <div class="general-comment-input-wrap">
-                <textarea type="text" placeholder="Add Comment" v-model="comment"></textarea> 
+                <textarea type="text" placeholder="Add Comment - Do not use this if you have a stock, store or order issue. Please upload a Job Card and place the call On Hold." v-model="comment"></textarea> 
             </div>
 
             

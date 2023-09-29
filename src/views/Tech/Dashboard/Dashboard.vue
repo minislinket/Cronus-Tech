@@ -128,8 +128,6 @@
 
         </div>
 
-        <button class="update-location-btn" @click="updateLocation()"><font-awesome-icon :icon="['fa', 'location-dot']" size="lg" /> Update Location</button>
-
         <button class="switch-user-type-btn" v-if="availableUserRoles.includes(2)" @click="switchProfile()"><font-awesome-icon :icon="['fa', 'retweet']" size="lg" /> Switch to Ops-Admin</button>
 
         
