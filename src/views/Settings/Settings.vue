@@ -5,16 +5,20 @@
             <font-awesome-icon class="loading-lightbox-icon" :icon="['fa','circle-notch']" size="lg" spin />
         </div>
 
-        <button :disabled="!online" class="update-static-btn" @click="updateStaticResources()"><font-awesome-icon :icon="['fa', 'sync-alt']" size="lg" /> Sync App Data</button>
+       
         
 
-        <br><br>
 
         
-        <button class="intent-btn">
-            <a class="a-link-for-intent" :href="'intent://track/#Intent;package=za.co.locksecure.cronustracking;action=CRONUS_TRACK;S.firebaseToken='+firebaseToken+';end'"><font-awesome-icon :icon="['fa', 'street-view']" size="lg" /> Start Tracking </a>
+        <div class="tracking-app-buttons-wrap">
+            <button><a class="a-link-for-intent" :href="trackingAppLocation"><font-awesome-icon :icon="['fa', 'download']" size="lg" /> Download Tracking App</a></button>
+
+            <button class="intent-btn">
+                <a class="a-link-for-intent" :href="'cronus://track?firebaseToken='+firebaseToken"><font-awesome-icon :icon="['fa', 'street-view']" size="lg" /> Start Tracking </a>
             </button>
+        </div>
         
+        <button :disabled="!online" class="update-static-btn" @click="updateStaticResources()"><font-awesome-icon :icon="['fa', 'sync-alt']" size="lg" /> Sync App Data</button>
 
         <!-- <button :disabled="!online" v-if="canReAuthenticate" class="register-biometrics-btn" @click="registerBiometrics()" ><font-awesome-icon :icon="['fa', 'fingerprint']" size="lg" /> Register Biometrics</button> -->
 
@@ -63,7 +67,8 @@ export default {
 
             notificationPermissions: false,
             locationPermissions: false,
-            swReg: ''
+            swReg: '',
+            trackingAppLocation: window.location.href.indexOf('localhost') !== -1 ? 'http://localhost:8087/cronus-track.apk' : 'https://dev.locksecure.co.za/cronus-tech/cronus-track.apk'
         }
     },
 
@@ -377,7 +382,7 @@ export default {
 
 
 .settings-wrap {
-    padding-top: 80px;
+    padding-top: 30px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -389,6 +394,20 @@ export default {
     margin: 10px 0;
     width: max-content;
 }
+
+
+
+
+
+.tracking-app-buttons-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;   
+}
+
+
+
 
 
 
@@ -409,6 +428,10 @@ export default {
     font-size: 26px;
     margin-right: 5px;
 }
+
+
+
+
 
 
 

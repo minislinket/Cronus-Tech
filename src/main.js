@@ -5,6 +5,7 @@ import router from './router'
 import store from './store'
 import './fontAwesome'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+'serviceWorker' in navigator ? navigator.serviceWorker.register('/service-worker.js') : null;
 import './FCMNotifications'
 // import './socket_io'
 

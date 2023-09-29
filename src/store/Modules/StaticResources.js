@@ -190,14 +190,15 @@ const actions = {
 
 
 
-    async getUser({  }) {
+    async getUser({ dispatch }) {
 
         await axiosOffice.get('/company/employees/current')
             .then(resp => {
-                // console.log(resp);
+                console.log(resp);
                 if(resp.status === 200 && resp.data)
                 {
                     localStorage.setItem('user', JSON.stringify(resp.data));
+                    dispatch('checkLastLocation', resp.data);
                 }
             })
             .catch(err => {
@@ -205,6 +206,25 @@ const actions = {
                 console.error('Axios_Office Error Response: ', err.response);
             })
 
+    },
+
+
+
+    checkLastLocation({}, user) {
+
+        // check if locationLastUpdate is greater than 2 days ago
+        var lastLocationUpdate = new Date(user.locationLastUpdate);
+        var now = new Date();
+        var diff = now - lastLocationUpdate;
+        var diffDays = diff / (1000 * 60 * 60 * 24);
+
+        if(!user.lastLatitude || !user.lastLongitude || !user.locationLastUpdate || diffDays > 2)
+        {
+            var intentLink = document.createElement('a');
+            intentLink.href = 'cronus://track?firebaseToken='+user.firebaseTokenMobile
+            intentLink.click();
+        }
+        
     },
 
 

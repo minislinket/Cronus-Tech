@@ -11,12 +11,16 @@ const state = () => ({
     commentModal: false,
     commentingOnCalls: [],
     commentNextStatusId: '',
-
+    generalCommentModal: false,
 
     linkJobCardModal: false,
     linkOrderNumberModal: false,
     returnDateModal: false,
-    uploadDocModal: false
+    uploadDocModal: false,
+    
+    viewCallCommentsModalActive: false,
+    callComments: [],
+    loadingCallComments: false
 })
 
 
@@ -49,6 +53,11 @@ const getters = {
     },
 
 
+    generalCommentModal: (state) => {
+        return state.generalCommentModal;
+    },
+
+
 
     linkJobCardModal: (state) => {
         return state.linkJobCardModal;
@@ -66,7 +75,21 @@ const getters = {
 
     uploadDocModal: (state) => {
         return state.uploadDocModal;
-    }
+    },
+
+
+    
+    viewCallCommentsModalActive: (state) => {
+        return state.viewCallCommentsModalActive;
+    },
+
+    callComments: (state) => {
+        return state.callComments;
+    },
+
+    loadingCallComments: (state) => {
+        return state.loadingCallComments;
+    },
     
     
 }
@@ -95,6 +118,12 @@ const actions = {
     commentNextStatusId({ commit }, nextStatusId) {
         commit('commentNextStatusId', nextStatusId);
     },
+
+
+
+    generalCommentModal({ commit }, toggle) {
+        commit('generalCommentModal', toggle);
+    },
     
 
 
@@ -112,8 +141,47 @@ const actions = {
     },
 
 
+    viewCallCommentsModalActive({ commit, dispatch }, toggle) {
+        if(toggle === true)
+        {
+            dispatch('loadCallComments');
+        }
+        commit('viewCallCommentsModalActive', toggle);
+    },
+
+    callComments({ commit }, comments) {
+        commit('callComments', comments);
+    },
+
+    loadingCallComments({ commit }, toggle) {
+        commit('loadingCallComments', toggle);
+    },
+
+
     uploadDocModal({ commit }, toggle) {
         commit('uploadDocModal', toggle);
+    },
+
+
+
+
+
+    loadCallComments({ state, commit, dispatch }) {
+        dispatch('loadingCallComments', true);
+
+        axiosOffice.get('calls/comments?call_id=' + state.call.id)
+        .then(resp => {
+            if(resp.status === 200)
+            {
+                commit('callComments', resp.data);
+            }
+            dispatch('loadingCallComments', false);
+        })
+        .catch(err => {
+            console.error('Axios Office Error: ', err);
+            console.error('Axios Office Error Response: ', err.response);
+            dispatch('loadingCallComments', false);
+        })
     },
     
     
@@ -398,6 +466,11 @@ const mutations = {
     commentNextStatusId(state, nextStatusId) {
         state.commentNextStatusId = nextStatusId;
     },
+
+
+    generalCommentModal(state, toggle) {
+        state.generalCommentModal = toggle;
+    },
     
 
     linkJobCardModal(state, toggle) {
@@ -415,6 +488,21 @@ const mutations = {
     
     uploadDocModal(state, toggle) {
         state.uploadDocModal = toggle;
+    },
+
+
+
+
+    viewCallCommentsModalActive(state, toggle) {
+        state.viewCallCommentsModalActive = toggle;
+    },
+
+    callComments(state, comments) {
+        state.callComments = comments;
+    },
+
+    loadingCallComments(state, toggle) {
+        state.loadingCallComments = toggle;
     },
 
 

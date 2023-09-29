@@ -502,12 +502,12 @@ const actions = {
                         }
                         if(key == 'techStateId')
                         {
-                            if(serverCall[key] == 9 || serverCall[key] == 6)
-                            {
+                            // if(serverCall[key] == 9 || serverCall[key] == 6)
+                            // {
                                 localCall.techState = serverCall.techState;
                                 localCall.techStateId = serverCall.techStateId;
                                 localCall.techStateName = serverCall.techStateName;
-                            }
+                            // }
                         }
                     }
                 }
@@ -571,13 +571,13 @@ const actions = {
         activeCalls.sort((a,b) => {
             return b.id - a.id;
         })
-        // console.log('Active calls: ', activeCalls);
+        console.log('Active calls: ', activeCalls);
 
         var pendingCalls = calls.filter(call => call.techStateId == 1);
         pendingCalls.sort((a,b) => {
             return a.id - b.id;
         })
-        // console.log('Pending calls: ', pendingCalls);
+        console.log('Pending calls: ', pendingCalls);
 
         commit('setActiveCalls', activeCalls);
         commit('setPendingCalls', pendingCalls);

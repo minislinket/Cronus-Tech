@@ -29,9 +29,9 @@ import StaticResources from './store/Modules/StaticResources';
 
 
 async function catchAndRouteMessage(title, body, data) {
-	// console.log('Title: ', title);
-	// console.log('Body: ', body);
-	// console.log('Data: ', data);
+	console.log('Title: ', title);
+	console.log('Body: ', body);
+	console.log('Data: ', data);
 
 
 	// Ignore auto-routing when Ops Admin
@@ -40,7 +40,11 @@ async function catchAndRouteMessage(title, body, data) {
 
 
 	// Do not redirect "Call Update:" notifications...
-	if(title && title.indexOf('Call Update:') !== -1) { return }
+	if(title && title.indexOf('Call Update:') !== -1) 
+	{ 
+		await store.dispatch('Calls/refreshTechnicianCalls', false, { root: true }); 
+		return 
+	}
 
 
 
@@ -89,15 +93,15 @@ if (process.env.NODE_ENV === 'production') {
 
 
 	Notification.requestPermission()
-		.then((permission) => {
-			if (permission === 'granted') {
-				// console.log('Notification permission granted.');
-				// getFCMToken();
-			}
-		})
-		.catch((err) => {
-			console.log(err);
-		})
+	.then((permission) => {
+		if (permission === 'granted') {
+			// console.log('Notification permission granted.');
+			// getFCMToken();
+		}
+	})
+	.catch((err) => {
+		console.log(err);
+	})
 
 
 
@@ -105,7 +109,7 @@ if (process.env.NODE_ENV === 'production') {
 	if('serviceWorker' in navigator)
 	{
 		navigator.serviceWorker.addEventListener('message', async event => {
-			// console.log('Message Received from sw: ', event);
+			console.log('Message Received from sw: ', event);
 
 			
 			if(event.data && event.data.type && event.data.type === 'heartbeat')
@@ -133,7 +137,10 @@ if (process.env.NODE_ENV === 'production') {
 			// Intercept Push Notification Clicks and redirect user to desired page
 			if (event.data && event.data.type && event.data.type === 'FCM') 
 			{
-				await catchAndRouteMessage(event.data.title, event.data.body, event.data.data);
+				if(event.data.title.indexOf('Call Update:') == -1) 
+				{
+					await catchAndRouteMessage(event.data.title, event.data.body, event.data.data);
+				}
 			}
 
 
@@ -162,7 +169,7 @@ if (process.env.NODE_ENV === 'production') {
 			// Listen for Foreground Push Notifications and show them using the Service Worker
 			messaging.onMessage(async function (payload) {
 
-				// console.log('Msg received while window was in foreground: ', payload);
+				console.log('Msg received while window was in foreground: ', payload);
 
 
 				var title = payload && payload.notification && payload.notification.title ? payload.notification.title : 'Cronus Tech';
@@ -193,7 +200,10 @@ if (process.env.NODE_ENV === 'production') {
 				}
 
 
-				await catchAndRouteMessage(title, body, data);
+				// if(payload.notification.title.indexOf('Call Update:') == -1) 
+				// { 
+					await catchAndRouteMessage(title, body, data);
+				// }
 
 
 				// Show the Notification using the Service Worker

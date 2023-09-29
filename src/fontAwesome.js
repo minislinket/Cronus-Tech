@@ -56,6 +56,7 @@ import {
   faChevronDown,
   faComment,
   faComments,
+  faCommentDots,
   faRotateLeft,
   faClockRotateLeft,
   faShuffle,
@@ -69,6 +70,7 @@ import {
   faFileCircleCheck,
   faMapLocationDot,
   faStreetView,
+  faDownload,
 } from '@fortawesome/free-solid-svg-icons'
 
 
@@ -138,6 +140,7 @@ library.add(
   farTimesCircle,
   faComment,
   faComments,
+  faCommentDots,
   faRotateLeft,
   faClockRotateLeft,
   faShuffle,
@@ -150,5 +153,6 @@ library.add(
   faLocationDot,
   faFileCircleCheck,
   faMapLocationDot,
-  faStreetView
+  faStreetView,
+  faDownload
 )

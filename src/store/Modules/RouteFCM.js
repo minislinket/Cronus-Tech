@@ -71,9 +71,9 @@ const actions = {
                         if(payload.data.callId)
                         {
 
-                            // await dispatch('Calls/refreshTechnicianCalls', false, { root: true });
-                            await dispatch('Call/loadCall', payload.data.callId, { root: true });
-                            route = item.url + '/' + payload.data.callId; 
+                            await dispatch('Calls/refreshTechnicianCalls', false, { root: true });
+                            // await dispatch('Call/loadCall', payload.data.callId, { root: true });
+                            // route = item.url + '/' + payload.data.callId; 
                         }
                         break
                 }

@@ -24,6 +24,16 @@
                     <span>Refresh Docs</span>
                 </div>
             </div>
+            <div class="link-jc-no-order-num-wrap" v-if="call.techStateId >= 4 && call.techStateId !== 5 && call.techStateId !== 7 || call.callTypeId == 6 && call.techStateId >= 2">
+                <div class="link-job-card-wrap">
+                    <button @click="addGeneralCallComment()" class="add-comment-btn"><font-awesome-icon class="add-comment-icon" :icon="['fa','comment-dots']" size="lg" /> </button>
+                    <span>Add Comment</span>
+                </div>
+                <div class="link-job-card-wrap" v-if="call.techStateId >= 4 && call.techStateId !== 5 && call.techStateId !== 7 || call.callTypeId == 6 && call.techStateId >= 2">
+                    <button @click="viewCallComments()" class="view-comments-btn"><font-awesome-icon class="view-comments-icon" :icon="['fa','comments']" size="lg" /> </button>
+                    <span>View Comments</span>
+                </div>
+            </div>
 
 
             <div class="call-info-wrapper job-card-list">
@@ -156,10 +166,12 @@
 
     
         <CommentModal @submitComment="submitComment($event)" />
+        <GeneralCommentModal @submitGeneralComment="submitGeneralComment($event)" />
         <LinkJobCardModal @linkJobCards="linkJobCards($event)" />
         <LinkOrderNumberModal @linkOrderNumber="linkOrderNumber($event)" />
         <ReturnDateModal @recordReturnDate="recordReturnDate($event)" />
         <UploadDocument @uploadDocs="uploadDocs($event)"/>
+        <ViewCallCommentsModal />
 
         <div class="call-button-wrap" >
             <button :disabled="!canUpdateStatus" v-if="call.techStateId === 1" @click="canUpdateCall(2)" class="update-call-btn received"><font-awesome-icon class="update-call-icon accept" :icon="['fa', 'user-check']" size="lg" :class="{ disabled : !canUpdateStatus }" /> Accept Call</button>
@@ -177,10 +189,12 @@
 <script>
 
 import CommentModal from './CommentModal.vue';
+import GeneralCommentModal from './GeneralCommentModal.vue';
 import LinkJobCardModal from './LinkJobCardModal.vue';
 import LinkOrderNumberModal from './LinkOrderNumberModal.vue';
 import ReturnDateModal from './ReturnDateModal.vue'
 import UploadDocument from './UploadDocument.vue';
+import ViewCallCommentsModal from './ViewCallCommentsModal.vue'
 
 import { mapGetters } from 'vuex'
 
@@ -189,7 +203,7 @@ export default {
 
 
     components: {
-         CommentModal, LinkJobCardModal, LinkOrderNumberModal, ReturnDateModal, UploadDocument
+         CommentModal, GeneralCommentModal, LinkJobCardModal, LinkOrderNumberModal, ReturnDateModal, UploadDocument, ViewCallCommentsModal
     },
 
 
@@ -313,8 +327,19 @@ export default {
 
     methods: {
 
-        
+        viewCallComments: function() {
+            this.$store.dispatch('Call/viewCallCommentsModalActive', true);
+        },
+
+
+        addGeneralCallComment: function() {
+            this.$store.dispatch('Call/generalCommentModal', true);
+        },
             
+
+
+
+
 
 
         refreshCallDocs: function() {
@@ -467,7 +492,10 @@ export default {
             await this.sendToServiceWorker(data, 'addCallComment');
 
             // Update the call on the users device
-            this.updateCall(6, this.call);
+            if(type !== 'general')
+            {
+                this.updateCall(6, this.call);
+            }
 
 
             // }))
@@ -581,6 +609,10 @@ export default {
 
 
 
+        submitGeneralComment: function(comment) {
+            this.addCallComment(comment, 'general');
+        },
+
 
 
         submitComment: function(data) {
@@ -690,6 +722,7 @@ export default {
             this.updateCall(nextStatusId, this.call);
  
         },
+
 
 
 
@@ -1293,8 +1326,12 @@ export default {
 
 
 .link-jc-no-order-num-wrap {
-    display: flex;
+    /* display: flex;
     justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px; */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     align-items: center;
     margin-bottom: 10px;
 }
@@ -1331,6 +1368,29 @@ export default {
 .link-job-card-icon {
 
 }
+
+
+
+
+.add-comment-btn {
+    background: var(--Comments);
+}
+
+.add-comment-icon {
+    color: var(--OffWhite);
+}
+
+
+.view-comments-btn {
+    background: var(--Comments);
+}
+
+
+.view-comments-icon {
+    color: var(--OffWhite);
+}
+
+
 
 
 

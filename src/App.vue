@@ -100,6 +100,20 @@ export default {
 
 	created() {
 
+		window.addEventListener('error', (event) => {
+			console.log('Error: ', event.error);
+			console.log('Error Message: ', event.message);
+			console.log('Error Stack: ', event.error.stack);
+		})
+
+		window.onerror = function(message, source, lineno, colno, error) {
+			console.log('Error: ', error);
+			console.log('Error Message: ', message);
+			console.log('Error Source: ', source);
+			console.log('Error Line Number: ', lineno);
+			console.log('Error Column Number: ', colno);
+		}
+
 		navigator.serviceWorker.getRegistration().then(reg => { this.listenForWaitingServiceWorker(reg, this.promptUserToRefresh) }); 
 		navigator.serviceWorker.addEventListener('controllerchange', function() { window.location.reload() });
 
@@ -110,6 +124,8 @@ export default {
 
 
 	mounted() {
+
+		
 
 		console.log('App version: ', process.env.PACKAGE_VERSION);
 		localStorage.setItem('version', process.env.PACKAGE_VERSION);

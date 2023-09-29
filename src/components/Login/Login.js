@@ -258,7 +258,7 @@ const actions = {
 
                     // dispatch('setUserDevice', employeeCode);
 
-
+                    
 
                     // console.log('Started loading static resources...')
                     await dispatch('StaticResources/loadStaticResources', null, {root: true});
