@@ -7,6 +7,7 @@ const state = () => ({
     call: '',
     loading: false,
 
+    addNewCallModal: false,
 
     commentModal: false,
     commentingOnCalls: [],
@@ -37,6 +38,10 @@ const getters = {
     loading: (state) => {
         return state.loading;
     },
+
+
+
+    addNewCallModal: (state) => state.addNewCallModal,
 
 
 
@@ -104,6 +109,11 @@ const actions = {
 
     loading({ commit }, toggle) {
         commit('loading', toggle);
+    },
+
+
+    addNewCallModal({ commit }, toggle) {
+        commit('addNewCallModal', toggle);
     },
 
 
@@ -277,6 +287,7 @@ const actions = {
         if(nextStatusId === 8 || nextStatusId === 5 || nextStatusId === 6) 
         {
             router.push('/calls');
+            dispatch('Calls/sortCalls', null, { root: true });
         }
 
         
@@ -452,6 +463,11 @@ const mutations = {
 
     loading(state, toggle) {
         state.loading = toggle;
+    },
+
+
+    addNewCallModal(state, toggle) {
+        state.addNewCallModal = toggle;
     },
 
 

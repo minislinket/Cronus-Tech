@@ -42,7 +42,7 @@ async function catchAndRouteMessage(title, body, data) {
 	// Do not redirect "Call Update:" notifications...
 	if(title && title.indexOf('Call Update:') !== -1) 
 	{ 
-		await store.dispatch('Calls/refreshTechnicianCalls', false, { root: true }); 
+		// await store.dispatch('Calls/refreshTechnicianCalls', false, { root: true }); 
 		return 
 	}
 

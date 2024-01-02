@@ -71,6 +71,7 @@ import {
   faMapLocationDot,
   faStreetView,
   faDownload,
+  faExclamation,
 } from '@fortawesome/free-solid-svg-icons'
 
 
@@ -154,5 +155,6 @@ library.add(
   faFileCircleCheck,
   faMapLocationDot,
   faStreetView,
-  faDownload
+  faDownload,
+  faExclamation
 )

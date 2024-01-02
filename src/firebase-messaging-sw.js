@@ -76,6 +76,7 @@ let callSyncStore = [];
 let callJobCardLinkStore = [];
 let callCommentStore = [];
 let CallOrderNumberStore = [];
+let newCallStore = [];
 let backgroundSyncActive = false;
 
 // Listen for messages from the App
@@ -90,7 +91,6 @@ self.addEventListener('message', function (event) {
 
 		if(callSyncStore.length >= 1)
 		{
-			// console.log('Checking callSyncStore for call updates...');
 			callSyncStore.map(callData => {
 				event.waitUntil(updateCall(callData.call.id));
 			})
@@ -98,7 +98,6 @@ self.addEventListener('message', function (event) {
 
 		if(callJobCardLinkStore.length >= 1)
 		{
-			// console.log('Checking callJobCardLinkStore for job card links...');
 			callJobCardLinkStore.map(jobCardData => {
 				event.waitUntil(linkJobCard(jobCardData.call.id));
 			})
@@ -106,9 +105,22 @@ self.addEventListener('message', function (event) {
 
 		if(callCommentStore.length >= 1)
 		{
-			// console.log('Checking callJobCardLinkStore for job card links...');
 			callCommentStore.map(commentData => {
 				event.waitUntil(addCallComment(commentData.call.id));
+			})
+		}
+
+		if(CallOrderNumberStore.length >= 1)
+		{
+			CallOrderNumberStore.map(orderNumberData => {
+				event.waitUntil(linkOrderNumber(orderNumberData.call.id));
+			})
+		}
+
+		if(newCallStore.length >= 1)
+		{
+			newCallStore.map(callData => {
+				event.waitUntil(addNewCall(callData));
 			})
 		}
 	}
@@ -122,6 +134,36 @@ self.addEventListener('message', function (event) {
 	// 	var docData = JSON.parse(event.data.data);
 	// 	console.log('Upload Docs request on SW: ', docData);
 	// }
+
+
+
+	if(event.data.type === 'addNewCall')
+	{
+		var data = JSON.parse(event.data.data);
+		var existingData = '';
+
+		newCallStore.map(exData => {
+			if(exData.call.customerStoreId === data.call.customerStoreId && exData.call.callDetails === data.call.callDetails)
+			{
+				existingData = exData;
+			}
+		});
+
+
+		if(existingData)
+		{
+			event.waitUntil(addNewCall(existingData))
+		}
+		else
+		{
+			data['sending'] = false;
+			data['sent'] = false;
+			newCallStore.push(data);
+
+			event.waitUntil(addNewCall(data));
+		}
+
+	}
 
 
 
@@ -441,6 +483,48 @@ self.addEventListener('message', function (event) {
 
 
 // })
+
+
+
+
+async function addNewCall(call) {
+	var callData = newCallStore.find(exData => exData.customerStoreId === call.customerStoreId && exData.callDetails === call.callDetails);
+	var flag = false;
+
+	if(callData && !callData.sending)
+	{
+		callData.sending = true;
+
+		var method = 'POST';
+		var query = 'calls';
+		var body = callData.call;
+		var signature = callData.signature;
+		
+		var SQLData = '';
+		// {
+		// 	call, 
+		// 	user: callData.user,
+		// }
+		var SQLQuery = '';
+
+		flag = await doFetch(method, query, body, signature, call, SQLData, SQLQuery);
+	}
+
+	if(!flag)
+	{
+		newCallStore = newCallStore.filter(exData => exData.customerStoreId !== call.customerStoreId && exData.callDetails !== call.callDetails);
+	}
+	
+}
+
+
+
+
+
+
+
+
+
 async function linkOrderNumber(callId) {
 	var orderNumberData = CallOrderNumberStore.filter(exData => exData.call.id.toString() === callId.toString())[0];
 	// console.log('Link Order Number: ', orderNumberData);
@@ -722,19 +806,21 @@ async function doFetch(method, query, body, signature, sendData, SQLData, SQLQue
 		}
 		else
 		{
-
-			//Save a log of all tech call updates
-			await fetch(SQLBase + SQLQuery, {
-				body: JSON.stringify(SQLData),
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				}
-			})
-			.catch(function(err) {
-				console.error('SW SQL Fetch Error: ', err);
-				console.error('SW SQL Fetch error response: ', err.response);
-			})
+			if(SQLQuery)
+			{
+				//Save a log of all tech call updates
+				await fetch(SQLBase + SQLQuery, {
+					body: JSON.stringify(SQLData),
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					}
+				})
+				.catch(function(err) {
+					console.error('SW SQL Fetch Error: ', err);
+					console.error('SW SQL Fetch error response: ', err.response);
+				})
+			}
 
 			sendData.sending = false;
 			sendData.sent = true;
