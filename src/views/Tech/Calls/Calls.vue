@@ -676,6 +676,7 @@ export default {
 
 .selection-toggle-switch .num-of-calls-subscript.pending.bounce {
     animation: bounce 1300ms ease;
+    animation-delay: 300ms;
     background: rgb(173, 17, 17);
     color: white;
     font-weight: 700;
