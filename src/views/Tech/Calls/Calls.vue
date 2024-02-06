@@ -626,25 +626,49 @@ export default {
         transform: translateY(0);
     }
     15% {
-        transform: translateY(-8px);
+        transform: translateY(-40px);
+    }
+    16% {
+        transform: translateY(-40px) rotate(45deg);
+    }
+    18% {
+        transform: translateY(-40px) rotate(90deg);
+    }
+    20% {
+        transform: translateY(-40px) rotate(135deg);
+    }
+    22% {
+        transform: translateY(-40px) rotate(180deg);
+    }
+    24% {
+        transform: translateY(-40px) rotate(225deg);
+    }
+    26% {
+        transform: translateY(-30px) rotate(270deg);
+    }
+    28% {
+        transform: translateY(-20px) rotate(305deg);
     }
     30% {
-        transform: translateY(0);
+        transform: translateY(-10px) rotate(360deg);
+    }
+    35% {
+        transform: translateY(0) rotate(360deg);
     }
     45% {
-        transform: translateY(-6px);
+        transform: translateY(-6px) rotate(360deg);
     }
     60% {
-        transform: translateY(0);
+        transform: translateY(0) rotate(360deg);
     }
     75% {
-        transform: translateY(-3px);
+        transform: translateY(-3px) rotate(360deg);
     }
     90% {
-        transform: translateY(0);
+        transform: translateY(0) rotate(360deg);
     }
     100% {
-        transform: translateY(0);
+        transform: translateY(0) rotate(360deg);
     }
 }
 
@@ -652,9 +676,11 @@ export default {
 
 .selection-toggle-switch .num-of-calls-subscript.pending.bounce {
     animation: bounce 1300ms ease;
+    animation-delay: 300ms;
     background: rgb(173, 17, 17);
     color: white;
     font-weight: 700;
+    transform-origin: center;
 }
 
 

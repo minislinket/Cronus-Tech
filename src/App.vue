@@ -100,19 +100,19 @@ export default {
 
 	created() {
 
-		window.addEventListener('error', (event) => {
-			console.log('Error: ', event.error);
-			console.log('Error Message: ', event.message);
-			console.log('Error Stack: ', event.error.stack);
-		})
+		// window.addEventListener('error', (event) => {
+		// 	console.log('Error: ', event.error);
+		// 	console.log('Error Message: ', event.message);
+		// 	console.log('Error Stack: ', event.error.stack);
+		// })
 
-		window.onerror = function(message, source, lineno, colno, error) {
-			console.log('Error: ', error);
-			console.log('Error Message: ', message);
-			console.log('Error Source: ', source);
-			console.log('Error Line Number: ', lineno);
-			console.log('Error Column Number: ', colno);
-		}
+		// window.onerror = function(message, source, lineno, colno, error) {
+		// 	console.log('Error: ', error);
+		// 	console.log('Error Message: ', message);
+		// 	console.log('Error Source: ', source);
+		// 	console.log('Error Line Number: ', lineno);
+		// 	console.log('Error Column Number: ', colno);
+		// }
 
 		navigator.serviceWorker.getRegistration().then(reg => { this.listenForWaitingServiceWorker(reg, this.promptUserToRefresh) }); 
 		navigator.serviceWorker.addEventListener('controllerchange', function() { window.location.reload() });
@@ -154,9 +154,9 @@ export default {
 			{
 				this.checkSWBackgroundSyncStore()
 				// console.log(this.$router.currentRoute._value.path);
-				if(this.$router.currentRoute._value.path.indexOf('/call/') === -1)
+				if(this.$router.currentRoute._value.path.indexOf('/calls') != -1)
 				{
-					await this.$store.dispatch('Calls/refreshTechnicianCalls');
+					// await this.$store.dispatch('Calls/refreshTechnicianCalls');
 					if(this.pendingCalls.length >= 1)
 					{
 						this.$store.dispatch('Calls/showActiveCalls', false);
