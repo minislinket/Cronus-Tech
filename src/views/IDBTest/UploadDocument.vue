@@ -211,38 +211,28 @@ export default {
 
 
         emitFiles: async function() {
-            var formData = new FormData();
+            var uploadDocuments = [];
             
             await Promise.all(this.fileList.map(file => {
-                if(this.fileTypeId == 1)
-                {
-                    // var compressedImage = await this.compressImage(files[i], 70);
-                    // console.log('File to compress: ', file.file)
+                // if(this.fileTypeId == 1)
+                // {
+                //     // var compressedImage = await this.compressImage(files[i], 70);
+                //     // console.log('File to compress: ', file.file)
+                //     this.compressFile(file.file, 0.5);
+                // }
 
-                    new Compressor(file.file, {
-                        quality: 0.5,
-
-                        // The compression process is asynchronous,
-                        // which means you have to access the `result` in the `success` hook function.
-                        success(result) {
-                            // console.log('Compressed File: ', result);
-                            file.file = result;
-                            file.url = URL.createObjectURL(result)
-                        },
-                        error(err) {
-                            // console.log(err.message);
-                        },
-                    });
-                    
-                }
                 var fileExtension = file.file.type.split('/')[1];
                 var newFile = new File([file.file], file.name + '.' + fileExtension, { type: file.file.type })
-                formData.append('file', newFile);
+                uploadDocuments.push(newFile);
             }))
 
+            console.log('Docs to upload: ', uploadDocuments);
+
             // var formObject = JSON.stringify(Object.fromEntries(formData));
+
+            // console.log('Form Object: ', formObject);
             
-            this.$emit('uploadDocs', { formData, fileTypeId: this.fileTypeId, jobCardId: this.jobCardId });
+            // this.$emit('uploadDocs', { formData, fileTypeId: this.fileTypeId, jobCardId: this.jobCardId });
         },
 
 
@@ -269,21 +259,19 @@ export default {
             if(this.fileList.length >= 1)
             {
                 this.fileList.map((file, i) => {
-                    file.name = this.fileTypeId == 19 ? this.jobCardId + ' ' + time : this.call.id + ' ' + time + ' ' + this.user.employeeCode + ' ('+(i+1)+')';
+                    file.name = 'test_upload_' + i;
                 })
             }
 
             
 
-            console.log(this.fileList);
+            console.log('Files renamed, list: ', this.fileList);
         },
 
 
 
-        addFiles: function(data) {
-            // console.log(data);
-
-            var this2 = this;
+        addFiles: async function(data) {
+            console.log(data);
             
             
             if(this.fileTypeId == 19 && this.fileList.length >= 1)
@@ -306,6 +294,8 @@ export default {
             {
 
                 var files = data.target.files;
+
+                console.log('We have files! ', files);
 
                 for(var i = 0; i < files.length; i++) {
 
@@ -343,7 +333,7 @@ export default {
                                 var toast = {
                                     shown: false,
                                     type: 'warning', // ['info', 'warning', 'error', 'okay']
-                                    heading: 'File must be an video', // (Optional)
+                                    heading: 'File must be a video', // (Optional)
                                     body: files[i].name, 
                                     time: 3000, // in milliseconds
                                     icon: '' // leave blank for default type icon
@@ -378,13 +368,13 @@ export default {
 
 
                     
-
-                    if(this.fileList.length >= 1)
+                    console.log('File List: ', this.fileList)
+                    if(this.fileList.length > 0)
                     {
 
                         this.fileList.map(listFile => {
 
-                            // console.log('File in file list: ', listFile);
+                            console.log('File in file list: ', listFile);
 
                             if(files[i].name == listFile.file.name)
                             {
@@ -440,17 +430,61 @@ export default {
                             url: URL.createObjectURL(files[i])
                         }
 
+
+                        if(this.fileTypeId == 1)
+                        {
+                            await this.compressFile(files[i], 0.5)
+                            .then(compressedFile => {
+                                preppedFile.file = compressedFile;
+                                preppedFile.url = URL.createObjectURL(compressedFile)
+                            })
+                            .catch(err => {
+                                console.error('Compression Error: ', err);
+                            })
+                        }
+
+                        
+
                         this.fileList.push(preppedFile);
                     }
                     
                 }
 
-                 this.renameFiles();
+                this.renameFiles();
             }
 
             
+            console.log('-----------------');
+            console.log('');
 
+            if(data.target && data.target) 
+            {
+                data.target.value = '';
+            }
             
+        },
+
+
+
+
+
+        compressFile: function(file, quality) {
+            return new Promise((resolve, reject) => {
+                new Compressor(file, {
+                    quality: quality,
+
+                    // The compression process is asynchronous,
+                    // which means you have to access the `result` in the `success` hook function.
+                    success(result) {
+                        // console.log('Compressed File: ', result);
+                        resolve(result);
+                    },
+                    error(err) {
+                        // console.log(err.message);
+                        reject(err);
+                    },
+                });
+            })
         },
 
 
