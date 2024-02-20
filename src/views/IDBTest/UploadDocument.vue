@@ -1,6 +1,12 @@
 <template>
     <div class="app-modal-lightbox" v-if="active" :class="{ active : active }">
 
+        <div class="loading-lightbox-fullscreen compressing-files" v-if="compressing">
+            <font-awesome-icon class="loading-lightbox-icon" :icon="['fa','circle-notch']" size="lg" spin />
+            <br>
+            <h3>Compressing...</h3>
+        </div>
+
         <div class="upload-documents-modal app-modal-content">
   
             <h4>Upload Documents</h4>
@@ -51,6 +57,8 @@
 import { mapGetters } from 'vuex'
 import { axiosOffice } from '../../axios/axios.js';
 import Compressor from 'compressorjs';
+import idb from '../../idb';
+
 export default {
 
     props: ['active'],
@@ -66,6 +74,8 @@ export default {
             jobCardId: '',
 
             user: JSON.parse(localStorage.getItem('user')),
+
+            compressing: false,
         }
     },
 
@@ -74,7 +84,7 @@ export default {
     computed: {
         ...mapGetters({
             // active: ['Call/uploadDocModal'],
-            // call: ['Call/call']
+            call: ['Call/call']
         })
     },
 
@@ -211,28 +221,45 @@ export default {
 
 
         emitFiles: async function() {
-            var uploadDocuments = [];
+            var uploadData = [];
             
             await Promise.all(this.fileList.map(file => {
-                // if(this.fileTypeId == 1)
-                // {
-                //     // var compressedImage = await this.compressImage(files[i], 70);
-                //     // console.log('File to compress: ', file.file)
-                //     this.compressFile(file.file, 0.5);
-                // }
-
                 var fileExtension = file.file.type.split('/')[1];
-                var newFile = new File([file.file], file.name + '.' + fileExtension, { type: file.file.type })
-                uploadDocuments.push(newFile);
+                var newFile = new File([file.file], file.name + '.' + fileExtension, { type: file.file.type, lastModified: file.file.lastModified })
+
+                uploadData.push
+                (
+                    {
+                        file: newFile,
+                        fileTypeId: this.fileTypeId,
+                        jobCardId: this.fileTypeId == 19 ? this.jobCardId : null,
+                        uploading: false,
+                        uploadComplete: false,
+                        originalFileName: file.file.name,
+                        call_id: 963852,
+                    }
+                )
+
             }))
 
-            console.log('Docs to upload: ', uploadDocuments);
+            console.log('Upload Data: ', uploadData);
 
-            // var formObject = JSON.stringify(Object.fromEntries(formData));
+            // console.log('IDB: ', idb)
 
-            // console.log('Form Object: ', formObject);
+            var fileTypeName = this.fileTypes.find(type => type.id == this.fileTypeId).name;
+
+            await Promise.all(uploadData.map(async fileData => {
+                var result = await idb.addRecord(fileTypeName, 1, [{name: 'call_id', key: 'call_id', unique: false}], fileData);
+                console.log('Result: ', result);
+            }));
+
             
-            // this.$emit('uploadDocs', { formData, fileTypeId: this.fileTypeId, jobCardId: this.jobCardId });
+            console.log('--------------------');
+            console.log('');
+
+
+            this.$emit('close', fileTypeName);
+            
         },
 
 
@@ -271,196 +298,220 @@ export default {
 
 
         addFiles: async function(data) {
-            console.log(data);
+            // console.log(data);
+
+            this.compressing = true;
             
-            
-            if(this.fileTypeId == 19 && this.fileList.length >= 1)
-            {
-                var toast = {
-                    shown: false,
-                    type: 'warning', // ['info', 'warning', 'error', 'okay']
-                    heading: 'Only 1 file can be uploaded', // (Optional)
-                    body: '', 
-                    time: 3500, // in milliseconds
-                    icon: '' // leave blank for default type icon
+            setTimeout(async() => {
+                
+                if(this.fileTypeId == 19 && this.fileList.length >= 1)
+                {
+                    var toast = {
+                        shown: false,
+                        type: 'warning', // ['info', 'warning', 'error', 'okay']
+                        heading: 'Only 1 file can be uploaded', // (Optional)
+                        body: '', 
+                        time: 3500, // in milliseconds
+                        icon: '' // leave blank for default type icon
+                    }
+
+                    this.$store.dispatch('Toast/toast', toast, {root: true});
+                    return
                 }
 
-                this.$store.dispatch('Toast/toast', toast, {root: true});
-                return
-            }
+
+                if(data.target && data.target.files)
+                {
+
+                    var files = data.target.files;
+
+                    // console.log('We have files! ', files);
+
+                    for(var i = 0; i < files.length; i++) {
+
+                        var flag = false;
+
+                        // console.log('File Type: ', files[i].type, 'File Name: ', files[i].name)
 
 
-            if(data.target && data.target.files)
-            {
+                        switch(this.fileTypeId)
+                        {
+                            case 1 : 
+                                if(files[i].type.indexOf('image/') === -1) 
+                                {
+                                    // Toast to the user that it's the wrong file type
+                                    var toast = {
+                                        shown: false,
+                                        type: 'warning', // ['info', 'warning', 'error', 'okay']
+                                        heading: 'File must be an image', // (Optional)
+                                        body: files[i].name, 
+                                        time: 3000, // in milliseconds
+                                        icon: '' // leave blank for default type icon
+                                    }
 
-                var files = data.target.files;
-
-                console.log('We have files! ', files);
-
-                for(var i = 0; i < files.length; i++) {
-
-                    var flag = false;
-
-                    // console.log('File Type: ', files[i].type, 'File Name: ', files[i].name)
+                                    this.$store.dispatch('Toast/toast', toast, {root: true});
+                                    this.compressing = false;
+                                    return flag = true;
+                                }
+                                break
 
 
-                    switch(this.fileTypeId)
-                    {
-                        case 1 : 
-                            if(files[i].type.indexOf('image/') === -1) 
-                            {
+                            case 15 :
+                                if(files[i].type.indexOf('video/') === -1) 
+                                {
+                                    // Toast to the user that it's the wrong file type
+                                    var toast = {
+                                        shown: false,
+                                        type: 'warning', // ['info', 'warning', 'error', 'okay']
+                                        heading: 'File must be a video', // (Optional)
+                                        body: files[i].name, 
+                                        time: 3000, // in milliseconds
+                                        icon: '' // leave blank for default type icon
+                                    }
+
+                                    this.$store.dispatch('Toast/toast', toast, {root: true});
+                                    this.compressing = false;
+                                    return flag = true;
+                                }
+                                break
+
+                            default :
+                                if(files[i].type.indexOf('application/pdf') === -1) 
+                                {
                                 // Toast to the user that it's the wrong file type
                                 var toast = {
                                     shown: false,
                                     type: 'warning', // ['info', 'warning', 'error', 'okay']
-                                    heading: 'File must be an image', // (Optional)
+                                    heading: 'File must be a PDF', // (Optional)
                                     body: files[i].name, 
                                     time: 3000, // in milliseconds
                                     icon: '' // leave blank for default type icon
                                 }
 
                                 this.$store.dispatch('Toast/toast', toast, {root: true});
-                                
+                                this.compressing = false;
                                 return flag = true;
                             }
                             break
+                        }
+
+                        
 
 
-                        case 15 :
-                            if(files[i].type.indexOf('video/') === -1) 
-                            {
-                                // Toast to the user that it's the wrong file type
-                                var toast = {
-                                    shown: false,
-                                    type: 'warning', // ['info', 'warning', 'error', 'okay']
-                                    heading: 'File must be a video', // (Optional)
-                                    body: files[i].name, 
-                                    time: 3000, // in milliseconds
-                                    icon: '' // leave blank for default type icon
+                        
+                        // console.log('File List: ', this.fileList)
+                        if(this.fileList.length > 0)
+                        {
+
+                            this.fileList.map(listFile => {
+
+                                // console.log('File in file list: ', listFile);
+
+                                if(files[i].name == listFile.file.name)
+                                {
+                                    var toast = {
+                                        shown: false,
+                                        type: 'info', // ['info', 'warning', 'error', 'okay']
+                                        heading: 'File already added', // (Optional)
+                                        body: listFile.file.name, 
+                                        time: 2000, // in milliseconds
+                                        icon: '' // leave blank for default type icon
+                                    }
+
+                                    this.$store.dispatch('Toast/toast', toast, {root: true});
+                                    flag = true;
                                 }
 
-                                this.$store.dispatch('Toast/toast', toast, {root: true});
-                                
-                                return flag = true;
-                            }
-                            break
+                            })
+                        }
 
-                        default :
-                            if(files[i].type.indexOf('application/pdf') === -1) 
-                            {
-                            // Toast to the user that it's the wrong file type
+
+
+                        if(this.fileTypeId == 19 && files.length > 1)
+                        {
                             var toast = {
                                 shown: false,
                                 type: 'warning', // ['info', 'warning', 'error', 'okay']
-                                heading: 'File must be a PDF', // (Optional)
-                                body: files[i].name, 
-                                time: 3000, // in milliseconds
+                                heading: 'Only 1 file can be uploaded', // (Optional)
+                                body: '', 
+                                time: 3500, // in milliseconds
                                 icon: '' // leave blank for default type icon
                             }
 
                             this.$store.dispatch('Toast/toast', toast, {root: true});
-                            return flag = true;
-                        }
-                        break
-                    }
+                            flag = true;
+                            this.compressing = false;
+                            return
+                        } 
+                        
+                        
+                        
+                        
 
-                    
 
 
-                    
-                    console.log('File List: ', this.fileList)
-                    if(this.fileList.length > 0)
-                    {
+                        if(!flag)
+                        {
 
-                        this.fileList.map(listFile => {
+                            
 
-                            console.log('File in file list: ', listFile);
-
-                            if(files[i].name == listFile.file.name)
+                            var preppedFile = 
                             {
-                                var toast = {
-                                    shown: false,
-                                    type: 'info', // ['info', 'warning', 'error', 'okay']
-                                    heading: 'File already added', // (Optional)
-                                    body: listFile.file.name, 
-                                    time: 2000, // in milliseconds
-                                    icon: '' // leave blank for default type icon
-                                }
-
-                                this.$store.dispatch('Toast/toast', toast, {root: true});
-                                flag = true;
+                                name: '',
+                                file: files[i],
+                                url: URL.createObjectURL(files[i])
                             }
 
-                        })
+
+                            if(this.fileTypeId == 1)
+                            {
+                                await this.compressFile(files[i], 0.5)
+                                .then(compressedFile => {
+                                    preppedFile.file = compressedFile;
+                                    preppedFile.url = URL.createObjectURL(compressedFile)
+                                })
+                                .catch(err => {
+                                    console.error('Compression Error: ', err);
+
+                                    var toast = {
+                                        shown: false,
+                                        type: 'error', // ['info', 'warning', 'error', 'okay']
+                                        heading: 'Error compressing image', // (Optional)
+                                        body: files[i].name, 
+                                        time: 5000, // in milliseconds
+                                        icon: '' // leave blank for default type icon
+                                    }
+
+                                    this.$store.dispatch('Toast/toast', toast, {root: true});
+                                })
+                            }
+
+                            
+
+                            this.fileList.push(preppedFile);
+                        }
+                        else
+                        {
+                            this.compressing = false;
+                        }
+                        
                     }
 
-
-
-                    if(this.fileTypeId == 19 && files.length > 1)
-                    {
-                        var toast = {
-                            shown: false,
-                            type: 'warning', // ['info', 'warning', 'error', 'okay']
-                            heading: 'Only 1 file can be uploaded', // (Optional)
-                            body: '', 
-                            time: 3500, // in milliseconds
-                            icon: '' // leave blank for default type icon
-                        }
-
-                        this.$store.dispatch('Toast/toast', toast, {root: true});
-                        flag = true;
-                        return
-                    } 
-                    
-                    
-                    
-                    
-
-
-
-                    if(!flag)
-                    {
-
-                        
-
-                        var preppedFile = 
-                        {
-                            name: '',
-                            file: files[i],
-                            url: URL.createObjectURL(files[i])
-                        }
-
-
-                        if(this.fileTypeId == 1)
-                        {
-                            await this.compressFile(files[i], 0.5)
-                            .then(compressedFile => {
-                                preppedFile.file = compressedFile;
-                                preppedFile.url = URL.createObjectURL(compressedFile)
-                            })
-                            .catch(err => {
-                                console.error('Compression Error: ', err);
-                            })
-                        }
-
-                        
-
-                        this.fileList.push(preppedFile);
-                    }
-                    
+                    this.renameFiles();
                 }
 
-                this.renameFiles();
-            }
+                
+                console.log('-----------------');
+                console.log('');
 
-            
-            console.log('-----------------');
-            console.log('');
+                if(data.target && data.target) 
+                {
+                    data.target.value = '';
+                }
 
-            if(data.target && data.target) 
-            {
-                data.target.value = '';
-            }
+                this.compressing = false;
+
+            }, 50);
             
         },
 
@@ -488,9 +539,11 @@ export default {
         },
 
 
-
+    
 
     }
+
+
 
 }
 </script>
@@ -499,6 +552,13 @@ export default {
 
 <style>
 
+
+.loading-lightbox-fullscreen.compressing-files {
+    display: flex;
+    flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
 
 
 
