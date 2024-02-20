@@ -15,6 +15,9 @@ Functions for use:
     - updateRecord(DB_NAME, DB_VERSION, updateRecord); Updates a record in the DB
     DELETE:
     - deleteRecord(DB_NAME, DB_VERSION, id); Deletes a record from the DB
+
+    Other:
+    - checkDatabaseExists(DB_NAME, DB_VERSION); Checks if the requested database exists
 */
 
 
