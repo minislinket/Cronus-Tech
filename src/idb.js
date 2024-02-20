@@ -4,20 +4,31 @@ This is a simple wrapper around IndexedDB to make it easier to use.
 It's important to note that custom indexes can be created when adding records for the first time.
 If the DB doesn't exist yet and records are retrieved/deleted, idb will return an empty array or false when updating.
 
+Please also note:
+    - The module is asynchronous and should be used with async/await or promises.
+    - Records are expected to be objects {}, with any properties you'd like. 
+
 Functions for use:
     POST:
     - addRecord(DB_NAME, DB_VERSION, customIndexes, record); Adds a record to the DB
+    
     GET:
     - getAllRecords(DB_NAME, DB_VERSION); Gets all records from the DB
     - getRecord(DB_NAME, DB_VERSION, id); Gets a record from the DB with the specified record ID
     - getAllRecordsOfCustomIndex(DB_NAME, DB_VERSION, idx, value); Gets all records from the DB with the specified custom index
+    
     PUT:
     - updateRecord(DB_NAME, DB_VERSION, updateRecord); Updates a record in the DB
+        * Note: The record must have an 'id' property to be updated
+
     DELETE:
     - deleteRecord(DB_NAME, DB_VERSION, id); Deletes a record from the DB
 
-    Other:
+    OTHER:
     - checkDatabaseExists(DB_NAME, DB_VERSION); Checks if the requested database exists
+        * This can be used to check if the DB exists before trying to get/update/delete records.
+        * Use case:
+            - Check if a DB exists, if it does, update a record, if it doesn't, add a new record.
 */
 
 

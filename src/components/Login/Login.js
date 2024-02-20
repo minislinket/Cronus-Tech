@@ -247,7 +247,7 @@ const actions = {
 
                     
                     
-                    dispatch('setSignatureIDB', resp.data.signature);
+                    await dispatch('setSignatureIDB', resp.data.signature);
 
                     localStorage.setItem('signature', JSON.stringify(resp.data.signature));
                     localStorage.setItem('time_stamp', JSON.stringify(time));
@@ -330,26 +330,14 @@ const actions = {
 
 
 
-    setSignatureIDB({}, signature) {
-        var signatureDB = idb.checkDatabaseExists('Signature', 1);
+    async setSignatureIDB({}, signature) {
+        var signatureDB = await idb.checkDatabaseExists('Signature', 1);
+
         if(signatureDB)
-            idb.updateRecord('Signature', 1, signature);
+            await idb.updateRecord('Signature', 1, { signature: signature, id: 1 });
         else
-            idb.addRecord('Signature', 1, [], signature);
+            await idb.addRecord('Signature', 1, [], { signature: signature });
     },
-
-
-
-
-
-    setSignatureIDB({}, signature) {
-        var signatureDB = idb.checkDatabaseExists('Signature', 1);
-        if(signatureDB)
-            idb.updateRecord('Signature', 1, signature);
-        else
-            idb.addRecord('Signature', 1, [], signature);
-    },
-
 
 
 
