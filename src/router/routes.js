@@ -86,15 +86,15 @@ const routes = [
 			icon: ['fa', 'box-archive']
 		}
 	},
-	{
-		path: '/idb_test',
-		name: 'IDB Test',
-		component: () => import('../views/IDBTest/IDBTest.vue'),
-		meta: {
-			title: 'IDB Test',
-			icon: ['fa', 'database']
-		}
-	},
+	// {
+	// 	path: '/idb_test',
+	// 	name: 'IDB Test',
+	// 	component: () => import('../views/IDBTest/IDBTest.vue'),
+	// 	meta: {
+	// 		title: 'IDB Test',
+	// 		icon: ['fa', 'database']
+	// 	}
+	// },
 	
 
 

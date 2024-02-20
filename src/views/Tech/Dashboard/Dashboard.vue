@@ -128,7 +128,7 @@
 
         </div>
 
-        <button @click="openIDBTestPage()" v-if="user && user.employeeCode == 'VAN027'" >IDB</button>
+        <!-- <button @click="openIDBTestPage()" v-if="user && user.employeeCode == 'VAN027'" >IDB</button> -->
 
         <button class="switch-user-type-btn" v-if="availableUserRoles.includes(2)" @click="switchProfile()"><font-awesome-icon :icon="['fa', 'retweet']" size="lg" /> Switch to Ops-Admin</button>
 
@@ -262,9 +262,9 @@ export default {
 
 
 
-        openIDBTestPage: function() {
-            this.$router.push('/idb_test');
-        },
+        // openIDBTestPage: function() {
+        //     this.$router.push('/idb_test');
+        // },
 
 
 
