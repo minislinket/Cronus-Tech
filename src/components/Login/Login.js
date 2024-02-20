@@ -1,4 +1,5 @@
 import { axiosMySQL, axiosOffice, axiosSSE } from '../../axios/axios'
+import idb from '../../idb';
 import router from '../../router/index'
 // import { socket } from '../../socket_io'
 const crypto = require('crypto');
@@ -323,6 +324,18 @@ const actions = {
                     dispatch('Toast/toast', toast, {root: true})
                 }
             })
+    },
+
+
+
+
+
+    setSignatureIDB({}, signature) {
+        var signatureDB = idb.checkDatabaseExists('Signature', 1);
+        if(signatureDB)
+            idb.updateRecord('Signature', 1, signature);
+        else
+            idb.addRecord('Signature', 1, [], signature);
     },
 
 
