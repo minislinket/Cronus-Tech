@@ -1,6 +1,7 @@
 import LZString from "lz-string";
 import { axiosOffice, axiosMySQL } from "../../axios/axios";
 import router from "../../router";
+import idb from "../../idb";
 
 // initial state
 const state = () => ({
@@ -270,6 +271,20 @@ const actions = {
                         { id: 19, name: "Job Card", abbreviation: "JC" },
                         // orderForm
                     )
+
+                    var docTypeDB = await idb.checkDatabaseExists('document_types', 1);
+                    if(docTypeDB)
+                    {
+                        await Promise.all(resp.data.map(async docType => {
+                            await idb.updateRecord('document_types', docType);
+                        }));
+                    }
+                    else
+                    {
+                        await Promise.all(resp.data.map(async docType => {
+                            await idb.addRecord('document_types', 1, [], docType);
+                        }));
+                    }
 
                    
                 }

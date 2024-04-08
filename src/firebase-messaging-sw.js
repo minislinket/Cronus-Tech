@@ -19,9 +19,6 @@ workbox.routing.registerNavigationRoute(
 
 
 
-
-
-
 // const eventSource = new EventSource("http://localhost:3000/connect_sse");
 
 // eventSource.onerror = function (event) {
@@ -68,6 +65,97 @@ function messageApp(type, title, body, data) {
 
 
 
+async function startNewDocumentUploads() {
+
+	var docTypes = await getDocumentTypesFromDB();
+	var allDocs = [];
+	console.log('SW - Document Types: ', docTypes);
+
+	if(docTypes && docTypes.length >= 1)
+	{
+		await Promise.all(docTypes.map(async docType => {
+
+			var docs = await getDocumentsFromDB(docType.name);
+			console.log('SW - Documents from IDB - '+ docType.name +' : ', docs);
+			allDocs.push({docTypeId: docType.id, docTypeName: docType.name, docs: docs});
+
+		}))
+	}
+
+	console.log('SW - All Documents from IDB: ', allDocs);
+
+}
+
+
+
+
+async function getDocumentsFromDB(docTypeName) {
+
+	var databases = await indexedDB.databases();
+	var exists = databases.find(db => db.name === docTypeName && db.version === 1);
+	if(!exists) { return [] }
+	
+	return new Promise((res, rej) => {
+
+		
+		var docDB = indexedDB.open(docTypeName, 1);
+
+		docDB.onerror = function(e) {
+			rej(false);
+		}
+
+		docDB.onsuccess = function(e) {
+			console.log('Successfully opened document DB: ', docTypeName, e.target.result);
+			var db = e.target.result;
+			var transaction = db.transaction(docTypeName, 'readwrite');
+			var store = transaction.objectStore(docTypeName);
+			var request = store.getAll();
+
+			request.onsuccess = function(e) {
+				res(e.target.result);
+			}
+
+			request.onerror = function(e) {
+				console.error('SW - Error getting documents: ', e);
+				rej(false);
+			}
+		}
+	});
+
+}
+
+
+
+
+async function getDocumentTypesFromDB() {
+
+	return new Promise((res, rej) => {
+
+		var docTypesDB = indexedDB.open('document_types', 1);
+
+		docTypesDB.onerror = function(e) {
+			rej(false);
+		}
+
+		docTypesDB.onsuccess = function(e) {
+			var db = e.target.result;
+			var transaction = db.transaction('document_types', 'readwrite');
+			var store = transaction.objectStore('document_types');
+			var request = store.getAll();
+
+			request.onsuccess = function(e) {
+				res(e.target.result);
+			}
+
+			request.onerror = function(e) {
+				console.error('SW - Error getting document types: ', e);
+				rej(false);
+			}
+		}
+	});
+}
+
+
 
 
 
@@ -82,6 +170,13 @@ let backgroundSyncActive = false;
 // Listen for messages from the App
 self.addEventListener('message', function (event) {
 	// console.log('Message from app: ', event);
+
+
+
+	if(event.data.type === 'startNewUploads')
+	{
+		startNewDocumentUploads();
+	}
 
 
 
@@ -128,12 +223,6 @@ self.addEventListener('message', function (event) {
 
 
 
-	// if(event.data.type === 'uploadDocuments')
-	// {
-
-	// 	var docData = JSON.parse(event.data.data);
-	// 	console.log('Upload Docs request on SW: ', docData);
-	// }
 
 
 
@@ -1022,6 +1111,15 @@ function getClientAndPostMessage(event, type, notification, title, body, data) {
 
 	}))
 }
+
+
+
+
+
+
+
+
+
 
 
 
