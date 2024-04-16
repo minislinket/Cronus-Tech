@@ -24,12 +24,12 @@
                     <span>Refresh Docs</span>
                 </div>
             </div>
-            <div class="link-jc-no-order-num-wrap" v-if="call.techStateId >= 4 && call.techStateId !== 5 && call.techStateId !== 7 || call.callTypeId == 6 && call.techStateId >= 2">
+            <div class="link-jc-no-order-num-wrap">
                 <div class="link-job-card-wrap">
                     <button @click="addGeneralCallComment()" class="add-comment-btn"><font-awesome-icon class="add-comment-icon" :icon="['fa','comment-dots']" size="lg" /> </button>
                     <span>Add Comment</span>
                 </div>
-                <div class="link-job-card-wrap" v-if="call.techStateId >= 4 && call.techStateId !== 5 && call.techStateId !== 7 || call.callTypeId == 6 && call.techStateId >= 2">
+                <div class="link-job-card-wrap">
                     <button @click="viewCallComments()" class="view-comments-btn"><font-awesome-icon class="view-comments-icon" :icon="['fa','comments']" size="lg" /> </button>
                     <span>View Comments</span>
                 </div>
@@ -536,7 +536,7 @@ export default {
 
             var call = JSON.parse(JSON.stringify(this.call));
 
-            // console.log('Call comment: ', comment);
+            console.log('Call comment: ', comment);
             var user = JSON.parse(localStorage.getItem('user'));
             var signature = JSON.parse(localStorage.getItem('signature'));
 

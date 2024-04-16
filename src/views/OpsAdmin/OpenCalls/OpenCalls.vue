@@ -40,6 +40,9 @@
         </div>
 
         <div id="OpenCalls" class="open-call-cards-scroll-section">
+            <div class="open-calls-searchbar-wrap">
+                <input v-if="filteredCalls && filteredCalls.length >= 1 || searchString" type="text" @input="searchCalls()" class="open-calls-searchbar" placeholder="Search Customer Store..." v-model="searchString" />
+            </div>
             <div class="open-call-card" v-for="call in filteredCalls" :key="call.id">
                 <p class="bold" @click="loadCall(call)">{{ call.id }}</p>
                 <p class="small-text" @click="loadStoreCalls(call)">{{ call.customerStoreName }}</p>
@@ -64,7 +67,8 @@ export default {
             filterOperatorCalls: false,
             user: JSON.parse(localStorage.getItem('user')),
             selectedBranch: '',
-            selectedCallTypeId: ''
+            selectedCallTypeId: '',
+            searchString: '',
         }
     },
 
@@ -124,6 +128,10 @@ export default {
 
 
     methods: {
+
+        searchCalls: function() {
+            this.$store.dispatch('OpenCalls/searchCalls', this.searchString);
+        },
 
         cancelSearch: function() {
             this.$store.dispatch('OpenCalls/abortSearch');
@@ -235,9 +243,27 @@ export default {
 
     overflow-y: scroll;
     padding: 10px;
+    padding-top: 60px;
     font-size: 14px;
 }
 
+
+
+
+.open-calls-searchbar-wrap {
+    position: fixed;
+    left: 0;
+    top: 150px;
+    width: 100%;
+    
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.open-calls-searchbar-wrap  input {
+    width: 80%;
+}
 
 
 
