@@ -18,7 +18,7 @@
         <br><br>
 
         <select v-model="deleteRecordId">
-            <option v-for="num in 20" :value="num">{{ num }}</option>
+            <option v-for="num in 20" :value="num - 1">{{ num - 1 }}</option>
         </select>
         <button @click="testUpdateRecord()">Update Test</button>
 
@@ -42,7 +42,7 @@ export default {
     data() {
         return {
             uploadModalActive: false,
-            testCallId: '123456',
+            testCallId: '109001',
 
             fileTypes: JSON.parse(localStorage.getItem('document_types')),
             selectedFileType: '',
@@ -85,10 +85,10 @@ export default {
 
         testUpdateRecord: async function() {
             var record = {
-                id: 6,
-                uploading: true,
+                id: this.deleteRecordId,
+                uploading: false,
             }
-            var updatedRecord = idb.updateRecord('Photo', 1, record);
+            var updatedRecord = await idb.updateRecord('Photo', 1, record);
             console.log('Updated Record: ', updatedRecord);
         },
 

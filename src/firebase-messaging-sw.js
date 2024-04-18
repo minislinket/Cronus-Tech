@@ -69,20 +69,312 @@ async function startNewDocumentUploads() {
 
 	var docTypes = await getDocumentTypesFromDB();
 	var allDocs = [];
-	console.log('SW - Document Types: ', docTypes);
 
 	if(docTypes && docTypes.length >= 1)
 	{
 		await Promise.all(docTypes.map(async docType => {
-
 			var docs = await getDocumentsFromDB(docType.name);
-			console.log('SW - Documents from IDB - '+ docType.name +' : ', docs);
 			allDocs.push({docTypeId: docType.id, docTypeName: docType.name, docs: docs});
-
-		}))
+		}));
 	}
 
 	console.log('SW - All Documents from IDB: ', allDocs);
+
+
+	allDocs.map(async docType => {
+
+		if(docType.docs && docType.docs.length >= 1)
+		{
+			docType.docs.map(async doc => {
+
+				// Start the upload process for each document
+				if(doc.uploadComplete === false && doc.uploading === false)
+				{
+					
+					doc.uploading = true;
+					await updateDocumentInDB(docType.docTypeName, doc);
+					console.log('SW - Starting upload for: ', docType.docTypeName, doc.id, doc);
+					registerSync(docType.docTypeName, doc);
+				}
+
+				// If the document is already uploaded, set uploading to false
+				else if(doc.uploadComplete === true && doc.uploading === true)
+				{
+					
+					doc.uploading = false;
+					await updateDocumentInDB(docType.docTypeName, doc);
+					console.log('SW - Document already uploaded: ', docType.docTypeName, doc.id, doc);
+				}
+
+				// If the document is uploaded and not uploading, delete it from the DB
+				else if(doc.uploadComplete === true && doc.uploading === false)
+				{
+					
+					await deleteDocumentFromDB(docType.docTypeName, doc.id);
+					console.log('SW - Deleting document from DB: ', docType.docTypeName, doc.id, doc);
+				}
+
+			})
+		}
+
+	});
+
+}
+
+
+
+
+
+async function registerSync(docTypeName, doc) {
+	
+	var syncId = 'uploadDocument_' + docTypeName + '_' + doc.id;
+	console.log('SW - Registering Sync: ', syncId);
+
+	try {
+		await self.registration.sync.register(syncId);
+	} catch (err) {
+		console.log('SW - Sync registration failed: ', err);
+		doc.uploading = false;
+	}
+}
+
+
+
+
+self.addEventListener('sync', async function(event) {
+
+	if(event.tag.indexOf('uploadDocument_') !== -1)
+	{
+
+		var docTypeName = event.tag.split('_')[1];
+		var docId = event.tag.split('_')[2];
+
+		docId = Number(docId);
+
+		console.log('SW - Getting doc from db with: ', docTypeName, docId);
+		var doc = await getDocumentByIdFromDB(docTypeName, docId);
+		console.log('SW - Sync document: ', doc);
+
+		const action = async () => {
+			let error;
+			try {
+				console.log('Trying to upload document...');
+				await uploadDocument(docTypeName, doc);
+				doc.uploading = false;
+				doc.uploadComplete = true;
+				await updateDocumentInDB(docTypeName, doc);
+			}
+			catch(e) {
+				error = true;
+				throw e;
+			}
+			finally {
+				if(error && event.lastChance)
+				{
+					doc.uploading = false;
+					await updateDocumentInDB(docTypeName, doc);
+				}
+			}
+		}
+
+		event.waitUntil(action());
+	}
+});
+
+
+
+async function uploadDocument(docTypeName, doc) {
+
+	try {
+		var docTypes = await getDocumentTypesFromDB();
+		var docTypeId = docTypes.find(dt => dt.name === docTypeName).id;
+
+		console.log('Uploading document: ', docTypeName, doc, docTypeId, doc.file);
+
+		var formData = new FormData();
+		var newFile = new File([doc.file], doc.file.name, { type: doc.file.type })
+		formData.append('file', newFile);
+		// formData.append('file', doc.file);
+
+		console.log('Form Data: ', formData, newFile);
+
+		// var flag = false;
+		var method = 'POST';
+		var query = 'http://129.232.180.146/cronus/api/';
+		var body = formData;
+		var signature = await getSignatureFromDB();
+
+		docTypeId == 19 
+		? 
+		query += 'job_cards/' + doc.jobCardId + '/upload' 
+		: 
+		query += 'customers/store/' + doc.customerStoreId + '/upload?customer_call_id=' + doc.call_id  + '&document_type_id=' + doc.fileTypeId;
+
+		console.log('Performing fetch with: ',docTypeName, method, query, body, signature, doc);
+	}
+	catch(e) {
+		console.log('Error uploading document: ', e);
+		return false;
+	}
+
+
+	var myHeaders = new Headers();
+	myHeaders.append("Authorization", "Bearer: " + signature);
+	// myHeaders.append("Content-Type", "multipart/form-data");
+	// myHeaders.append("Accept", "multipart/form-data");
+
+	return await fetch(query, {
+		method,
+		headers: myHeaders,
+		body: formData
+	})
+	.then(resp => {
+		if(!resp.ok)
+		{	
+			doc.uploading = false;
+			updateDocumentInDB(docTypeName, doc);
+			throw 'Failed to post file...' + JSON.parse(resp);
+		}
+	})
+
+	// flag = await doFetch(method, query, body, signature, doc, SQLData, SQLQuery);
+
+	// if(!flag)
+	// {
+	// 	doc.uploading = false;
+	// 	doc.uploadComplete = true;
+	// 	await updateDocumentInDB(docTypeName, doc);
+	// }
+}
+
+
+
+
+
+self.addEventListener('fetch', async event => {
+
+	const request = event.request;
+	if(request.url.endsWith('/cronus/api/techs') && request.method === 'POST')
+	{
+		event.respondWith(fetch(request.clone())
+		.then(response => {
+			if(!response.ok) { throw ERROR_MSG; }
+			event.waitUntil(uploadDocument(docTypeName, doc));
+			return response;
+		})
+		.catch(e => {
+			event.waitUntil(requestToDefect(request.clone())
+			.then(doc => saveDoc(doc)));
+			throw e;
+		})
+		);
+	}
+
+});
+
+
+
+
+async function deleteDocumentFromDB(docTypeName, docId) {
+
+	return new Promise((res, rej) => {
+
+		var docDB = indexedDB.open(docTypeName, 1);
+
+		docDB.onerror = function(e) {
+			rej(false);
+		}
+
+		docDB.onsuccess = function(e) {
+			var db = e.target.result;
+			var transaction = db.transaction(docTypeName, 'readwrite');
+			var store = transaction.objectStore(docTypeName);
+			var request = store.delete(docId);
+
+			request.onsuccess = function(e) {
+				res(true);
+			}
+
+			request.onerror = function(e) {
+				console.error('SW - Error deleting document: ', e);
+				rej(false);
+			}
+		}
+	});
+}
+
+
+
+
+
+async function updateDocumentInDB(docTypeName, doc) {
+
+	return new Promise((res, rej) => {
+
+		var docDB = indexedDB.open(docTypeName, 1);
+
+		docDB.onerror = function(e) {
+			rej(false);
+		}
+
+		docDB.onsuccess = function(e) {
+			var db = e.target.result;
+			var transaction = db.transaction(docTypeName, 'readwrite');
+			var store = transaction.objectStore(docTypeName);
+			var request = store.put(doc);
+
+			request.onsuccess = function(e) {
+				res(true);
+			}
+
+			request.onerror = function(e) {
+				console.error('SW - Error updating document: ', e);
+				rej(false);
+			}
+		}
+	});
+
+}
+
+
+
+
+
+async function getDocumentByIdFromDB(docTypeName, docId) {
+
+	var databases = await indexedDB.databases();
+	var exists = databases.find(db => db.name === docTypeName && db.version === 1);
+	if(!exists) { return [] }
+	
+	return new Promise((res, rej) => {
+
+		
+		var docDB = indexedDB.open(docTypeName, 1);
+
+		docDB.onerror = function(e) {
+			rej(false);
+		}
+
+		docDB.onsuccess = function(e) {
+			console.log('Successfully opened document DB: ', docTypeName, e.target.result);
+			var db = e.target.result;
+			var transaction = db.transaction(docTypeName, 'readonly');
+			var store = transaction.objectStore(docTypeName);
+			console.log('Got DB Store: ', store);
+			var request = store.get(docId);
+
+			request.onsuccess = function(e) {
+				res(e.target.result);
+			}
+
+			request.onerror = function(e) {
+				console.error('SW - Error getting document: ', e);
+				rej(false);
+			}
+		}
+	});
+
+
 
 }
 
@@ -105,7 +397,7 @@ async function getDocumentsFromDB(docTypeName) {
 		}
 
 		docDB.onsuccess = function(e) {
-			console.log('Successfully opened document DB: ', docTypeName, e.target.result);
+			// console.log('Successfully opened document DB: ', docTypeName, e.target.result);
 			var db = e.target.result;
 			var transaction = db.transaction(docTypeName, 'readwrite');
 			var store = transaction.objectStore(docTypeName);
@@ -153,6 +445,39 @@ async function getDocumentTypesFromDB() {
 			}
 		}
 	});
+}
+
+
+
+
+
+async function getSignatureFromDB() {
+
+	return new Promise((res, rej) => {
+
+		var signatureDB = indexedDB.open('Signature', 1);
+
+		signatureDB.onerror = function(e) {
+			rej(false);
+		}
+
+		signatureDB.onsuccess = function(e) {
+			var db = e.target.result;
+			var transaction = db.transaction('Signature', 'readwrite');
+			var store = transaction.objectStore('Signature');
+			var request = store.get(1);
+
+			request.onsuccess = function(e) {
+				res(e.target.result.signature);
+			}
+
+			request.onerror = function(e) {
+				console.error('SW - Error getting signature: ', e);
+				rej(false);
+			}
+		}
+	});
+
 }
 
 

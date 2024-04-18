@@ -236,7 +236,8 @@ export default {
                         uploading: false,
                         uploadComplete: false,
                         originalFileName: file.file.name,
-                        call_id: 963852,
+                        call_id: 161621 ,// <- actual call id from store 161 on test server // this.call.id,
+                        customerStoreId: 1291111134, // this.call.customerStoreId
                     }
                 )
 

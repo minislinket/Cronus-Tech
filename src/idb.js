@@ -115,7 +115,7 @@ export default {
             };
 
             request.onsuccess = (e) => {
-                res(e);
+                res(e.target.result);
             };
 
         })
@@ -267,7 +267,8 @@ export default {
             };
 
             request.onsuccess = (e) => {
-                res(e);
+                console.log('Record updated in Indexed DB', e)
+                res(e.target.result);
             };
 
         })
@@ -302,7 +303,7 @@ export default {
             };
 
             request.onsuccess = (e) => {
-                res(e);
+                res(e.target.result);
             };
 
         })

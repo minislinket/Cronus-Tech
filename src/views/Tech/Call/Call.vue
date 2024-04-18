@@ -441,6 +441,7 @@ export default {
                 call: this.call,
                 jobCardId: payload.jobCardId,
                 formData: payload.formData,
+                customerStoreId: this.call.customerStoreId
             }
 
             this.$store.dispatch('Call/uploadDocuments', data);
