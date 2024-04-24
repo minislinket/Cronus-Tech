@@ -1017,7 +1017,7 @@ button:disabled {
 @font-face {
   font-family: 'Material Symbols Outlined';
   font-style: normal;
-  src: url('./fonts/material-symbols.woff2') format('woff2');
+  src: url('./fonts/MaterialSymbolsOutlined.woff2') format('woff2');
 }
 
 

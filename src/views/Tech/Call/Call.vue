@@ -34,6 +34,16 @@
                     <span>View Comments</span>
                 </div>
             </div>
+            <div class="link-jc-no-order-num-wrap">
+                <div class="link-job-card-wrap">
+                    <button @click="viewCallUploads()" class="view-uploads-btn"><span class="material-symbols-outlined material" >note_stack</span> </button>
+                    <span>View Uploads</span>
+                </div>
+                <!-- <div class="link-job-card-wrap">
+                    <button @click="viewCallComments()" class="view-comments-btn"><font-awesome-icon class="view-comments-icon" :icon="['fa','comments']" size="lg" /> </button>
+                    <span>View Comments</span>
+                </div> -->
+            </div>
 
 
             <div class="call-info-wrapper job-card-list">
