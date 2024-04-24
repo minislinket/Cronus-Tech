@@ -18,7 +18,10 @@
                 <span class="call-combine-details">{{ call.callDetails }}</span>
                 <button @click="combineWithCall(call)" class="combine-call-btn">Combine</button>
             </div>
-            <button @click="createNewCall()">Create New Call</button>
+            <div class="call-combine-buttons-wrap">
+                <button class="make-new-call-btn" @click="createNewCall()">Create New Call</button>
+                <button class="cancel-combine-call-btn" @click="cancelCombineCall()">Cancel</button>
+            </div>
         </div>
     </div>
 </template>
@@ -60,6 +63,10 @@ export default {
 
 
     methods: {
+
+        cancelCombineCall: function() {
+            this.$store.dispatch('AddCall/cancelCombineCall');
+        },
 
         getCallTypeName: function(callTypeId) {
             var callType = this.callTypes.filter(type => type.id === callTypeId)[0].name;
@@ -103,6 +110,29 @@ export default {
 .combine-open-calls-modal-content {
     overflow-y: scroll;
     height: 100%;
+    position: absolute;
+    width: 85vw;
+}
+
+
+.call-combine-buttons-wrap {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    padding: 10px;
+
+}
+
+
+.make-new-call-btn {
+    color: var(--WarningOrange);
+}
+
+.cancel-combine-call-btn {
+    color: var(--WarningRed);
 }
 
 

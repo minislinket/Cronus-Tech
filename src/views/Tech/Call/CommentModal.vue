@@ -37,7 +37,11 @@
                     </select>
                     <SearchSelect class="comment-stock-reason-search-select" :searchArray="itemsArray" :heading="itemSearch.heading" :displayText="itemDisplayText" @select="selectItem($event)" />
                 </div>
-                <p v-if="type == 'order'">{{ reason }}</p>
+                <div v-if="type == 'order'" class="comment-order-wrap">
+                    <p>{{ reason }}</p>
+                    <br>
+                    <textarea placeholder="Any additional details..." v-model="orderReason"></textarea>
+                </div>
             </div>
 
             <div class="comment-stock-grid headings" v-if="type === 'stock'">
@@ -84,6 +88,7 @@ export default {
         return {
             type: '',
             reason: '',
+            orderReason: '',
 
 
             categories: JSON.parse(localStorage.getItem('item_categories')),
@@ -238,6 +243,7 @@ export default {
             this.type = '';
             this.selectedCategory = '';
             this.reason = '';
+            this.orderReason = '';
             this.stockList = [];
         },
 
@@ -247,6 +253,12 @@ export default {
             var reason = JSON.parse(JSON.stringify(this.reason));
             var stockList = JSON.parse(JSON.stringify(this.stockList));
             var type = JSON.parse(JSON.stringify(this.type));
+
+            if(this.type === 'order')
+            {
+                reason += '\n' + this.orderReason;
+            }
+
             this.$emit('submitComment', { reason, stockList, type });
 
             this.closeCommentModal();
@@ -294,6 +306,10 @@ export default {
     text-align: center;
     font-size: 14px;
 }
+
+
+
+
 
 
 
@@ -348,6 +364,7 @@ export default {
 .comment-input-wrap textarea {
     width: 80%;
     height: 200px;
+    border-radius: 3px;
 }
 
 
@@ -492,5 +509,26 @@ export default {
 }
 
 
+
+
+
+.comment-order-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.comment-order-wrap p {
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.comment-order-wrap textarea {
+    margin-bottom: 10px;
+    padding: 5px 8px;
+}
 
 </style>

@@ -29,9 +29,9 @@ import StaticResources from './store/Modules/StaticResources';
 
 
 async function catchAndRouteMessage(title, body, data) {
-	console.log('Title: ', title);
-	console.log('Body: ', body);
-	console.log('Data: ', data);
+	// console.log('Title: ', title);
+	// console.log('Body: ', body);
+	// console.log('Data: ', data);
 
 
 	// Ignore auto-routing when Ops Admin
@@ -49,7 +49,7 @@ async function catchAndRouteMessage(title, body, data) {
 
 
 	store.dispatch('Loading/setLoading', true);
-	console.log('Routing app based on message event: ', event.data);
+	// console.log('Routing app based on message event: ', event.data);
 
 	var routePayload = {
 		title,
@@ -57,7 +57,7 @@ async function catchAndRouteMessage(title, body, data) {
 		data
 	}
 	var route = await store.dispatch('RouteFCM/getRoute', routePayload);
-	console.log('We think we want to go to: ', route);
+	// console.log('We think we want to go to: ', route);
 	if(route) 
 	{
 		store.dispatch('Calls/refreshTechnicianCalls');
@@ -109,19 +109,19 @@ if (process.env.NODE_ENV === 'production') {
 	if('serviceWorker' in navigator)
 	{
 		navigator.serviceWorker.addEventListener('message', async event => {
-			console.log('Message Received from sw: ', event);
+			// console.log('Message Received from sw: ', event);
 
 			
 			if(event.data && event.data.type && event.data.type === 'heartbeat')
 			{
-				console.log('do doof, do doof...');
+				// console.log('do doof, do doof...');
 			}
 
 
 
 			if(event.data && event.data.type && event.data.type === 'checkForUpdates')
 			{
-				console.log('Received checkForUpdates from SW');
+				// console.log('Received checkForUpdates from SW');
 				window.location.reload();
 			}
 
@@ -169,7 +169,7 @@ if (process.env.NODE_ENV === 'production') {
 			// Listen for Foreground Push Notifications and show them using the Service Worker
 			messaging.onMessage(async function (payload) {
 
-				console.log('Msg received while window was in foreground: ', payload);
+				// console.log('Msg received while window was in foreground: ', payload);
 
 
 				var title = payload && payload.notification && payload.notification.title ? payload.notification.title : 'Cronus Tech';

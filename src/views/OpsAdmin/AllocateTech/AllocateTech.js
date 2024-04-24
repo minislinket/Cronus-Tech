@@ -14,6 +14,9 @@ const state = () => ({
 
     techListActive: false,
     techList: [],
+    transferTechActive: false,
+    transferTechs: [],
+    chooseTransferTechActive: false,
 
     assignTechActive: false,
     showCall: false,
@@ -66,6 +69,21 @@ const getters = {
 
     techList: (state) => {
         return state.techList;
+    },
+    
+
+    transferTechActive: (state) => {
+        return state.transferTechActive;
+    },
+
+
+    transferTechs: (state) => {
+        return state.transferTechs;
+    },
+
+
+    chooseTransferTechActive: (state) => {
+        return state.chooseTransferTechActive;
     },
 
 
@@ -180,6 +198,30 @@ const actions = {
                 dispatch('assignTechActive', false);
             }
         }
+    },
+
+
+
+    transferTechActive({ commit, state, dispatch }, toggle) {
+        commit('transferTechActive', toggle);
+        if(toggle === true && state.techListActive === true)
+        {
+            dispatch('techListActive', false);
+        }
+        else
+        {
+            commit('transferTechs', []);
+        }
+    },
+
+
+    transferTechs({ commit, state, dispatch }, transferTechs) {
+        commit('transferTechs', transferTechs);
+    },
+
+
+    chooseTransferTechActive({ commit, state, dispatch }, toggle) {
+        commit('chooseTransferTechActive', toggle);
     },
 
 
@@ -653,6 +695,200 @@ const actions = {
 
 
 
+    async transferCallToTech({ state, dispatch, commit }, { newTech }) {
+
+        console.log('Transfer these techs: ', state.transferTechs);
+        console.log('To this tech: ', newTech);
+
+        var newTechOnCall = state.techList.find(tech => tech.technicianEmployeeCode === newTech.employeeCode);
+        console.log('New tech on call? ', newTechOnCall)
+
+        dispatch('loading', true);
+
+        if(!newTechOnCall)
+        {
+            await dispatch('allocateTechToCall', newTech);
+            await dispatch('placeTechsOnTransferred', newTech);
+            dispatch('loadCallTechs');
+        }
+        else if(newTechOnCall && newTechOnCall.technicianCallStatusId === 9)
+        {
+            var modal = 
+            {
+                active: true, // true to show modal
+                type: 'warning', // ['info', 'warning', 'error', 'okay']
+                icon: [], // Leave blank for no icon
+                heading: 'Technician Already on Call',
+                body:   '<p>Technician, </p><p class="bold">'+ newTech.displayName + ',</p><p> is already assigned to call </p><p>' + state.call.id +', but is on "Transferred" status.</p><br>'
+                        +'<p>Would you like to place this technician\'s status back to <span class="bold">Pending</span>?</p><br>'
+                        +'<p>Selecting "No" will allow you to select a new technician to transfer to.</p>',
+
+                // Optional add on for when user needs to confirm or deny an action
+                confirmAction: 'init',
+                actionFrom: 'Tech_Transfer_Back_To_Pending',
+                actionData: newTech,
+                resolveText: 'Yes',
+                rejectText: 'No'
+            }
+            dispatch('Modal/modal', modal, { root: true });
+
+            dispatch('loading', false);
+        }
+        else if(newTechOnCall && newTechOnCall.technicianCallStatusId !== 9)
+        {
+            await dispatch('placeTechsOnTransferred', newTech);
+        }
+
+    },
+
+
+
+
+
+
+
+    async techTransferBackToPending({ state, dispatch, commit }, tech) {
+
+        dispatch('loading', true);
+
+        await axiosOffice.put('calls/' + state.call.id + '/techs?tech_status_id=1&employee_code=' + tech.employeeCode + '&call_id=' + state.call.id)
+        .then(resp => {
+            if(resp.status === 200)
+            {
+                var toast = {
+                    shown: false,
+                    type: "okay",
+                    heading: "Technician Status Updated",
+                    body: 'Technician status updated to Pending',
+                    time: 4000,
+                    icon: "" // leave blank for default type icon
+                };
+                dispatch("Toast/toast", toast, { root: true });
+                dispatch('placeTechsOnTransferred', tech);
+            }
+            // dispatch('loading', false);
+        })
+        .catch(err => {
+            console.error('Axios Office Error: ', err);
+            console.error('Axios Office Error Response: ', err.response);
+            var toast = {
+                shown: false,
+                type: "warning",
+                heading: "Server Error",
+                body: 'Error updating technician status, please try again later',
+                time: 4000,
+                icon: "" // leave blank for default type icon
+            };
+            dispatch("Toast/toast", toast, { root: true });
+            dispatch('loading', false);
+        })
+
+    },
+
+
+
+
+    async placeTechsOnTransferred({ state, dispatch, commit }, newTech) {
+
+        console.log('Placing techs on transferred');
+        
+        dispatch('loading', true);
+
+        var techsToPlaceOnTransferred = state.transferTechs.filter(tech => tech.technicianEmployeeCode !== newTech.employeeCode && tech.techStatusId !== 9);
+        var newTechAlreadyOnCall = state.transferTechs.find(tech => tech.technicianEmployeeCode === newTech.employeeCode);
+
+        if(newTechAlreadyOnCall && techsToPlaceOnTransferred.length <= 0)
+        {
+            var toast = {
+                shown: false,
+                type: "warning",
+                heading: "Cannot Transfer Technician to Self",
+                body: newTech.displayName + ' cannot be transferred to themselves',
+                time: 4500,
+                icon: "" // leave blank for default type icon
+            };
+
+            dispatch("Toast/toast", toast, { root: true });
+            dispatch('loading', false);
+            // dispatch('chooseTransferTechActive', false);
+            return;
+        }
+
+        if(techsToPlaceOnTransferred.length >= 1)
+        {
+            var error = false;
+
+            await Promise.all(techsToPlaceOnTransferred.map(async tech => {
+
+                var newTechIsTech = tech.technicianEmployeeCode === newTech.employeeCode;
+
+                console.log('New tech is tech?', newTechIsTech);
+
+                
+
+                await axiosOffice.put('calls/' + state.call.id + '/techs?tech_status_id=9&employee_code=' + tech.technicianEmployeeCode + '&call_id=' + state.call.id)
+                .then(resp => {
+                    if(resp.status === 200)
+                    {
+                        console.log('Tech ' + tech.technicianEmployeeCode + ' transferred to ' + newTech.employeeCode);
+                    }
+                    
+                })
+                .catch(err => {
+                    console.error('Axios Office Error: ', err);
+                    console.error('Axios Office Error Response: ', err.response);
+                    error = true;
+                    
+                })
+
+            }));
+
+            if(error)
+            {
+                var toast = {
+                    shown: false,
+                    type: "warning",
+                    heading: "Server Error",
+                    body: 'Error transferring technicians, please try again later',
+                    time: 4000,
+                    icon: "" // leave blank for default type icon
+                };
+                dispatch("Toast/toast", toast, { root: true });
+                // dispatch('loading', false); 
+            }
+            else
+            {
+
+                var toast = {
+                    shown: false,
+                    type: "okay",
+                    heading: "Technicians Transferred",
+                    body: 'Technicians transferred to ' + newTech.displayName,
+                    time: 4000,
+                    icon: "" // leave blank for default type icon
+                };
+
+                dispatch("Toast/toast", toast, { root: true });
+                dispatch('transferTechs', []);
+                dispatch('chooseTransferTechActive', false);
+                // dispatch('loading', false);
+            }
+        }
+
+        // dispatch('loading', false);
+        dispatch('loadCallTechs');
+
+    },
+
+
+
+    
+
+
+
+
+
+
 
 
     async allocateTechToCall({ state, dispatch, commit }, tech) {
@@ -663,8 +899,7 @@ const actions = {
 
         if(state.techList.length >= 1)
         {
-            var flag = false;
-            state.techList.map(tek => tek.technicianEmployeeCode === tech.employeeCode ? flag = true : null);
+            var flag = state.techList.find(tek => tek.technicianEmployeeCode === tech.employeeCode);
             if(flag) 
             {
                 var toast = {
@@ -723,14 +958,17 @@ const actions = {
 
 
 
-    cancelCall({ state, commit, dispatch }) {
+    async cancelCall({ state, commit, dispatch }) {
 
         dispatch('loading', true);
 
         axiosOffice.put('/calls/'+ state.call.id +'/status?call_status_id=3')
-        .then(resp => {
+        .then(async resp => {
             if(resp.status === 200)
             {
+
+                state.call.comments = await dispatch('getCallComments', state.call.id);
+
                 state.call.callStatusId = 3;
                 var toast = {
                     shown: false,
@@ -741,6 +979,7 @@ const actions = {
                     icon: "" // leave blank for default type icon
                 };
                 dispatch("Toast/toast", toast, { root: true });
+                dispatch('resolveCallComments');
                 dispatch('loadStoreCalls', 'reload');
             }
             dispatch('loading', false);
@@ -764,7 +1003,42 @@ const actions = {
 
 
 
+    resolveCallComments({ state, dispatch }) {
+            
+        var comments = state.call.comments;
+        var error = false;
+        comments.map(comment => {
+            if(comment.resolved === false)
+            {
+                comment.resolved = true;
+                axiosOffice.put('calls/comments/'+ comment.id, comment)
+                .then(resp => {
+                    if(resp.status === 200)
+                    {
+                        // console.log('Comment ' + comment.id + ' resolved');
+                    }
+                })
+                .catch(err => {
+                    console.error('Axios Office Error: ', err);
+                    console.error('Axios Office Error Response: ', err.response);
+                    error = true;
+                })
+            }
+        })
 
+        if(error)
+        {
+            var toast = {
+                shown: false,
+                type: "warning",
+                heading: "Server Error",
+                body: 'Please inform admin there was an error resolving call comments.',
+                time: 6000,
+                icon: "" // leave blank for default type icon
+            };
+            dispatch("Toast/toast", toast, { root: true });
+        }
+    },
 
 
 
@@ -965,6 +1239,20 @@ const mutations = {
 
     techList(state, techs) {
         state.techList = techs;
+    },
+
+
+    transferTechActive(state, toggle) {
+        state.transferTechActive = toggle;
+    },
+
+
+    transferTechs(state, techs) {
+        state.transferTechs = techs;
+    },
+
+    chooseTransferTechActive(state, toggle) {
+        state.chooseTransferTechActive = toggle;
     },
 
 
