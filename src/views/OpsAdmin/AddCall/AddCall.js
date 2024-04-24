@@ -78,6 +78,12 @@ const getters = {
 const actions = {
 
 
+    cancelCombineCall({ dispatch, commit }) {
+        dispatch('callCombineModal', false);
+        commit('callsToCombine', []);
+    },
+
+
     canSubmitCall({ commit }, toggle) {
         commit('canSubmitCall', toggle);
     },

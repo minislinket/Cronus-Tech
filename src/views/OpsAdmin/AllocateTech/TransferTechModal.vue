@@ -2,10 +2,10 @@
     <div class="tech-list-modal-wrap" v-if="active">
 
 
-        <h3>Tech's on Call <span class="tiny-text">(tap on a tech to remove them)</span></h3>
+        <h3>Transfer Tech <span class="small-text">(tap on a tech to select them, then tap on "Transfer Tech(s)" to select a new technician)</span></h3>
 
         
-        <div class="tech-list-technician-wrap" v-for="tech in techList" :key="tech.id" @click="removeTech(tech.technicianEmployeeCode)">
+        <div class="tech-list-technician-wrap" v-for="tech in techList" :key="tech.id" @click="updateTransferTechs(tech)">
             <div class="tech-list-grid">
                 <p>Tech:</p>
                 <span class="bold tech-name">{{ getTechName(tech.technicianEmployeeCode) }} <span class="small-text">({{ tech.technicianEmployeeCode }})</span></span>
@@ -36,12 +36,12 @@
                 </div>
                 
             </div>
-            <font-awesome-icon class="warning remove-technician-icon" :icon="['fa','minus-square']" size="lg" />
+            <input v-if="tech.technicianCallStatusId != 9" type="checkbox" class="transfer-technician-checkbox" :checked="techInTransferList(tech)">
         </div>
         
-        <div class="tech-list-modal-btn-wrap">
-            <button class="open-transfer-techs-btn" @click="$store.dispatch('AllocateTech/transferTechActive', true)">Transfer</button>
-            <button class="close-tech-list-modal-btn" @click="$store.dispatch('AllocateTech/techListActive', false)">Close</button>
+        <div class="transfer-techs-btn-wrap">
+            <button class="transfer-techs-btn" :disabled="transferTechs.length <= 0" :class="{ disabled : transferTechs.length >= 1 }" @click="chooseNewTech()">Transfer Tech(s)</button>
+            <button class="close-transfer-tech-modal-btn" @click="$store.dispatch('AllocateTech/transferTechActive', false)">Close</button>
         </div>
 
     </div>
@@ -57,7 +57,8 @@ export default {
     data() {
         return {
             tech_states: JSON.parse(localStorage.getItem('call_tech_states')),
-            employees: JSON.parse(localStorage.getItem('employees'))
+            employees: JSON.parse(localStorage.getItem('employees')),
+            transferTechs: [],
         }
     },
 
@@ -67,7 +68,8 @@ export default {
     computed: {
         ...mapGetters({
             techList: ['AllocateTech/techList'],
-            active: ['AllocateTech/techListActive'],
+            stateTransferTechs: ['AllocateTech/transferTechs'],
+            active: ['AllocateTech/transferTechActive'],
             modal: ['Modal/modal'],
             call: ['AllocateTech/call']
         })
@@ -84,7 +86,18 @@ export default {
                     this.$store.dispatch('AllocateTech/removeTech', this.modal.actionData);
             },
             deep: true
-        }
+        },
+
+
+        stateTransferTechs: {
+            handler: function() {
+                if(this.stateTransferTechs.length <= 0)
+                {
+                    this.transferTechs = [];
+                }
+            },
+            deep: true
+        },
 
 
         // techList: {
@@ -111,6 +124,32 @@ export default {
 
 
     methods: {
+
+        techInTransferList: function(tech) {
+            return this.transferTechs.includes(tech);
+        },
+
+        updateTransferTechs: function(tech) {
+            if(this.transferTechs.includes(tech))
+                this.transferTechs = this.transferTechs.filter(t => t !== tech);
+            else
+                tech.technicianCallStatusId != 9 ? this.transferTechs.push(tech) : null;
+
+            console.log('Transfer Techs: ', this.transferTechs);
+            this.$store.dispatch('AllocateTech/transferTechs', this.transferTechs);
+        },
+
+
+        chooseNewTech: function() {
+            if(this.transferTechs <= 0) { return }
+            console.log('Transfer Techs: ', this.transferTechs);
+            this.$store.dispatch('AllocateTech/chooseTransferTechActive', true);
+
+            // this.$store.dispatch('AllocateTech/transferTechs', { tech: this.transferToTech, techs: this.transferTechs });
+        },
+
+
+
 
 
         removeTech: function(employeeCode) {
@@ -213,10 +252,11 @@ export default {
 }
 
 
-.remove-technician-icon {
+.transfer-technician-checkbox {
     position: absolute;
     right: 20px;
-
+    width: 18px;
+    height: 18px;
 }
 
 
@@ -268,11 +308,7 @@ export default {
 
 
 
-
-
-
-
-.tech-list-modal-btn-wrap {
+.transfer-techs-btn-wrap {
     display: flex;
     justify-content: space-evenly;
     
@@ -285,11 +321,11 @@ export default {
 }
 
 
-.open-transfer-techs-btn {
+.transfer-techs-btn {
     color: var(--OkayGreen);
 }
 
-.close-tech-list-modal-btn {
+.close-transfer-tech-modal-btn {
     color: var(--WarningOrange);
 }
 
