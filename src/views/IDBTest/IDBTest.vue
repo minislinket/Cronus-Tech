@@ -9,11 +9,11 @@
         <select v-model="selectedFileType">
             <option v-for="fileType in fileTypes" :key="fileType.id" :value="fileType.name">{{ fileType.name }}</option>
         </select>
-        <button @click="getAllPhotos()">Get All Docs</button>
+        <button @click="getAllDocs()">Get All Docs</button>
 
         <br><br>
         <input type="text" v-model="testCallId">
-        <button @click="testGetCallPhotos()">Get Call Id Files</button>
+        <button @click="testGetCallDocs()">Get Call Id Files</button>
 
         <br><br>
 
@@ -21,6 +21,13 @@
             <option v-for="num in 20" :value="num - 1">{{ num - 1 }}</option>
         </select>
         <button @click="testUpdateRecord()">Update Test</button>
+
+        <div style="display: flex; flex-wrap: wrap; width: 100%; align-items: center; justify-content: center;">
+            <div v-for="doc in allCallDocs" :key="doc.id">
+                <img :src="doc.thumbnailImage" :alt="doc.name">
+                <p>{{ doc.originalFileName }} - uploading: {{ doc.uploading ? 'Yes' : 'No' }}, upload complete: {{ doc.uploadComplete ? 'Yes' : 'No' }}</p>
+            </div>
+        </div>
 
         <UploadDocument :active="uploadModalActive" @close="uploadModalActive = false" />
 
@@ -42,12 +49,14 @@ export default {
     data() {
         return {
             uploadModalActive: false,
-            testCallId: '109001',
+            testCallId: '161621',
 
             fileTypes: JSON.parse(localStorage.getItem('document_types')),
             selectedFileType: '',
 
-            deleteRecordId: 0
+            deleteRecordId: 0,
+
+            allCallDocs: []
         }
     },
 
@@ -70,16 +79,22 @@ export default {
 
 
 
-        getAllPhotos: async function() {
-            var allCallPhotos = await idb.getAllRecords(this.selectedFileType, 1)
-            console.log('All '+this.selectedFileType+'s: ', allCallPhotos);
+        getAllDocs: async function() {
+            var allCallDocs = await idb.getAllRecords(this.selectedFileType, 1)
+            console.log('All '+this.selectedFileType+'s: ', allCallDocs);
         },
 
 
-        testGetCallPhotos: async function() {
+        testGetCallDocs: async function() {
             var callId = this.testCallId;
-            var allCallPhotos = await idb.getAllRecordsOfCustomIndex(this.selectedFileType, 1, 'call_id', Number(callId))
-            console.log('All Call '+this.selectedFileType+'s: ', allCallPhotos);
+            var allCallDocs = await idb.getAllRecordsOfCustomIndex(this.selectedFileType, 1, 'call_id', Number(callId))
+            console.log('All Call '+this.selectedFileType+'s: ', allCallDocs);
+
+            await Promise.all(allCallDocs.map(async (doc) => {
+                doc['thumbnailImage'] = doc.thumbnail ? URL.createObjectURL(doc.thumbnail) : null;
+            }));
+
+            this.allCallDocs = allCallDocs;
         },
 
 
@@ -87,6 +102,7 @@ export default {
             var record = {
                 id: this.deleteRecordId,
                 uploading: false,
+                uploadComplete: false,
             }
             var updatedRecord = await idb.updateRecord('Photo', 1, record);
             console.log('Updated Record: ', updatedRecord);

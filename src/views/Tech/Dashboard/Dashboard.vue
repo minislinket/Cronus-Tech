@@ -127,8 +127,10 @@
             </div> -->
 
         </div>
+        <!-- 
         <button @click="openIDBTestPage()" v-if="user && user.employeeCode == 'VAN027'" >upload test</button>
-        <button @click="testStartDocUploads()" v-if="user && user.employeeCode == 'VAN027'" >Test "Start Doc Uploads"</button>
+        <button @click="testStartDocUploads()" v-if="user && user.employeeCode == 'VAN027'" >Test "Start Doc Uploads"</button> 
+        -->
 
         <button class="switch-user-type-btn" v-if="availableUserRoles.includes(2)" @click="switchProfile()"><font-awesome-icon :icon="['fa', 'retweet']" size="lg" /> Switch to Ops-Admin</button>
 
@@ -259,17 +261,17 @@ export default {
 
     methods: {
 
-        testStartDocUploads: function() {
-            navigator.serviceWorker.getRegistration()
-            .then(reg => {
-				reg.active.postMessage({type: 'startNewUploads'});
-			})
-        },
+        // testStartDocUploads: function() {
+        //     navigator.serviceWorker.getRegistration()
+        //     .then(reg => {
+		// 		reg.active.postMessage({type: 'startNewUploads'});
+		// 	})
+        // },
 
 
-        openIDBTestPage: function() {
-            this.$router.push('/idb_test');
-        },
+        // openIDBTestPage: function() {
+        //     this.$router.push('/idb_test');
+        // },
 
 
 

@@ -1,5 +1,6 @@
 import LZString from "lz-string";
 import { axiosOffice } from "../../../axios/axios";
+import idb from '../../../idb';
 
 // initial state
 const state = () => ({
@@ -311,7 +312,12 @@ const actions = {
 
     async getCallJobCards({}, call) {
         var user = JSON.parse(localStorage.getItem('user'));
-        // console.log('Getting JC\'s for call: ', call.id)
+        console.log('Getting JC\'s for call: ', call.id)
+
+        var idbJobCards  = await idb.getAllRecordsOfCustomIndex('Job Card', 1, 'call_id', Number(call.id));
+
+        console.log('IDB Job Cards: ', idbJobCards);
+
         return axiosOffice.get('job_cards?allocatedEmployeeCode='+ user.employeeCode +'&customerCallId='+ call.id)
         .then(async resp => {
             // console.log('call JC resp: ', resp);
@@ -321,7 +327,10 @@ const actions = {
                 call['allJobCardsHaveCMIS'] = true;
                 if(call.jobCards.length >= 1)
                 {
-                    await Promise.all(call.jobCards.map(jc => jc.cmisDocumentId ? null : call.allJobCardsHaveCMIS = false));
+                    await Promise.all(call.jobCards.map(jc => {
+                        var idbJC = idbJobCards.find(idbJC => idbJC.id === jc.id);
+                        !jc.cmisDocumentId && !idbJC ? call.allJobCardsHaveCMIS = false : null;
+                    }));
                 }
                 else
                 {

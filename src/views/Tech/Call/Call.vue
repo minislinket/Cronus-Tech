@@ -170,7 +170,7 @@
         <LinkJobCardModal @linkJobCards="linkJobCards($event)" />
         <LinkOrderNumberModal @linkOrderNumber="linkOrderNumber($event)" />
         <ReturnDateModal @recordReturnDate="recordReturnDate($event)" />
-        <UploadDocument @uploadDocs="uploadDocs($event)"/>
+        <UploadDocument :active="uploadModalActive" @close="uploadModalActive = false" />
         <ViewCallCommentsModal />
 
         <div class="call-button-wrap" >
@@ -217,7 +217,8 @@ export default {
             serviceWorker: null,
             user: JSON.parse(localStorage.getItem('user')),
             canUpdateStatus: true,
-            updateCalls: []
+            updateCalls: [],
+            uploadModalActive: false,
         }
     },
 
@@ -428,7 +429,7 @@ export default {
 
 
         openUploadDocs: function() {
-            this.$store.dispatch('Call/uploadDocModal', true);
+            this.uploadModalActive = true;
         },
 
 

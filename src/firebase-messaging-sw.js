@@ -19,6 +19,8 @@ workbox.routing.registerNavigationRoute(
 
 
 
+
+
 // const eventSource = new EventSource("http://localhost:3000/connect_sse");
 
 // eventSource.onerror = function (event) {
@@ -65,8 +67,81 @@ function messageApp(type, title, body, data) {
 
 
 
-async function startNewDocumentUploads() {
 
+let filesInUploadQueue = 0; // Files currently in the upload queue
+const maxFilesInUploadQueue = 1; // Max files to upload at a time
+let moreFilesToUpload = false; // If there are more files to upload, set to true
+
+
+
+
+async function registerUploadSync() {
+	
+	var syncId = 'SyncDocUploads';
+	console.log('SW - Registering Sync: ', syncId);
+
+	// Keeping the below code here in comments, just as an idea.
+	// It should be noted that a sync tag is immediately consumed after the sync event is fired and even if multiple sync events 
+	// were to register, our startDocumentUploads function protects against multiple uploads.
+	const tags = await self.registration.sync.getTags();
+	console.log('SW - Sync tags: ', tags);
+	// if(tags && tags.filter(tag => tag == syncId).length >= 2) { return } // not tested yet, but should work okay, not needed though.
+
+	try {
+		await self.registration.sync.register(syncId);
+		moreFilesToUpload = false;
+	} catch (err) {
+		console.log('SW - Sync registration failed: ', err);
+	}
+}
+
+
+
+
+self.addEventListener('sync', async function(event) {
+
+	if(event.tag == 'SyncDocUploads') 
+	{
+
+		const action = async () => {
+			let error;
+			try {
+				// console.log('Trying to upload document...');
+				await startDocumentUploads();
+				if(moreFilesToUpload)
+				{
+					registerUploadSync();
+				}
+			}
+			catch(e) {
+				console.log('SW - Error uploading document showing at sync listener: ', e);
+				error = true;
+				throw e;
+			}
+			finally {
+				if(error && event.lastChance)
+				{
+					console.log('SW - Last chance to upload document: ', error);
+					registerUploadSync();
+				}
+			}
+		}
+
+
+
+		event.waitUntil(action());
+
+	}
+});
+
+
+
+
+
+
+async function startDocumentUploads() {
+
+	// Get all documents from IDB and store in allDocs variable
 	var docTypes = await getDocumentTypesFromDB();
 	var allDocs = [];
 
@@ -80,44 +155,87 @@ async function startNewDocumentUploads() {
 
 	console.log('SW - All Documents from IDB: ', allDocs);
 
-
-	allDocs.map(async docType => {
+	// Loop through all documents and upload them
+	await Promise.all(allDocs.map(async docType => {
 
 		if(docType.docs && docType.docs.length >= 1)
 		{
-			docType.docs.map(async doc => {
+			await Promise.all(docType.docs.map(async doc => {
+
+				// We don't need this code yet, but it will work once JC links happen in the background as well.
+				// if(docType.id == 19)
+				// {
+				// 	var docLinked = callJobCardLinkStore.find(jcData => jcData.jobCardLinks.find(jcLink => jcLink.jobCard.id == doc.id) == undefined);
+				// }
+
 
 				// Start the upload process for each document
-				if(doc.uploadComplete === false && doc.uploading === false)
+				if(/* docLinked &&  */doc.uploadComplete === false && doc.uploading === false)
 				{
+
+					// If the max files in the upload queue is reached, return
+					if(filesInUploadQueue >= maxFilesInUploadQueue) 
+					{ 
+						moreFilesToUpload = true;
+						return 
+					}
 					
-					doc.uploading = true;
-					await updateDocumentInDB(docType.docTypeName, doc);
-					console.log('SW - Starting upload for: ', docType.docTypeName, doc.id, doc);
-					registerSync(docType.docTypeName, doc);
+
+					filesInUploadQueue++;
+
+					// If the document is not uploaded and not uploading, start the upload process
+					await uploadDocument(docType, doc)
+					// If successful, set uploading to false and uploadComplete to true and remove the file to save memory
+					.then(async () => {
+						console.log('Document uploaded successfully: ', docType.docTypeName, doc.id, doc);
+
+						doc.uploading = false;
+						doc.uploadComplete = true;
+						doc.file = 'Uploaded';
+						await updateDocumentInDB(docType.docTypeName, doc);
+
+						filesInUploadQueue--;
+					})
+					// If failed, set uploading to false and keep uploadComplete to false, it will try again on the next sync
+					.catch(async e => {
+						console.log('Error uploading document: ', e);
+
+						doc.uploading = false;
+						await updateDocumentInDB(docType.docTypeName, doc);
+
+						filesInUploadQueue--;
+
+						throw e;
+
+					})
 				}
+
+
+
 
 				// If the document is already uploaded, set uploading to false
 				else if(doc.uploadComplete === true && doc.uploading === true)
 				{
-					
 					doc.uploading = false;
 					await updateDocumentInDB(docType.docTypeName, doc);
 					console.log('SW - Document already uploaded: ', docType.docTypeName, doc.id, doc);
 				}
 
+
+
+
 				// If the document is uploaded and not uploading, delete it from the DB
-				else if(doc.uploadComplete === true && doc.uploading === false)
+				else if(doc.uploadComplete === true && doc.uploading === false && doc.file != 'Uploaded')
 				{
-					
-					await deleteDocumentFromDB(docType.docTypeName, doc.id);
-					console.log('SW - Deleting document from DB: ', docType.docTypeName, doc.id, doc);
+					await deleteDocumentFileFromDB(docType.docTypeName, doc.id);
+					console.log('SW - Deleting file from IDB: ', docType.docTypeName, doc.id, doc);
 				}
 
-			})
+			}));
 		}
 
-	});
+	}));
+
 
 }
 
@@ -125,157 +243,71 @@ async function startNewDocumentUploads() {
 
 
 
-async function registerSync(docTypeName, doc) {
+
+
+
+
+async function uploadDocument(docType, doc) {
+
+	// Set the document to uploading in the DB
+	doc.uploading = true;
+	await updateDocumentInDB(docType.docTypeName, doc);
+	console.log('SW - Starting upload for: ', docType.docTypeName, doc.id, doc);
 	
-	var syncId = 'uploadDocument_' + docTypeName + '_' + doc.id;
-	console.log('SW - Registering Sync: ', syncId);
+	// Get the document type ID from the DB
+	var docTypes = await getDocumentTypesFromDB();
+	var docTypeId = docTypes.find(dt => dt.name === docType.docTypeName).id;
 
-	try {
-		await self.registration.sync.register(syncId);
-	} catch (err) {
-		console.log('SW - Sync registration failed: ', err);
-		doc.uploading = false;
-	}
-}
+	// Create a new FormData object and append the file to it
+	var formData = new FormData();
+	var newFile = new File([doc.file], doc.file.name, { type: doc.file.type })
+	formData.append('file', newFile);
 
+	// Setup the fetch query base, signature and method
+	var method = 'POST';
+	var query = 'http://129.232.180.146/cronus/api/';
+	var signature = await getSignatureFromDB();
 
-
-
-self.addEventListener('sync', async function(event) {
-
-	if(event.tag.indexOf('uploadDocument_') !== -1)
-	{
-
-		var docTypeName = event.tag.split('_')[1];
-		var docId = event.tag.split('_')[2];
-
-		docId = Number(docId);
-
-		console.log('SW - Getting doc from db with: ', docTypeName, docId);
-		var doc = await getDocumentByIdFromDB(docTypeName, docId);
-		console.log('SW - Sync document: ', doc);
-
-		const action = async () => {
-			let error;
-			try {
-				console.log('Trying to upload document...');
-				await uploadDocument(docTypeName, doc);
-				doc.uploading = false;
-				doc.uploadComplete = true;
-				await updateDocumentInDB(docTypeName, doc);
-			}
-			catch(e) {
-				error = true;
-				throw e;
-			}
-			finally {
-				if(error && event.lastChance)
-				{
-					doc.uploading = false;
-					await updateDocumentInDB(docTypeName, doc);
-				}
-			}
-		}
-
-		event.waitUntil(action());
-	}
-});
+	// Setup the query
+	docTypeId == 19 
+	? 
+	query += 'job_cards/' + doc.jobCardId + '/upload' 
+	: 
+	query += 'customers/store/' + doc.customerStoreId + '/upload?customer_call_id=' + doc.call_id  + '&document_type_id=' + doc.fileTypeId;
 
 
 
-async function uploadDocument(docTypeName, doc) {
-
-	try {
-		var docTypes = await getDocumentTypesFromDB();
-		var docTypeId = docTypes.find(dt => dt.name === docTypeName).id;
-
-		console.log('Uploading document: ', docTypeName, doc, docTypeId, doc.file);
-
-		var formData = new FormData();
-		var newFile = new File([doc.file], doc.file.name, { type: doc.file.type })
-		formData.append('file', newFile);
-		// formData.append('file', doc.file);
-
-		console.log('Form Data: ', formData, newFile);
-
-		// var flag = false;
-		var method = 'POST';
-		var query = 'http://129.232.180.146/cronus/api/';
-		var body = formData;
-		var signature = await getSignatureFromDB();
-
-		docTypeId == 19 
-		? 
-		query += 'job_cards/' + doc.jobCardId + '/upload' 
-		: 
-		query += 'customers/store/' + doc.customerStoreId + '/upload?customer_call_id=' + doc.call_id  + '&document_type_id=' + doc.fileTypeId;
-
-		console.log('Performing fetch with: ',docTypeName, method, query, body, signature, doc);
-	}
-	catch(e) {
-		console.log('Error uploading document: ', e);
-		return false;
-	}
-
-
-	var myHeaders = new Headers();
-	myHeaders.append("Authorization", "Bearer: " + signature);
-	// myHeaders.append("Content-Type", "multipart/form-data");
-	// myHeaders.append("Accept", "multipart/form-data");
-
+	// Fetch the document to the server
 	return await fetch(query, {
 		method,
-		headers: myHeaders,
+		headers: {
+			"Authorization": "Bearer: " + signature
+		},
 		body: formData
 	})
-	.then(resp => {
+	.then(async resp => {
 		if(!resp.ok)
-		{	
-			doc.uploading = false;
-			updateDocumentInDB(docTypeName, doc);
-			throw 'Failed to post file...' + JSON.parse(resp);
+		{
+			throw `Failed to upload document... ${resp.status}`;
 		}
 	})
+	.catch(e => {
+		throw e;
+	})
 
-	// flag = await doFetch(method, query, body, signature, doc, SQLData, SQLQuery);
 
-	// if(!flag)
-	// {
-	// 	doc.uploading = false;
-	// 	doc.uploadComplete = true;
-	// 	await updateDocumentInDB(docTypeName, doc);
-	// }
 }
 
 
 
 
 
-self.addEventListener('fetch', async event => {
-
-	const request = event.request;
-	if(request.url.endsWith('/cronus/api/techs') && request.method === 'POST')
-	{
-		event.respondWith(fetch(request.clone())
-		.then(response => {
-			if(!response.ok) { throw ERROR_MSG; }
-			event.waitUntil(uploadDocument(docTypeName, doc));
-			return response;
-		})
-		.catch(e => {
-			event.waitUntil(requestToDefect(request.clone())
-			.then(doc => saveDoc(doc)));
-			throw e;
-		})
-		);
-	}
-
-});
 
 
 
 
-async function deleteDocumentFromDB(docTypeName, docId) {
+
+async function deleteDocumentFileFromDB(docTypeName, docId) {
 
 	return new Promise((res, rej) => {
 
@@ -289,9 +321,11 @@ async function deleteDocumentFromDB(docTypeName, docId) {
 			var db = e.target.result;
 			var transaction = db.transaction(docTypeName, 'readwrite');
 			var store = transaction.objectStore(docTypeName);
-			var request = store.delete(docId);
+			var request = store.get(docId);
 
 			request.onsuccess = function(e) {
+				var doc = e.target.result;
+				doc.file = 'Uploaded';
 				res(true);
 			}
 
@@ -500,7 +534,7 @@ self.addEventListener('message', function (event) {
 
 	if(event.data.type === 'startNewUploads')
 	{
-		startNewDocumentUploads();
+		registerUploadSync();
 	}
 
 

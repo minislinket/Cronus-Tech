@@ -236,8 +236,10 @@ export default {
                         uploading: false,
                         uploadComplete: false,
                         originalFileName: file.file.name,
-                        call_id: 161621 ,// <- actual call id from store 161 on test server // this.call.id,
-                        customerStoreId: 1291111134, // this.call.customerStoreId
+                        uploadFileName: file.name,
+                        call_id: this.call.id,
+                        customerStoreId: this.call.customerStoreId,
+                        thumbnail: file.thumbnail ? file.thumbnail : null
                     }
                 )
 
@@ -283,11 +285,11 @@ export default {
             // console.log(date);
             // var dateTime = date.replace(/\//g,'.');
             // dateTime = dateTime.replace(',', '');
-            var time = date.getHours() + '.' + date.getMinutes() + '.' + date.getSeconds();
+            var time = date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
             if(this.fileList.length >= 1)
             {
                 this.fileList.map((file, i) => {
-                    file.name = 'test_upload_' + i;
+                    file.name = this.call.id + '_' + date + ' ' + time + '_' + i;
                 })
             }
 
@@ -485,6 +487,11 @@ export default {
 
                                     this.$store.dispatch('Toast/toast', toast, {root: true});
                                 })
+
+                                await this.makeThumbnail(files[i], 100)
+                                .then(thumbnail => {
+                                    preppedFile.thumbnail = thumbnail;
+                                })
                             }
 
                             
@@ -538,6 +545,23 @@ export default {
                 });
             })
         },
+
+
+
+
+        makeThumbnail: function(file, width) {
+            return new Promise((res, rej) => {
+                new Compressor(file, {
+                    width: width,
+                    success(result) {
+                        res(result);
+                    },
+                    error(err) {
+                        rej(err);
+                    },
+                });
+            })
+        }
 
 
     

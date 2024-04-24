@@ -315,6 +315,7 @@ const actions = {
         });
 
         editCall.jobCards = jobCardArray;
+        editCall.allJobCardsHaveCMIS = false;
         dispatch('Calls/updateLocalStorage', editCall, { root: true });
 
         dispatch('loading', false);
