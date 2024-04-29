@@ -157,12 +157,6 @@ async function startDocumentUploads() {
 
 
 
-	/*
-		Let's look at prioritizing Job Card (docTypeId 19) above all other documents
-	*/
-
-
-
 
 	// Loop through all documents and upload them
 	await Promise.all(allDocs.map(async docType => {
