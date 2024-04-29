@@ -24,7 +24,7 @@
                     <span>Refresh Docs</span>
                 </div>
             </div>
-            <div class="link-jc-no-order-num-wrap">
+            <div class="link-jc-no-order-num-wrap" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2">
                 <div class="link-job-card-wrap">
                     <button @click="viewCallUploads()" class="view-uploads-btn"><span class="view-uploads-icon material-symbols-outlined material" >drive_folder_upload</span> </button>
                     <span>View Uploads</span>
