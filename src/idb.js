@@ -267,7 +267,7 @@ export default {
             };
 
             request.onsuccess = (e) => {
-                console.log('Record updated in Indexed DB', e)
+                // console.log('Record updated in Indexed DB', e)
                 res(e.target.result);
             };
 

@@ -33,7 +33,7 @@
             <div class="file-upload-scroll-section">
                 <div class="file-upload-grid" v-for="(file, index) in fileList" :key="file.url" :class="{ 'two-columns' : fileTypeId !== 1 }">
                     <img class="thumbnail-image-upload" :src="file.url" v-if="fileTypeId == 1">
-                    <span>{{ file.name }}</span>
+                    <span>{{ file.file.name }}</span>
                     <font-awesome-icon @click="removeFile(index)" class="remove-doc-upload-icon warning" :icon="['fa', 'trash']" size="lg" />
                 </div>
                 
@@ -125,23 +125,6 @@ export default {
     mounted() {
         
     },
-
-
-    /*
-
-    To Test:
-    - WORKS! event.lastChance in SW; ie fail an upload enough to trigger lastChance and see if it registers a new sync event
-    - Upload of multiple files, go nuts(30+)! Especially photos
-    
-    To Build:
-    - Add a 'remove' button to each file in the list ----MAYBE (gpt suggestion)
-    - View uploaded/uploading files in/from the call view with thumbnails (photos only)
-    - Trigger Sync for uploads - need to think about when and if manual/user trigger is viable (don't like the idea of a user trigger)
-    - Look at deleting entries from IDB when call is no longer with the technician
-    - Set photo max size by width, not quality <- Looked at it, photo size is still good (3000 x 4000) and size is low (0.5mb), leave as is.
-    */
-
-
 
 
 
@@ -279,20 +262,20 @@ export default {
 
             }))
 
-            console.log('Upload Data: ', uploadData);
+            // console.log('Upload Data: ', uploadData);
 
             // console.log('IDB: ', idb)
 
             var fileTypeName = this.fileTypes.find(type => type.id == this.fileTypeId).name;
 
             await Promise.all(uploadData.map(async fileData => {
-                var result = await idb.addRecord(fileTypeName, 1, [{name: 'call_id', key: 'call_id', unique: false}], fileData);
-                console.log('Result: ', result);
+                /* var result =  */await idb.addRecord(fileTypeName, 1, [{name: 'call_id', key: 'call_id', unique: false}], fileData);
+                // console.log('Result: ', result);
             }));
 
             
-            console.log('--------------------');
-            console.log('');
+            // console.log('--------------------');
+            // console.log('');
 
             navigator.serviceWorker.getRegistration()
             .then(reg => {
@@ -335,7 +318,7 @@ export default {
             var seconds = date.getSeconds();
             seconds = seconds < 10 ? '0' + seconds.toString() : seconds.toString();
 
-            console.log('Hours: ', hours, 'Minutes: ', minutes, 'Seconds: ', seconds);
+            // console.log('Hours: ', hours, 'Minutes: ', minutes, 'Seconds: ', seconds);
 
             var time = hours + '.' + minutes + '.' + seconds;
 
@@ -361,7 +344,7 @@ export default {
 
             
 
-            console.log('Files renamed, list: ', this.fileList);
+            // console.log('Files renamed, list: ', this.fileList);
         },
 
 
@@ -554,7 +537,7 @@ export default {
                                     this.$store.dispatch('Toast/toast', toast, {root: true});
                                 })
 
-                                await this.makeThumbnail(files[i], 100)
+                                await this.makeThumbnail(files[i], 200)
                                 .then(thumbnail => {
                                     preppedFile.thumbnail = thumbnail;
                                     preppedFile.url = URL.createObjectURL(thumbnail);
@@ -576,8 +559,8 @@ export default {
                 }
 
                 
-                console.log('-----------------');
-                console.log('');
+                // console.log('-----------------');
+                // console.log('');
 
                 if(data.target && data.target) 
                 {

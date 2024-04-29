@@ -135,8 +135,8 @@ export default {
 		// this.$store.dispatch('Updates/checkingForUpdates', true);
 
 
-		console.log('The App should auto refresh and load the new service worker')
-		console.log('Making a change that the app can auto load because of a server message...');
+		// console.log('The App should auto refresh and load the new service worker')
+		// console.log('Making a change that the app can auto load because of a server message...');
 
 		this.checkCallSyncStoreBackup();
 
@@ -285,7 +285,7 @@ export default {
 
 			// Backup the current SW callSyncStore in localStorage as it will be wiped when new SW loads
 			// Restore event triggers in Mounted Hook here in App
-			console.log('Attempting to get SW callSyncStore...');
+			// console.log('Attempting to get SW callSyncStore...');
 			
 			reg.active.postMessage({ type: 'getCallSyncStore' });
 

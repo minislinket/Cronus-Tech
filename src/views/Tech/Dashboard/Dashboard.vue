@@ -114,7 +114,7 @@
             </div>
 
 
-            <!-- <div class="job-type completed">
+            <div class="job-type completed">
                 <div class="job-type-wrap">
                     <font-awesome-icon class="dash-job-icon completed" :icon="['fa', 'clipboard-check']" size="lg" />
                 </div>
@@ -124,7 +124,7 @@
                 <div class="job-amount-circle">
                     <span class="job-amount">{{ completed }}</span>
                 </div>
-            </div> -->
+            </div>
 
         </div>
         <!-- 
@@ -348,7 +348,7 @@ export default {
 
             this.$store.dispatch('UserRole/setUserRole', 2);
             this.$router.push('/ops_dashboard');
-            console.log('Switching to: OPS-ADMIN');
+            // console.log('Switching to: OPS-ADMIN');
         },
 
 

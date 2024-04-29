@@ -312,11 +312,11 @@ const actions = {
 
     async getCallJobCards({}, call) {
         var user = JSON.parse(localStorage.getItem('user'));
-        console.log('Getting JC\'s for call: ', call.id)
+        // console.log('Getting JC\'s for call: ', call.id)
 
         var idbJobCards  = await idb.getAllRecordsOfCustomIndex('Job Card', 1, 'call_id', Number(call.id));
 
-        console.log('IDB Job Cards: ', idbJobCards);
+        // console.log('IDB Job Cards: ', idbJobCards);
 
         return axiosOffice.get('job_cards?allocatedEmployeeCode='+ user.employeeCode +'&customerCallId='+ call.id)
         .then(async resp => {
@@ -328,7 +328,7 @@ const actions = {
                 if(call.jobCards.length >= 1)
                 {
                     await Promise.all(call.jobCards.map(jc => {
-                        var idbJC = idbJobCards.find(idbJC => idbJC.id === jc.id);
+                        var idbJC = idbJobCards.find(idbJC => idbJC.jobCardId == jc.id);
                         !jc.cmisDocumentId && !idbJC ? call.allJobCardsHaveCMIS = false : null;
                     }));
                 }

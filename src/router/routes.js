@@ -10,6 +10,7 @@ import PasswordReset from '../views/PswReset/PswReset.vue'
 import Dashboard from '../views/Tech/Dashboard/Dashboard.vue'
 import Calls from '../views/Tech/Calls/Calls.vue'
 import Call from '../views/Tech/Call/Call.vue'
+import ViewUploads from '../views/Tech/Call/ViewUploads.vue'
 import Stock from '../views/Tech/Stock/Stock.vue'
 
 
@@ -78,6 +79,15 @@ const routes = [
 		}
 	},
 	{
+		path: '/uploads/:callId',
+		name: 'Uploads',
+		component: ViewUploads,
+		meta: {
+			title: 'Uploads on Call #',
+			icon: ['fa', 'folder-closed']
+		}
+	},
+	{
 		path: '/stock',
 		name: 'Stock',
 		component: Stock,
@@ -86,15 +96,15 @@ const routes = [
 			icon: ['fa', 'box-archive']
 		}
 	},
-	{
-		path: '/idb_test',
-		name: 'IDB Test',
-		component: () => import('../views/IDBTest/IDBTest.vue'),
-		meta: {
-			title: 'IDB Test',
-			icon: ['fa', 'database']
-		}
-	},
+	// {
+	// 	path: '/idb_test',
+	// 	name: 'IDB Test',
+	// 	component: () => import('../views/IDBTest/IDBTest.vue'),
+	// 	meta: {
+	// 		title: 'IDB Test',
+	// 		icon: ['fa', 'database']
+	// 	}
+	// },
 	
 
 

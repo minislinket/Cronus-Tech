@@ -78,13 +78,13 @@ let moreFilesToUpload = false; // If there are more files to upload, set to true
 async function registerUploadSync() {
 	
 	var syncId = 'SyncDocUploads';
-	console.log('SW - Registering Sync: ', syncId);
+	// console.log('SW - Registering Sync: ', syncId);
 
 	// Keeping the below code here in comments, just as an idea.
 	// It should be noted that a sync tag is immediately consumed after the sync event is fired and even if multiple sync events 
 	// were to register, our startDocumentUploads function protects against multiple uploads.
-	const tags = await self.registration.sync.getTags();
-	console.log('SW - Sync tags: ', tags);
+	// const tags = await self.registration.sync.getTags();
+	// console.log('SW - Sync tags: ', tags);
 	// if(tags && tags.filter(tag => tag == syncId).length >= 2) { return } // not tested yet, but should work okay, not needed though.
 
 	try {
@@ -114,14 +114,14 @@ self.addEventListener('sync', async function(event) {
 				}
 			}
 			catch(e) {
-				console.log('SW - Error uploading document showing at sync listener: ', e);
+				// console.log('SW - Error uploading document showing at sync listener: ', e);
 				error = true;
 				throw e;
 			}
 			finally {
 				if(error && event.lastChance)
 				{
-					console.log('SW - Last chance to upload document: ', error);
+					// console.log('SW - Last chance to upload document: ', error);
 					registerUploadSync();
 				}
 			}
@@ -153,7 +153,16 @@ async function startDocumentUploads() {
 		}));
 	}
 
-	console.log('SW - All Documents from IDB: ', allDocs);
+	// console.log('SW - All Documents from IDB: ', allDocs);
+
+
+
+	/*
+		Let's look at prioritizing Job Card (docTypeId 19) above all other documents
+	*/
+
+
+
 
 	// Loop through all documents and upload them
 	await Promise.all(allDocs.map(async docType => {
@@ -163,14 +172,15 @@ async function startDocumentUploads() {
 			await Promise.all(docType.docs.map(async doc => {
 
 				// We don't need this code yet, but it will work once JC links happen in the background as well.
-				// if(docType.id == 19)
-				// {
-				// 	var docLinked = callJobCardLinkStore.find(jcData => jcData.jobCardLinks.find(jcLink => jcLink.jobCard.id == doc.id) == undefined);
-				// }
+				if(docType.id == 19)
+				{
+					var docLinked = callJobCardLinkStore.find(jcData => jcData.jobCardLinks.find(jcLink => jcLink.jobCard.id == doc.jobCardId) == undefined);
+					// console.log('Doc linked: ', docLinked, doc.jobCardId);
+				}
 
 
 				// Start the upload process for each document
-				if(/* docLinked &&  */doc.uploadComplete === false && doc.uploading === false)
+				if(doc.uploadComplete === false && doc.uploading === false)
 				{
 
 					// If the max files in the upload queue is reached, return
@@ -179,6 +189,8 @@ async function startDocumentUploads() {
 						moreFilesToUpload = true;
 						return 
 					}
+
+					if(docType.id == 19 && !docLinked) { return }
 					
 
 					filesInUploadQueue++;
@@ -187,7 +199,7 @@ async function startDocumentUploads() {
 					await uploadDocument(docType, doc)
 					// If successful, set uploading to false and uploadComplete to true and remove the file to save memory
 					.then(async () => {
-						console.log('Document uploaded successfully: ', docType.docTypeName, doc.id, doc);
+						// console.log('Document uploaded successfully: ', docType.docTypeName, doc.id, doc);
 
 						doc.uploading = false;
 						doc.uploadComplete = true;
@@ -198,7 +210,7 @@ async function startDocumentUploads() {
 					})
 					// If failed, set uploading to false and keep uploadComplete to false, it will try again on the next sync
 					.catch(async e => {
-						console.log('Error uploading document: ', e);
+						// console.log('Error uploading document: ', e);
 
 						doc.uploading = false;
 						await updateDocumentInDB(docType.docTypeName, doc);
@@ -218,7 +230,7 @@ async function startDocumentUploads() {
 				{
 					doc.uploading = false;
 					await updateDocumentInDB(docType.docTypeName, doc);
-					console.log('SW - Document already uploaded: ', docType.docTypeName, doc.id, doc);
+					// console.log('SW - Document already uploaded: ', docType.docTypeName, doc.id, doc);
 				}
 
 
@@ -228,7 +240,7 @@ async function startDocumentUploads() {
 				else if(doc.uploadComplete === true && doc.uploading === false && doc.file != 'Uploaded')
 				{
 					await deleteDocumentFileFromDB(docType.docTypeName, doc.id);
-					console.log('SW - Deleting file from IDB: ', docType.docTypeName, doc.id, doc);
+					// console.log('SW - Deleting file from IDB: ', docType.docTypeName, doc.id, doc);
 				}
 
 			}));
@@ -252,7 +264,7 @@ async function uploadDocument(docType, doc) {
 	// Set the document to uploading in the DB
 	doc.uploading = true;
 	await updateDocumentInDB(docType.docTypeName, doc);
-	console.log('SW - Starting upload for: ', docType.docTypeName, doc.id, doc);
+	// console.log('SW - Starting upload for: ', docType.docTypeName, doc.id, doc);
 	
 	// Get the document type ID from the DB
 	var docTypes = await getDocumentTypesFromDB();
@@ -390,11 +402,10 @@ async function getDocumentByIdFromDB(docTypeName, docId) {
 		}
 
 		docDB.onsuccess = function(e) {
-			console.log('Successfully opened document DB: ', docTypeName, e.target.result);
+
 			var db = e.target.result;
 			var transaction = db.transaction(docTypeName, 'readonly');
 			var store = transaction.objectStore(docTypeName);
-			console.log('Got DB Store: ', store);
 			var request = store.get(docId);
 
 			request.onsuccess = function(e) {
@@ -431,7 +442,7 @@ async function getDocumentsFromDB(docTypeName) {
 		}
 
 		docDB.onsuccess = function(e) {
-			// console.log('Successfully opened document DB: ', docTypeName, e.target.result);
+
 			var db = e.target.result;
 			var transaction = db.transaction(docTypeName, 'readwrite');
 			var store = transaction.objectStore(docTypeName);
@@ -1243,7 +1254,7 @@ async function doFetch(method, query, body, signature, sendData, SQLData, SQLQue
 	.then(async resp => {
 
 		// resp.json().then(data => console.log(data));
-		console.log(resp.status + ' - ' + JSON.stringify(sendData));
+		// console.log(resp.status + ' - ' + JSON.stringify(sendData));
 
 		if(resp.status != 200)
 		{

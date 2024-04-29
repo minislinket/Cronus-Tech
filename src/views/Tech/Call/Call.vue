@@ -26,6 +26,16 @@
             </div>
             <div class="link-jc-no-order-num-wrap">
                 <div class="link-job-card-wrap">
+                    <button @click="viewCallUploads()" class="view-uploads-btn"><span class="view-uploads-icon material-symbols-outlined material" >drive_folder_upload</span> </button>
+                    <span>View Uploads</span>
+                </div>
+                <!-- <div class="link-job-card-wrap">
+                    <button @click="viewCallComments()" class="view-comments-btn"><font-awesome-icon class="view-comments-icon" :icon="['fa','comments']" size="lg" /> </button>
+                    <span>View Comments</span>
+                </div> -->
+            </div>
+            <div class="link-jc-no-order-num-wrap">
+                <div class="link-job-card-wrap">
                     <button @click="addGeneralCallComment()" class="add-comment-btn"><font-awesome-icon class="add-comment-icon" :icon="['fa','comment-dots']" size="lg" /> </button>
                     <span>Add Comment</span>
                 </div>
@@ -34,16 +44,7 @@
                     <span>View Comments</span>
                 </div>
             </div>
-            <div class="link-jc-no-order-num-wrap">
-                <div class="link-job-card-wrap">
-                    <button @click="viewCallUploads()" class="view-uploads-btn"><span class="material-symbols-outlined material" >note_stack</span> </button>
-                    <span>View Uploads</span>
-                </div>
-                <!-- <div class="link-job-card-wrap">
-                    <button @click="viewCallComments()" class="view-comments-btn"><font-awesome-icon class="view-comments-icon" :icon="['fa','comments']" size="lg" /> </button>
-                    <span>View Comments</span>
-                </div> -->
-            </div>
+            
 
 
             <div class="call-info-wrapper job-card-list">
@@ -339,7 +340,10 @@ export default {
                 // if(this.modal.confirmAction === false && this.modal.actionFrom.indexOf('add_site_call_'+this.call.id) !== -1)
                 // {
                 //     console.log('User says we are done on site...')
-                    this.updateCall(8, this.call);             
+                setTimeout(() => {
+                    this.updateCall(8, this.call);
+                }, 50);
+                    
                 }
                 
             },
@@ -363,6 +367,15 @@ export default {
 
 
     methods: {
+
+
+        viewCallUploads: function() {
+            // Use router with a route param to load docs from idb
+            // idea of left panel menu for dif doc types scrolling down the list on the right
+            // clicking on panel btn to expand/collapse the panel
+
+            this.$router.push('/uploads/' + this.call.id);
+        },
 
 
 
@@ -398,7 +411,9 @@ export default {
             await this.sendToServiceWorker(data, 'addNewCall');
 
             // Update the call on the users device
-            this.updateCall(8, this.call);
+            setTimeout(() => {
+                this.updateCall(8, this.call);
+            }, 50);
         },
 
 
@@ -491,7 +506,9 @@ export default {
             await this.sendToServiceWorker(data, 'addCallComment');
 
             // Update the call on the users device
-            this.updateCall(5, this.call);
+            setTimeout(() => {
+                this.updateCall(5, this.call);
+            }, 50);
         },
 
 
@@ -548,7 +565,7 @@ export default {
 
             var call = JSON.parse(JSON.stringify(this.call));
 
-            console.log('Call comment: ', comment);
+            // console.log('Call comment: ', comment);
             var user = JSON.parse(localStorage.getItem('user'));
             var signature = JSON.parse(localStorage.getItem('signature'));
 
@@ -584,7 +601,9 @@ export default {
             // Update the call on the users device
             if(type !== 'general')
             {
-                this.updateCall(6, this.call);
+                setTimeout(() => {
+                    this.updateCall(6, this.call);
+                }, 50);
             }
 
 
@@ -775,7 +794,9 @@ export default {
                     // auto-activated status (no prompt)
                     if(call.techStateId == 3 || call.techStateId == 4)
                     {
-                        this.updateCall(7, call);
+                        setTimeout(() => {
+                            this.updateCall(7, call);
+                        }, 50);
                     }
 
                 }
@@ -810,7 +831,9 @@ export default {
 
 
             // Update the current Call
-            this.updateCall(nextStatusId, this.call);
+            setTimeout(() => {
+                this.updateCall(nextStatusId, this.call);
+            }, 50);
  
         },
 
@@ -825,7 +848,12 @@ export default {
             this.activeCalls.map(call => {
                 if(call.id !== currentCall.id && call.customerStoreId === currentCall.customerStoreId)
                 {
-                    nextStatusId !== call.techStateId ? this.updateCall(nextStatusId, call) : null;
+                    if(nextStatusId !== call.techStateId)
+                    {
+                        setTimeout(() => {
+                            this.updateCall(nextStatusId, call)
+                        }, 50);
+                    }
                 }
             });
         },
@@ -1436,7 +1464,8 @@ export default {
 
 
 .link-job-card-wrap {
-    
+    display: flex;
+    align-items: center;
 }
 
 
@@ -1481,6 +1510,15 @@ export default {
     color: var(--OffWhite);
 }
 
+
+.view-uploads-btn {
+    background: var(--BlueLight);
+}
+
+.view-uploads-icon {
+    display: block;
+    color: var(--OffWhite);
+} 
 
 
 

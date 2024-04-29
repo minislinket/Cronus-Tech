@@ -258,18 +258,12 @@ const actions = {
 
                 if(res.name === 'document_types')
                 {
-                    // var orderFormIndex = '';
-                    // resp.data.filter((type, i) => i == 18 ? orderFormIndex = i : null)[0];
-                    // var orderForm = resp.data.filter(type => type.id == 18)[0];
-                    
-                    // resp.data.splice(orderFormIndex, 1);
 
-
+                    resp.data.sort((a,b) => a.id - b.id );
 
                     resp.data.unshift
                     (
                         { id: 19, name: "Job Card", abbreviation: "JC" },
-                        // orderForm
                     )
 
                     var docTypeDB = await idb.checkDatabaseExists('document_types', 1);

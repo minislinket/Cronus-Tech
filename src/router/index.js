@@ -26,6 +26,8 @@ router.beforeEach((to, from, next) => {
 // Check if user is authorized
 router.afterEach((to, from) => {
 
+	// console.log('From: ', from, 'To: ', to);
+
 	store.dispatch('Menu/resetTitle');
 
 	if (to.meta && to.meta.title)
