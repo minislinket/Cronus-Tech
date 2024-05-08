@@ -271,8 +271,17 @@ async function uploadDocument(docType, doc) {
 
 	// Setup the fetch query base, signature and method
 	var method = 'POST';
-	var query = 'http://129.232.180.146/cronus/api/';
+	var query = '';
 	var signature = await getSignatureFromDB();
+
+	if(self.location.origin.indexOf('localhost') !== -1)
+	{
+		query = 'http://129.232.180.146/cronus/api/';
+	}
+	else
+	{
+		query = 'https://office.locksecure.co.za/cronus/api/';
+	}
 
 	// Setup the query
 	docTypeId == 19 
