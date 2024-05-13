@@ -7,7 +7,7 @@
                 <button class="uploads-back-to-call-btn" @click="$router.go(-1)">
                     <font-awesome-icon class="uploads-back-to-call-icon" :icon="['fa', 'arrow-alt-circle-left']" size="lg" />
                 </button>
-                <button class="uploads-refresh-btn" @click="getCallRecords()">
+                <button class="uploads-refresh-btn" @click="getCallRecords($route.params.callId)">
                     <font-awesome-icon class="uploads-refresh-icon" :icon="['fa', 'sync-alt']" size="lg" />
                 </button>
             </div>
@@ -201,7 +201,7 @@ export default {
 
                     this.$store.dispatch('Menu/setTitle', { title: 'Uploads on Call #' + this.$route.params.callId, icon: ['fa', 'toolbox'] });
                     setTimeout(() => {
-                        this.getCallRecords();    
+                        this.getCallRecords(this.$route.params.callId);    
                     }, 50);
                     
                 }
@@ -297,11 +297,16 @@ export default {
 
 
 
-        getCallRecords: async function() {
+        getCallRecords: async function(callId) {
+
+            callId = parseInt(callId);
+
+            console.log('Getting Call Records...', callId);
+
             var allCallDocs = [];
 
             await Promise.all(this.docTypes.map(async docType => {
-                return idb.getAllRecordsOfCustomIndex(docType.name, 1, 'call_id', this.call.id)
+                return idb.getAllRecordsOfCustomIndex(docType.name, 1, 'call_id', callId)
                 .then(async docs => {
                     await Promise.all(docs.map(async doc => {
                         if(doc.thumbnail)

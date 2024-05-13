@@ -151,21 +151,16 @@ export default {
                         if(!resp.data.customerCallId)
                         {
 
-                            var modal = {
-                                active: true, // true to show modal
-                                type: 'okay', // ['info', 'warning', 'error', 'okay']
-                                icon: [], // Leave blank for no icon
-                                heading: 'Link Job Card?',
-                                body:   '<p>Job Card ' + this.jobCardId + ' is not linked to yet.</p>'
-                                        +'<br><p>Would you like to link it to call '+ this.call.id +'?</p>',
-                                confirmAction: 'init',
-                                actionFrom: 'link_job_card_from_upload_' + this.jobCardId,
-                                actionData: '',
-                                resolveText: 'Yes',
-                                rejectText: 'No'
-                                
+                            var toast = {
+                                shown: false,
+                                type: 'warning', // ['info', 'warning', 'error', 'okay']
+                                heading: 'Job Card not linked to a Job/Call', // (Optional)
+                                body: 'Please link your Job Card first', 
+                                time: 5000, // in milliseconds
+                                icon: '' // leave blank for default type icon
                             }
-                            this.$store.dispatch('Modal/modal', modal);                            
+
+                            this.$store.dispatch('Toast/toast', toast, {root: true});                            
                             this.jobCardIdVerified = false;
                             this.verifying = false;
                             return
