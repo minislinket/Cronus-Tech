@@ -22,7 +22,7 @@ socket.on("connect", () => {
 
     var isAuth = store.getters['Login/isAuth'];
     var user = localStorage.getItem('user');
-    var appVersion = localStorage.getItem('version');
+    var appVersion = require('../package.json').version;
 
     // console.log('Lets see if isAuth is defined: ', isAuth);
     if(uuid !== undefined)
@@ -70,7 +70,7 @@ socket.on('sendClientUUID', (uuid, replyToServer) => {
 	replyToServer(clientInfo);
     var isAuth = store.getters['Login/isAuth'];
     socket.emit('user_login_status', localStorage.getItem('socketUUID'), isAuth);
-    var appVersion = localStorage.getItem('version');
+    var appVersion = require('../package.json').version;
     if(appVersion !== undefined)
     {
         socket.emit('app_version', uuid, appVersion);
@@ -219,7 +219,7 @@ function awaitMsgToken(replyToServer) {
         replyToServer(clientInfo);
         var isAuth = store.getters['Login/isAuth'];
         socket.emit('user_login_status', localStorage.getItem('socketUUID'), isAuth);
-        var appVersion = localStorage.getItem('version');
+        var appVersion = require('../package.json').version;
         if(appVersion !== undefined)
         {
             socket.emit('app_version', uuid, appVersion);

@@ -112,25 +112,29 @@ export default {
 
 	mounted() {
 
-		console.log('App version: ', process.env.PACKAGE_VERSION);
+		var trueAppVersion = require('../package.json').version;
+
+		console.log('App version:', trueAppVersion);
+		console.log('Local App version: ', localStorage.getItem('version'));
+
 
 		if(localStorage.getItem('socketUUID'))
-			socket.emit('app_version', localStorage.getItem('socketUUID') ,process.env.PACKAGE_VERSION);
+			socket.emit('app_version', localStorage.getItem('socketUUID') , trueAppVersion);
 
-		console.log('Local App version: ', localStorage.getItem('version'));
-		if(localStorage.getItem('version') !== process.env.PACKAGE_VERSION)
+		
+		if(localStorage.getItem('version') != trueAppVersion)
 		{
 			var toast = {
                 shown: false,
                 type: 'okay', // ['info', 'warning', 'error', 'okay']
-                heading: 'App updated to version ' + process.env.PACKAGE_VERSION, // (Optional)
+                heading: 'App updated to version ' + trueAppVersion, // (Optional)
                 body: '', 
                 time: 3500, // in milliseconds
                 icon: '' // leave blank for default type icon
             }
 
             this.$store.dispatch('Toast/toast', toast, {root: true});
-			localStorage.setItem('version', process.env.PACKAGE_VERSION);
+			localStorage.setItem('version', trueAppVersion);
 			
 		}
 		
@@ -141,7 +145,7 @@ export default {
 
 
 		console.log('The App should auto refresh and load the new service worker')
-		console.log('Making a change that the app can auto load because of a server message...');
+		// console.log('Making a change that the app can auto load because of a server message...');
 
 		this.checkCallSyncStoreBackup();
 
