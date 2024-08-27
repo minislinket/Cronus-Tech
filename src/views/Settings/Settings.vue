@@ -5,10 +5,14 @@
             <font-awesome-icon class="loading-lightbox-icon" :icon="['fa','circle-notch']" size="lg" spin />
         </div>
 
+
+        <p class="app-version-float">v{{ version }}</p>
+
+
         <button :disabled="!online" class="update-static-btn" @click="updateStaticResources()"><font-awesome-icon :icon="['fa', 'sync-alt']" size="lg" /> Sync App Data</button>
         
 
-        <br><br>
+        <br>
 
         <button><a class="a-link-for-intent" :href="trackingAppLocation">Install Tracking App</a></button>
 
@@ -39,7 +43,7 @@
         <button :disabled="!online" class="update-static-btn warning" @click="resetApp()"><font-awesome-icon :icon="['fa', 'sync-alt']" size="lg" /> Reset App Data</button>
 
         <div class="app-permission-wrap">
-            <h4>App Permissions</h4>
+            <!-- <h4>App Permissions</h4> -->
             <div class="app-permissions-settings-wrap">    
                 <p><font-awesome-icon class="icon" :icon="['fa', 'bell']" size="lg" /> Notifications </p>
                 <font-awesome-icon class="icon permission-active" v-if="notificationPermissions" :icon="['far', 'check-circle']" size="lg" />
@@ -70,7 +74,7 @@ export default {
             user: JSON.parse(localStorage.getItem('user')),
             firebaseToken: localStorage.getItem('msgToken'),
             loading: false,
-
+            version: localStorage.getItem('version'),
             notificationPermissions: false,
             locationPermissions: false,
             swReg: '',
@@ -433,17 +437,26 @@ export default {
 
 
 .settings-wrap {
-    padding-top: 80px;
+    padding-top: 50px;
     display: flex;
     flex-direction: column;
     align-items: center;
     position: relative;
+    padding-bottom: 150px;
 }
 
 
 .settings-wrap button {
     margin: 10px 0;
     width: max-content;
+}
+
+
+
+.app-version-float {
+    position: fixed;
+    top: 60px;
+    right: 10px;
 }
 
 
@@ -493,11 +506,13 @@ export default {
 
 .app-permission-wrap {
     position: fixed;
-    bottom: -50px;
+    bottom: 60px;
     width: 100vw;
     padding: 5px 10px;
     background: var(--BlueAlt);
-    height: 250px;
+    height: 100px;
+    display: flex;
+    align-items: center;
 }
 
 
@@ -511,8 +526,10 @@ export default {
 
 
 .app-permissions-settings-wrap {
+    padding-top: 5px;
     display: grid;
     grid-template-columns: 1fr 0.5fr;
+    row-gap: 5px;
     justify-items: center;
     width: 100%;
     padding-bottom: 5px;
