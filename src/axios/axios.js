@@ -107,9 +107,9 @@ if (process.env.NODE_ENV === 'production')
     axiosMySQL.defaults.baseURL = baseURLMySQL;
     axiosSSE.defaults.baseURL = baseURLSSE;
 
-    axios.defaults.headers = {
-        'ngrok-skip-browser-warning': true
-    }
+    // axios.defaults.headers = {
+    //     'ngrok-skip-browser-warning': true
+    // }
 
 }
 

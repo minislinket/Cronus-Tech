@@ -23,20 +23,20 @@
 import Menu from './components/Menu/Menu.vue'
 import QuickMenu from './components/QuickMenu/QuickMenu.vue'
 import Loading from './components/Loading/Loading.vue'
-import Control from './components/Control/Control.vue'
+// import Control from './components/Control/Control.vue'
 import Login from './components/Login/Login.vue'
 import Toast from './components/Toast/Toast.vue'
 import Modal from './components/Modal/Modal.vue'
 import Landscape from './components/Landscape/Landscape.vue'
 import { mapGetters } from 'vuex'
 
-import { socket } from './socket_io'
+// import { socket } from './socket_io'
 
 export default {
 
 
 	components: {
-		Menu, Login, Toast, Modal, QuickMenu, Loading, Landscape, Control
+		Menu, Login, Toast, Modal, QuickMenu, Loading, Landscape, // Control
 	},
 
 
@@ -101,7 +101,21 @@ export default {
 
 	created() {
 
-		navigator.serviceWorker.getRegistration().then(reg => { this.listenForWaitingServiceWorker(reg, this.refreshServiceWorker) }); 
+		// window.addEventListener('error', (event) => {
+		// 	console.log('Error: ', event.error);
+		// 	console.log('Error Message: ', event.message);
+		// 	console.log('Error Stack: ', event.error.stack);
+		// })
+
+		// window.onerror = function(message, source, lineno, colno, error) {
+		// 	console.log('Error: ', error);
+		// 	console.log('Error Message: ', message);
+		// 	console.log('Error Source: ', source);
+		// 	console.log('Error Line Number: ', lineno);
+		// 	console.log('Error Column Number: ', colno);
+		// }
+
+		navigator.serviceWorker.getRegistration().then(reg => { this.listenForWaitingServiceWorker(reg, this.promptUserToRefresh) }); 
 		navigator.serviceWorker.addEventListener('controllerchange', function() { window.location.reload() });
 
 	},
@@ -112,6 +126,7 @@ export default {
 
 	mounted() {
 
+		
 		var trueAppVersion = require('../package.json').version;
 
 		console.log('App version:', trueAppVersion);
@@ -163,9 +178,9 @@ export default {
 			{
 				this.checkSWBackgroundSyncStore()
 				// console.log(this.$router.currentRoute._value.path);
-				if(this.$router.currentRoute._value.path.indexOf('/call/') === -1)
+				if(this.$router.currentRoute._value.path.indexOf('/calls') != -1)
 				{
-					await this.$store.dispatch('Calls/refreshTechnicianCalls');
+					// await this.$store.dispatch('Calls/refreshTechnicianCalls');
 					if(this.pendingCalls.length >= 1)
 					{
 						this.$store.dispatch('Calls/showActiveCalls', false);
@@ -284,7 +299,7 @@ export default {
 
 			// Backup the current SW callSyncStore in localStorage as it will be wiped when new SW loads
 			// Restore event triggers in Mounted Hook here in App
-			console.log('Attempting to get SW callSyncStore...');
+			// console.log('Attempting to get SW callSyncStore...');
 			
 			reg.active.postMessage({ type: 'getCallSyncStore' });
 
@@ -1027,7 +1042,7 @@ button:disabled {
 @font-face {
   font-family: 'Material Symbols Outlined';
   font-style: normal;
-  src: url('./fonts/material-symbols.woff2') format('woff2');
+  src: url('./fonts/MaterialSymbolsOutlined.woff2') format('woff2');
 }
 
 

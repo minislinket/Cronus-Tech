@@ -1,6 +1,7 @@
 import LZString from "lz-string";
 import { axiosOffice, axiosMySQL } from "../../axios/axios";
 import router from "../../router";
+import idb from "../../idb";
 
 // initial state
 const state = () => ({
@@ -190,14 +191,15 @@ const actions = {
 
 
 
-    async getUser({  }) {
+    async getUser({ dispatch }) {
 
         await axiosOffice.get('/company/employees/current')
             .then(resp => {
-                // console.log(resp);
+                console.log(resp);
                 if(resp.status === 200 && resp.data)
                 {
                     localStorage.setItem('user', JSON.stringify(resp.data));
+                    dispatch('checkLastLocation', resp.data);
                 }
             })
             .catch(err => {
@@ -205,6 +207,25 @@ const actions = {
                 console.error('Axios_Office Error Response: ', err.response);
             })
 
+    },
+
+
+
+    checkLastLocation({}, user) {
+
+        // check if locationLastUpdate is greater than 2 days ago
+        var lastLocationUpdate = new Date(user.locationLastUpdate);
+        var now = new Date();
+        var diff = now - lastLocationUpdate;
+        var diffDays = diff / (1000 * 60 * 60 * 24);
+
+        if(!user.lastLatitude || !user.lastLongitude || !user.locationLastUpdate || diffDays > 2)
+        {
+            var intentLink = document.createElement('a');
+            intentLink.href = 'cronus://track?firebaseToken='+user.firebaseTokenMobile
+            intentLink.click();
+        }
+        
     },
 
 
@@ -237,19 +258,27 @@ const actions = {
 
                 if(res.name === 'document_types')
                 {
-                    // var orderFormIndex = '';
-                    // resp.data.filter((type, i) => i == 18 ? orderFormIndex = i : null)[0];
-                    // var orderForm = resp.data.filter(type => type.id == 18)[0];
-                    
-                    // resp.data.splice(orderFormIndex, 1);
 
-
+                    resp.data.sort((a,b) => a.id - b.id );
 
                     resp.data.unshift
                     (
                         { id: 19, name: "Job Card", abbreviation: "JC" },
-                        // orderForm
                     )
+
+                    var docTypeDB = await idb.checkDatabaseExists('document_types', 1);
+                    if(docTypeDB)
+                    {
+                        await Promise.all(resp.data.map(async docType => {
+                            await idb.updateRecord('document_types', docType);
+                        }));
+                    }
+                    else
+                    {
+                        await Promise.all(resp.data.map(async docType => {
+                            await idb.addRecord('document_types', 1, [], docType);
+                        }));
+                    }
 
                    
                 }

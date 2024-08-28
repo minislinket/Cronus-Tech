@@ -12,7 +12,7 @@ import Settings from '../views/Settings/Settings'
 import UserRole from './Modules/UserRole'
 import ErrorLog from './Modules/ErrorLog'
 import GeoLocation from './Modules/GeoLocation'
-import Control from '../components/Control/Control'
+// import Control from '../components/Control/Control'
 
 import RouteFCM from './Modules/RouteFCM'
 
@@ -67,7 +67,7 @@ export default createStore({
     UserRole,
     ErrorLog,
     GeoLocation,
-    Control,
+    // Control,
 
     // Firebase Message App Routing
     RouteFCM,

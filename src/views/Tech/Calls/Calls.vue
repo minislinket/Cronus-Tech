@@ -45,7 +45,7 @@
                         <span class="bold call-info">Client Call # {{ call.id }}</span>
                         <font-awesome-icon class="call-store-icon" :icon="['fa', 'info-circle']" size="lg" />
                         <span class="call-info call-detail bold">{{ call.callDetails.length <= 30 ? call.callDetails : call.callDetails.substring(0,30) + '...' }}</span>
-                        <div class="tech-state-icon-wrap" :class="{ pending : call.techStateId === 1, received : call.techStateId === 2, 'en-route' : call.techStateId === 3, 'on-site' : call.techStateId === 4, 'returning' : call.techStateId === 5, 'on-hold' : call.techStateId === 6, 'rerouted' : call.techStateId == 7, 'transferred' : call.techStateId == 9 }">
+                        <div class="tech-state-icon-wrap" :class="{ pending : call.techStateId === 1, received : call.techStateId === 2, 'en-route' : call.techStateId === 3, 'on-site' : call.techStateId === 4, 'returning' : call.techStateId === 5, 'on-hold' : call.techStateId === 6, 'rerouted' : call.techStateId == 7, 'completed' : call.techStateId == 8, 'transferred' : call.techStateId == 9 }">
                             <div>
                                 <span v-if="call.techStateId === 1" class="material-symbols-outlined tech-state-icon pending material" >pending_actions</span>
                                 <font-awesome-icon v-if="call.techStateId === 2" class="tech-state-icon received" :icon="['fa', 'user-check']" size="lg" />
@@ -53,6 +53,7 @@
                                 <font-awesome-icon v-if="call.techStateId === 4" class="tech-state-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" />
                                 <font-awesome-icon v-if="call.techStateId === 5" class="tech-state-icon returning" style="transform: scaleX(-1);" :icon="['fa', 'clock-rotate-left']" size="lg" />
                                 <font-awesome-icon v-if="call.techStateId === 6" class="tech-state-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" />
+                                <font-awesome-icon v-if="call.techStateId === 8" class="tech-state-icon completed" :icon="['fa', 'clipboard-check']" size="lg" />
                                 <font-awesome-icon v-if="call.techStateId === 9" class="tech-state-icon transferred" :icon="['fa', 'shuffle']" size="lg" />
                                 <span v-if="call.techStateId === 7" class="material-symbols-outlined tech-state-icon rerouted material" >alt_route</span>
                                 <span class="tech-state-name">{{ call.techStateName }}</span>
@@ -66,6 +67,8 @@
             </div>
 
         </div>
+
+        <!-- KEEP COMPLETED CALLS FOR ONE DAY-->
 
 
 
@@ -431,6 +434,15 @@ export default {
 } */
 
 
+.tech-state-icon-wrap.completed {
+    background: var(--Completed);
+    color: var(--CompletedLight);
+}
+/* .tech-state-icon-wrap.completed .tech-state-name {
+    color: var(--CompletedLight);
+} */
+
+
 .tech-state-icon-wrap.transferred {
     background: var(--Transferred);
     color: var(--TransferredLight);
@@ -614,25 +626,49 @@ export default {
         transform: translateY(0);
     }
     15% {
-        transform: translateY(-8px);
+        transform: translateY(-40px);
+    }
+    16% {
+        transform: translateY(-40px) rotate(45deg);
+    }
+    18% {
+        transform: translateY(-40px) rotate(90deg);
+    }
+    20% {
+        transform: translateY(-40px) rotate(135deg);
+    }
+    22% {
+        transform: translateY(-40px) rotate(180deg);
+    }
+    24% {
+        transform: translateY(-40px) rotate(225deg);
+    }
+    26% {
+        transform: translateY(-30px) rotate(270deg);
+    }
+    28% {
+        transform: translateY(-20px) rotate(305deg);
     }
     30% {
-        transform: translateY(0);
+        transform: translateY(-10px) rotate(360deg);
+    }
+    35% {
+        transform: translateY(0) rotate(360deg);
     }
     45% {
-        transform: translateY(-6px);
+        transform: translateY(-6px) rotate(360deg);
     }
     60% {
-        transform: translateY(0);
+        transform: translateY(0) rotate(360deg);
     }
     75% {
-        transform: translateY(-3px);
+        transform: translateY(-3px) rotate(360deg);
     }
     90% {
-        transform: translateY(0);
+        transform: translateY(0) rotate(360deg);
     }
     100% {
-        transform: translateY(0);
+        transform: translateY(0) rotate(360deg);
     }
 }
 
@@ -640,9 +676,11 @@ export default {
 
 .selection-toggle-switch .num-of-calls-subscript.pending.bounce {
     animation: bounce 1300ms ease;
+    animation-delay: 300ms;
     background: rgb(173, 17, 17);
     color: white;
     font-weight: 700;
+    transform-origin: center;
 }
 
 

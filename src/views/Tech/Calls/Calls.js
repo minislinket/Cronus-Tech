@@ -1,5 +1,6 @@
 import LZString from "lz-string";
 import { axiosOffice } from "../../../axios/axios";
+import idb from '../../../idb';
 
 // initial state
 const state = () => ({
@@ -109,15 +110,15 @@ const actions = {
         // var transferredParams = {technician_employee_code: user.employeeCode, call_status_id: 2, tech_call_status_id: 9};
         // var getTransferredCalls = dispatch('loadTechnicianCallsFromServer', transferredParams);
 
-        // Completed Calls - for Telephone Support
-        // var transferredParams = {technician_employee_code: user.employeeCode, call_status_id: 2, tech_call_status_id: 9};
-        // var getTransferredCalls = dispatch('loadTechnicianCallsFromServer', transferredParams);
+        // Completed Calls
+        var completedParams = {technician_employee_code: user.employeeCode, call_status_id: 2, tech_call_status_id: 8};
+        var getCompletedCalls = dispatch('loadTechnicianCallsFromServer', completedParams);
 
         
         // Get all technician calls simultaneously
-        var [pendingCalls, receivedCalls, enRouteCalls, reroutedCalls, onSiteCalls, returningCalls, onHoldCalls/* , transferredCalls */] 
+        var [pendingCalls, receivedCalls, enRouteCalls, reroutedCalls, onSiteCalls, returningCalls, onHoldCalls/* , transferredCalls */, completedCalls] 
         = 
-        await Promise.all([getPendingCalls, getReceivedCalls, getEnRouteCalls, getReroutedCalls, getOnSiteCalls, getReturningCalls, getOnHoldCalls/* , getTransferredCalls */]);
+        await Promise.all([getPendingCalls, getReceivedCalls, getEnRouteCalls, getReroutedCalls, getOnSiteCalls, getReturningCalls, getOnHoldCalls/* , getTransferredCalls */, getCompletedCalls]);
 
         // console.log('Pending Calls: ', pendingCalls);
         // console.log('Received Calls: ', receivedCalls);
@@ -126,7 +127,7 @@ const actions = {
         // console.log('On Hold Calls: ', onHoldCalls);
 
 
-        var allCalls = pendingCalls.concat(receivedCalls, enRouteCalls, reroutedCalls, onSiteCalls, returningCalls, onHoldCalls/* , transferredCalls */);
+        var allCalls = pendingCalls.concat(receivedCalls, enRouteCalls, reroutedCalls, onSiteCalls, returningCalls, onHoldCalls/* , transferredCalls */, completedCalls);
         // console.log('All Calls: ', allCalls);
 
         var flag = false;
@@ -319,6 +320,11 @@ const actions = {
     async getCallJobCards({}, call) {
         var user = JSON.parse(localStorage.getItem('user'));
         // console.log('Getting JC\'s for call: ', call.id)
+
+        var idbJobCards  = await idb.getAllRecordsOfCustomIndex('Job Card', 1, 'call_id', Number(call.id));
+
+        // console.log('IDB Job Cards: ', idbJobCards);
+
         return axiosOffice.get('job_cards?allocatedEmployeeCode='+ user.employeeCode +'&customerCallId='+ call.id)
         .then(async resp => {
             // console.log('call JC resp: ', resp);
@@ -328,7 +334,10 @@ const actions = {
                 call['allJobCardsHaveCMIS'] = true;
                 if(call.jobCards.length >= 1)
                 {
-                    await Promise.all(call.jobCards.map(jc => jc.cmisDocumentId ? null : call.allJobCardsHaveCMIS = false));
+                    await Promise.all(call.jobCards.map(jc => {
+                        var idbJC = idbJobCards.find(idbJC => idbJC.jobCardId == jc.id);
+                        !jc.cmisDocumentId && !idbJC ? call.allJobCardsHaveCMIS = false : null;
+                    }));
                 }
                 else
                 {
@@ -509,7 +518,7 @@ const actions = {
                         }
                         if(key == 'techStateId')
                         {
-                            if(serverCall[key] == 9 || serverCall[key] == 6)
+                            if(serverCall[key] == 9 || serverCall[key] == 6/*  || serverCall[key] == 1 */)
                             {
                                 localCall.techState = serverCall.techState;
                                 localCall.techStateId = serverCall.techStateId;
@@ -553,6 +562,23 @@ const actions = {
 
 
 
+    sortCalls({ dispatch, state }) {
+        // sort all calls with completed calls (id 8) if there are any, in last order
+        
+        var calls = state.activeCalls.concat(state.pendingCalls);
+        var completedCalls = calls.filter(call => call.techStateId === 8);
+
+        if(completedCalls.length >= 1)
+        {
+            state.activeCalls = state.activeCalls.filter(call => call.techStateId != 8);
+            state.activeCalls = state.activeCalls.concat(completedCalls);
+        }
+
+
+    },
+
+
+
 
     loadLocalStorageCalls({ dispatch }, calls) {
 
@@ -573,7 +599,7 @@ const actions = {
 
         var activeCalls = calls.filter(call => {
             // console.log(call.techStateId);
-            return call.techStateId >= 2 && call.techStateId <= 5 || call.techStateId >= 6 && call.techStateId <= 7 || call.techStateId == 9;
+            return call.techStateId >= 2 && call.techStateId <= 9 /* || call.techStateId >= 6 && call.techStateId <= 7 || call.techStateId == 9 */;
         });
         activeCalls.sort((a,b) => {
             return b.id - a.id;
@@ -588,6 +614,8 @@ const actions = {
 
         commit('setActiveCalls', activeCalls);
         commit('setPendingCalls', pendingCalls);
+
+        dispatch('sortCalls');
 
         pendingCalls.length >= 1 ? dispatch('Calls/showActiveCalls', false, { root: true }) : dispatch('Calls/showActiveCalls', true, { root: true });
         // console.log('--------calls done loading--------');

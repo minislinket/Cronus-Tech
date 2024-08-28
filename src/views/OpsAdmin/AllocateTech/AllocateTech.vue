@@ -44,6 +44,8 @@
         
 
         <TechListModal />
+        <TransferTechModal />
+        <ChooseTransferTechModal />
         <AssignTechModal />
         <AddCallDetails />
         <CallEvents />
@@ -63,6 +65,8 @@ import SearchSelect from '../../../components/SearchSelect/SearchSelect.vue';
 import AllocateTechCallInfo from './AllocateTechCallInfo.vue'
 import StoreCallsList from './StoreCallsList.vue';
 import TechListModal from './TechListModal.vue';
+import TransferTechModal from './TransferTechModal.vue';
+import ChooseTransferTechModal from './ChooseTransferTechModal.vue';
 import AssignTechModal from './AssignTechModal.vue';
 import CallEvents from './CallEvents.vue';
 import AddCallDetails from './AddCallDetails.vue';
@@ -76,6 +80,8 @@ export default {
         AllocateTechCallInfo,
         StoreCallsList,
         TechListModal,
+        TransferTechModal,
+        ChooseTransferTechModal,
         AssignTechModal,
         CallEvents,
         AddCallDetails,

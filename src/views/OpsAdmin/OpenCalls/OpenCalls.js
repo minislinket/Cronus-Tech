@@ -90,7 +90,12 @@ const actions = {
     },
 
 
-
+    searchCalls({ state, dispatch }, search) {
+        dispatch('loading', true);
+        var filteredCalls = state.openCalls.filter(call => call.customerStoreName.toLowerCase().includes(search.toLowerCase()));
+        state.filteredCalls = filteredCalls;
+        dispatch('loading', false);
+    },
     
 
 

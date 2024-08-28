@@ -24,6 +24,27 @@
                     <span>Refresh Docs</span>
                 </div>
             </div>
+            <div class="link-jc-no-order-num-wrap" v-if="call.techStateId >= 4 || call.callTypeId == 6 && call.techStateId >= 2">
+                <div class="link-job-card-wrap">
+                    <button @click="viewCallUploads()" class="view-uploads-btn"><span class="view-uploads-icon material-symbols-outlined material" >drive_folder_upload</span> </button>
+                    <span>View Uploads</span>
+                </div>
+                <!-- <div class="link-job-card-wrap">
+                    <button @click="viewCallComments()" class="view-comments-btn"><font-awesome-icon class="view-comments-icon" :icon="['fa','comments']" size="lg" /> </button>
+                    <span>View Comments</span>
+                </div> -->
+            </div>
+            <div class="link-jc-no-order-num-wrap">
+                <div class="link-job-card-wrap">
+                    <button @click="addGeneralCallComment()" class="add-comment-btn"><font-awesome-icon class="add-comment-icon" :icon="['fa','comment-dots']" size="lg" /> </button>
+                    <span>Add Comment</span>
+                </div>
+                <div class="link-job-card-wrap">
+                    <button @click="viewCallComments()" class="view-comments-btn"><font-awesome-icon class="view-comments-icon" :icon="['fa','comments']" size="lg" /> </button>
+                    <span>View Comments</span>
+                </div>
+            </div>
+            
 
 
             <div class="call-info-wrapper job-card-list">
@@ -84,7 +105,7 @@
                 </div>
             </div>
 
-            <div class="current-tech-state-wrap" :class="{ pending : call.techStateId === 1, received : call.techStateId === 2, 'en-route' : call.techStateId === 3, 'on-site' : call.techStateId === 4, 'returning' : call.techStateId === 5, 'on-hold' : call.techStateId === 6, 'rerouted' : call.techStateId == 7, 'transferred' : call.techStateId == 9 }">
+            <div class="current-tech-state-wrap" :class="{ pending : call.techStateId === 1, received : call.techStateId === 2, 'en-route' : call.techStateId === 3, 'on-site' : call.techStateId === 4, 'returning' : call.techStateId === 5, 'on-hold' : call.techStateId === 6, 'rerouted' : call.techStateId == 7, 'completed' : call.techStateId == 8, 'transferred' : call.techStateId == 9 }">
                 <p class="call-info-store" :class="{ 'small-text' : call.customerStoreName && call.customerStoreName.length >= 18 }">{{ call.customerStoreName }} <span v-if="call.customerStoreName">({{ call.customerStoreBranchCode }})</span></p>
                 <div class="job-status-wrap">
                     <h6 class="current-job-status-heading-text">Job Status</h6>
@@ -154,20 +175,22 @@
 
         </div>
 
-    
+        <AddNewCallModal @submitNewCallInfo="submitNewCallInfo($event)" />
         <CommentModal @submitComment="submitComment($event)" />
+        <GeneralCommentModal @submitGeneralComment="submitGeneralComment($event)" />
         <LinkJobCardModal @linkJobCards="linkJobCards($event)" />
         <LinkOrderNumberModal @linkOrderNumber="linkOrderNumber($event)" />
         <ReturnDateModal @recordReturnDate="recordReturnDate($event)" />
-        <UploadDocument @uploadDocs="uploadDocs($event)"/>
+        <UploadDocument :active="uploadModalActive" @close="uploadModalActive = false" />
+        <ViewCallCommentsModal />
 
         <div class="call-button-wrap" >
             <button :disabled="!canUpdateStatus" v-if="call.techStateId === 1" @click="canUpdateCall(2)" class="update-call-btn received"><font-awesome-icon class="update-call-icon accept" :icon="['fa', 'user-check']" size="lg" :class="{ disabled : !canUpdateStatus }" /> Accept Call</button>
-            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 2 && call.callTypeId != 6 || call.techStateId >= 5 && call.techStateId <= 7 && call.callTypeId != 6 || call.techStateId == 9 && call.callTypeId != 6" @click="canUpdateCall(3)" class="update-call-btn en-route"><font-awesome-icon class="update-call-icon en-route" :icon="['fa', 'route']" size="lg" :class="{ disabled : !canUpdateStatus }" /> En Route</button>
+            <button :disabled="!canUpdateStatus" v-if="call.techStateId === 2 && call.callTypeId != 6 || call.techStateId >= 5 && call.techStateId <= 9 && call.callTypeId != 6" @click="canUpdateCall(3)" class="update-call-btn en-route"><font-awesome-icon class="update-call-icon en-route" :icon="['fa', 'route']" size="lg" :class="{ disabled : !canUpdateStatus }" /> En Route</button>
             <button :disabled="!canUpdateStatus" v-if="call.techStateId === 3 && call.callTypeId != 6" @click="canUpdateCall(4)" class="update-call-btn on-site"><font-awesome-icon class="update-call-icon on-site" :icon="['fa', 'map-marker-alt']" size="lg" :class="{ disabled : !canUpdateStatus }" /> On Site</button>
-            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS" v-if="call.techStateId === 4 && call.callTypeId != 6" @click="openCommentsModal()" class="update-call-btn on-hold"><font-awesome-icon class="update-call-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS }" /> On Hold</button>
-            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS" v-if="call.techStateId === 4 && call.callTypeId != 6" @click="captureReturnDate()" class="update-call-btn returning"><font-awesome-icon class="update-call-icon returning" :icon="['fa', 'clock-rotate-left']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS }" /> Returning</button>
-            <button :disabled="!call.jobCards && call.callTypeId != 4 || call.jobCards && call.jobCards.length <= 0&& call.callTypeId != 4 || !call.allJobCardsHaveCMIS && call.callTypeId != 4 || !call.orderNumber && call.callTypeId != 4 && call.callTypeId != 6" v-if="call.techStateId === 4 || call.techStateId === 6 || call.techStateId === 2 && call.callTypeId == 6" @click="canUpdateCall(8)" class="update-call-btn completed"><font-awesome-icon class="update-call-icon completed" :icon="['fa', 'clipboard-check']" size="lg" :class="{ disabled : !call.jobCards && call.callTypeId != 4 || call.jobCards && call.jobCards.length <= 0 && call.callTypeId != 4 || !call.orderNumber && call.callTypeId != 4 && call.callTypeId != 6 }" /> Complete</button>
+            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS" v-if="call.techStateId === 4 && call.callTypeId != 6 || call.techStateId === 8 && call.callTypeId != 6" @click="openCommentsModal()" class="update-call-btn on-hold"><font-awesome-icon class="update-call-icon on-hold" :icon="['fa', 'pause-circle']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS }" /> On Hold</button>
+            <button :disabled="!call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS" v-if="call.techStateId === 4 && call.callTypeId != 6 || call.techStateId === 8 && call.callTypeId != 6" @click="captureReturnDate()" class="update-call-btn returning"><font-awesome-icon class="update-call-icon returning" :icon="['fa', 'clock-rotate-left']" size="lg" :class="{ disabled : !call.jobCards || call.jobCards && call.jobCards.length <= 0 || !call.allJobCardsHaveCMIS }" /> Returning</button>
+            <button :disabled="!call.jobCards /* && call.callTypeId != 4 */ || call.jobCards && call.jobCards.length <= 0 /* && call.callTypeId != 4 */ || !call.allJobCardsHaveCMIS /* && call.callTypeId != 4 */ || !call.orderNumber /* && call.callTypeId != 4 */ && call.callTypeId != 6" v-if="call.techStateId === 4 || call.techStateId === 6 || call.techStateId === 2 && call.callTypeId == 6" @click="canUpdateCall(8)" class="update-call-btn completed"><font-awesome-icon class="update-call-icon completed" :icon="['fa', 'clipboard-check']" size="lg" :class="{ disabled : !call.jobCards /* && call.callTypeId != 4 */ || call.jobCards && call.jobCards.length <= 0 /* && call.callTypeId != 4 */ || !call.orderNumber /* && call.callTypeId != 4 */ && call.callTypeId != 6 }" /> Complete</button>
         </div>
     </div>
 </template>
@@ -176,11 +199,14 @@
 
 <script>
 
+import AddNewCallModal from './AddNewCallModal.vue'
 import CommentModal from './CommentModal.vue';
+import GeneralCommentModal from './GeneralCommentModal.vue';
 import LinkJobCardModal from './LinkJobCardModal.vue';
 import LinkOrderNumberModal from './LinkOrderNumberModal.vue';
 import ReturnDateModal from './ReturnDateModal.vue'
 import UploadDocument from './UploadDocument.vue';
+import ViewCallCommentsModal from './ViewCallCommentsModal.vue'
 
 import { mapGetters } from 'vuex'
 
@@ -189,7 +215,7 @@ export default {
 
 
     components: {
-         CommentModal, LinkJobCardModal, LinkOrderNumberModal, ReturnDateModal, UploadDocument
+        AddNewCallModal, CommentModal, GeneralCommentModal, LinkJobCardModal, LinkOrderNumberModal, ReturnDateModal, UploadDocument, ViewCallCommentsModal
     },
 
 
@@ -202,7 +228,8 @@ export default {
             serviceWorker: null,
             user: JSON.parse(localStorage.getItem('user')),
             canUpdateStatus: true,
-            updateCalls: []
+            updateCalls: [],
+            uploadModalActive: false,
         }
     },
 
@@ -258,10 +285,10 @@ export default {
 
         call: {
             handler: function() {
-                if(this.call && this.call.techStateId === 8)
-                {
-                    this.$router.push('/calls');
-                }
+                // if(this.call && this.call.techStateId === 8)
+                // {
+                //     this.$router.push('/calls');
+                // }
             },
             deep: true,
             immediate: true
@@ -285,10 +312,38 @@ export default {
 
 
         modal: {
-            handler: function() {
+            handler: async function() {
                 if(this.modal.confirmAction === true && this.modal.actionFrom.indexOf('complete_call_'+this.call.id) !== -1)
                 {
-                    this.updateCall(8, this.call);             
+                //     var modal = {
+                //         active: true, // true to show modal
+                //         type: 'okay', // ['info', 'warning', 'error', 'okay']
+                //         icon: [], // Leave blank for no icon
+                //         heading: 'Additional Work On Site?',
+                //         body:   '<p>Is there any additional work that needs to be completed on site that is not part of the current job?</p>',
+                //         confirmAction: 'init',
+                //         actionFrom: 'add_site_call_'+this.call.id,
+                //         actionData: '',
+                //         resolveText: 'Yes',
+                //         rejectText: 'No'
+                        
+                //     }
+                //     this.$store.dispatch('Modal/modal', modal);            
+                // }
+
+
+                // if(this.modal.confirmAction === true && this.modal.actionFrom.indexOf('add_site_call_'+this.call.id) !== -1)
+                // {
+                //     console.log('User has extra work info for the site...');
+                //     this.openAddNewCallModal();            
+                // }
+                // if(this.modal.confirmAction === false && this.modal.actionFrom.indexOf('add_site_call_'+this.call.id) !== -1)
+                // {
+                //     console.log('User says we are done on site...')
+                setTimeout(() => {
+                    this.updateCall(8, this.call);
+                }, 50);
+                    
                 }
                 
             },
@@ -313,8 +368,82 @@ export default {
 
     methods: {
 
-        
+
+        viewCallUploads: function() {
+            // Use router with a route param to load docs from idb
+            // idea of left panel menu for dif doc types scrolling down the list on the right
+            // clicking on panel btn to expand/collapse the panel
+
+            this.$router.push('/uploads/' + this.call.id);
+        },
+
+
+
+        submitNewCallInfo: async function(callInfo) {
+
+
+            var user = JSON.parse(localStorage.getItem('user'));
+            var signature = JSON.parse(localStorage.getItem('signature'));
+
+            var newCall =
+            {
+                "customerStoreId": this.call.customerStoreId,
+                "callTypeId": callInfo.callTypeId,
+                "callSubTypeId": callInfo.callSubTypeId,
+                "callStatusId": 1,
+                "operatorEmployeeCode": user.employeeCode,
+                "managingBranchId": user.branchId,
+                "callDetails": callInfo.callDetails,
+                "callerName": callInfo.contactPerson ? callInfo.contactPerson : '',
+                "contactNumber": callInfo.contactNumber ? callInfo.contactNumber : '',
+                "orderNumber": '',
+                "siteReady": false,
+                "siteReadyDate": ''
+            }
+
+
+            var data = {
+                call: newCall,
+                user,
+                signature
+            }
+
+            await this.sendToServiceWorker(data, 'addNewCall');
+
+            // Update the call on the users device
+            setTimeout(() => {
+                this.updateCall(8, this.call);
+            }, 50);
+        },
+
+
+
+
+
+
+
+        viewCallComments: function() {
+            this.$store.dispatch('Call/viewCallCommentsModalActive', true);
+        },
+
+
+        addGeneralCallComment: function() {
+            this.$store.dispatch('Call/generalCommentModal', true);
+        },
+
+
+
+
+
+
+        openAddNewCallModal: function() {
+            this.$store.dispatch('Call/addNewCallModal', true);
+        },
             
+
+
+
+
 
 
         refreshCallDocs: function() {
@@ -325,7 +454,7 @@ export default {
 
 
         openUploadDocs: function() {
-            this.$store.dispatch('Call/uploadDocModal', true);
+            this.uploadModalActive = true;
         },
 
 
@@ -338,6 +467,7 @@ export default {
                 call: this.call,
                 jobCardId: payload.jobCardId,
                 formData: payload.formData,
+                customerStoreId: this.call.customerStoreId
             }
 
             this.$store.dispatch('Call/uploadDocuments', data);
@@ -376,7 +506,9 @@ export default {
             await this.sendToServiceWorker(data, 'addCallComment');
 
             // Update the call on the users device
-            this.updateCall(5, this.call);
+            setTimeout(() => {
+                this.updateCall(5, this.call);
+            }, 50);
         },
 
 
@@ -467,7 +599,12 @@ export default {
             await this.sendToServiceWorker(data, 'addCallComment');
 
             // Update the call on the users device
-            this.updateCall(6, this.call);
+            if(type !== 'general')
+            {
+                setTimeout(() => {
+                    this.updateCall(6, this.call);
+                }, 50);
+            }
 
 
             // }))
@@ -597,6 +734,10 @@ export default {
 
 
 
+        submitGeneralComment: function(comment) {
+            this.addCallComment(comment, 'general');
+        },
+
 
 
         submitComment: function(data) {
@@ -669,7 +810,9 @@ export default {
                     // auto-activated status (no prompt)
                     if(call.techStateId == 3 || call.techStateId == 4)
                     {
-                        this.updateCall(7, call);
+                        setTimeout(() => {
+                            this.updateCall(7, call);
+                        }, 50);
                     }
 
                 }
@@ -689,7 +832,8 @@ export default {
                     type: 'okay', // ['info', 'warning', 'error', 'okay']
                     icon: [], // Leave blank for no icon
                     heading: 'Complete Job?',
-                    body:   '<p>Once completed, this job will no longer be available on your Job List.</p>',
+                    body:   '<p>This Job will be available at the bottom of your Jobs list until Operations Closes/Completes the Call at the office.</p>'
+                            +'<br><p>If you realise you need to go back to this site, or there is a problem on the call, please open the call again and update your status to "On Hold" or "Returning".</p>',
                     confirmAction: 'init',
                     actionFrom: 'complete_call_'+this.call.id,
                     actionData: '',
@@ -703,9 +847,12 @@ export default {
 
 
             // Update the current Call
-            this.updateCall(nextStatusId, this.call);
+            setTimeout(() => {
+                this.updateCall(nextStatusId, this.call);
+            }, 50);
  
         },
+
 
 
 
@@ -717,7 +864,12 @@ export default {
             this.activeCalls.map(call => {
                 if(call.id !== currentCall.id && call.customerStoreId === currentCall.customerStoreId)
                 {
-                    nextStatusId !== call.techStateId ? this.updateCall(nextStatusId, call) : null;
+                    if(nextStatusId !== call.techStateId)
+                    {
+                        setTimeout(() => {
+                            this.updateCall(nextStatusId, call)
+                        }, 50);
+                    }
                 }
             });
         },
@@ -1309,8 +1461,12 @@ export default {
 
 
 .link-jc-no-order-num-wrap {
-    display: flex;
+    /* display: flex;
     justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px; */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     align-items: center;
     margin-bottom: 10px;
 }
@@ -1324,7 +1480,8 @@ export default {
 
 
 .link-job-card-wrap {
-    
+    display: flex;
+    align-items: center;
 }
 
 
@@ -1344,9 +1501,41 @@ export default {
 }
 
 
-.link-job-card-icon {
+/* .link-job-card-icon {
 
+} */
+
+
+
+
+.add-comment-btn {
+    background: var(--Comments);
 }
+
+.add-comment-icon {
+    color: var(--OffWhite);
+}
+
+
+.view-comments-btn {
+    background: var(--Comments);
+}
+
+
+.view-comments-icon {
+    color: var(--OffWhite);
+}
+
+
+.view-uploads-btn {
+    background: var(--BlueLight);
+}
+
+.view-uploads-icon {
+    display: block;
+    color: var(--OffWhite);
+} 
+
 
 
 

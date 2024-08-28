@@ -1,4 +1,5 @@
 import { axiosMySQL, axiosOffice, axiosSSE } from '../../axios/axios'
+import idb from '../../idb';
 import router from '../../router/index'
 import { socket } from '../../socket_io'
 import { socketState } from '../../socket_io'
@@ -247,7 +248,7 @@ const actions = {
 
                     
                     
-
+                    await dispatch('setSignatureIDB', resp.data.signature);
 
                     localStorage.setItem('signature', JSON.stringify(resp.data.signature));
                     localStorage.setItem('time_stamp', JSON.stringify(time));
@@ -257,9 +258,9 @@ const actions = {
 
 
 
-                    dispatch('setUserDevice', employeeCode);
+                    // dispatch('setUserDevice', employeeCode);
 
-
+                    
 
                     // console.log('Started loading static resources...')
                     await dispatch('StaticResources/loadStaticResources', null, {root: true});
@@ -330,6 +331,17 @@ const actions = {
 
 
 
+    async setSignatureIDB({}, signature) {
+        var signatureDB = await idb.checkDatabaseExists('Signature', 1);
+
+        if(signatureDB)
+            await idb.updateRecord('Signature', 1, { signature: signature, id: 1 });
+        else
+            await idb.addRecord('Signature', 1, [], { signature: signature });
+    },
+
+
+
 
     setUserDevice({ state }, employeeCode) {
 
@@ -382,10 +394,10 @@ const actions = {
 
     resetApp({ commit }) {
         var msgToken = localStorage.getItem('msgToken');
-        var socketUUID = localStorage.getItem('socketUUID');
+        // var socketUUID = localStorage.getItem('socketUUID');
         localStorage.clear();
         localStorage.setItem('msgToken', msgToken);
-        localStorage.setItem('socketUUID', socketUUID);
+        // localStorage.setItem('socketUUID', socketUUID);
         commit('isAuth', false);
         router.push('/');
     }

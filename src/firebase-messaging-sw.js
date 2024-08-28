@@ -17,7 +17,6 @@ workbox.routing.registerNavigationRoute(
 );
 
 
-
 const SW_VERSION = '1.0.0';
 
 
@@ -69,6 +68,468 @@ function messageApp(type, title, body, data) {
 
 
 
+let filesInUploadQueue = 0; // Files currently in the upload queue
+const maxFilesInUploadQueue = 1; // Max files to upload at a time
+let moreFilesToUpload = false; // If there are more files to upload, set to true
+
+
+
+
+async function registerUploadSync() {
+	
+	var syncId = 'SyncDocUploads';
+	// console.log('SW - Registering Sync: ', syncId);
+
+	// Keeping the below code here in comments, just as an idea.
+	// It should be noted that a sync tag is immediately consumed after the sync event is fired and even if multiple sync events 
+	// were to register, our startDocumentUploads function protects against multiple uploads.
+	// const tags = await self.registration.sync.getTags();
+	// console.log('SW - Sync tags: ', tags);
+	// if(tags && tags.filter(tag => tag == syncId).length >= 2) { return } // not tested yet, but should work okay, not needed though.
+
+	try {
+		await self.registration.sync.register(syncId);
+		moreFilesToUpload = false;
+	} catch (err) {
+		console.log('SW - Sync registration failed: ', err);
+	}
+}
+
+
+
+
+self.addEventListener('sync', async function(event) {
+
+	if(event.tag == 'SyncDocUploads') 
+	{
+
+		const action = async () => {
+			let error;
+			try {
+				// console.log('Trying to upload document...');
+				await startDocumentUploads();
+				if(moreFilesToUpload)
+				{
+					registerUploadSync();
+				}
+			}
+			catch(e) {
+				// console.log('SW - Error uploading document showing at sync listener: ', e);
+				error = true;
+				throw e;
+			}
+			finally {
+				if(error && event.lastChance)
+				{
+					// console.log('SW - Last chance to upload document: ', error);
+					registerUploadSync();
+				}
+			}
+		}
+
+
+
+		event.waitUntil(action());
+
+	}
+});
+
+
+
+
+
+
+async function startDocumentUploads() {
+
+	// Get all documents from IDB and store in allDocs variable
+	var docTypes = await getDocumentTypesFromDB();
+	var allDocs = [];
+
+	if(docTypes && docTypes.length >= 1)
+	{
+		await Promise.all(docTypes.map(async docType => {
+			var docs = await getDocumentsFromDB(docType.name);
+			allDocs.push({docTypeId: docType.id, docTypeName: docType.name, docs: docs});
+		}));
+	}
+
+	// console.log('SW - All Documents from IDB: ', allDocs);
+
+
+
+
+	// Loop through all documents and upload them
+	await Promise.all(allDocs.map(async docType => {
+
+		if(docType.docs && docType.docs.length >= 1)
+		{
+			await Promise.all(docType.docs.map(async doc => {
+
+				// We don't need this code yet, but it will work once JC links happen in the background as well.
+				if(docType.id == 19)
+				{
+					var docLinked = callJobCardLinkStore.find(jcData => jcData.jobCardLinks.find(jcLink => jcLink.jobCard.id == doc.jobCardId) == undefined);
+					// console.log('Doc linked: ', docLinked, doc.jobCardId);
+				}
+
+
+				// Start the upload process for each document
+				if(doc.uploadComplete === false && doc.uploading === false)
+				{
+
+					// If the max files in the upload queue is reached, return
+					if(filesInUploadQueue >= maxFilesInUploadQueue) 
+					{ 
+						moreFilesToUpload = true;
+						return 
+					}
+
+					if(docType.id == 19 && !docLinked) { return }
+					
+
+					filesInUploadQueue++;
+
+					// If the document is not uploaded and not uploading, start the upload process
+					await uploadDocument(docType, doc)
+					// If successful, set uploading to false and uploadComplete to true and remove the file to save memory
+					.then(async () => {
+						// console.log('Document uploaded successfully: ', docType.docTypeName, doc.id, doc);
+
+						doc.uploading = false;
+						doc.uploadComplete = true;
+						doc.file = 'Uploaded';
+						await updateDocumentInDB(docType.docTypeName, doc);
+
+						filesInUploadQueue--;
+					})
+					// If failed, set uploading to false and keep uploadComplete to false, it will try again on the next sync
+					.catch(async e => {
+						// console.log('Error uploading document: ', e);
+
+						doc.uploading = false;
+						await updateDocumentInDB(docType.docTypeName, doc);
+
+						filesInUploadQueue--;
+
+						throw e;
+
+					})
+				}
+
+
+
+
+				// If the document is already uploaded, set uploading to false
+				else if(doc.uploadComplete === true && doc.uploading === true)
+				{
+					doc.uploading = false;
+					await updateDocumentInDB(docType.docTypeName, doc);
+					// console.log('SW - Document already uploaded: ', docType.docTypeName, doc.id, doc);
+				}
+
+
+
+
+				// If the document is uploaded and not uploading, delete it from the DB
+				else if(doc.uploadComplete === true && doc.uploading === false && doc.file != 'Uploaded')
+				{
+					await deleteDocumentFileFromDB(docType.docTypeName, doc.id);
+					// console.log('SW - Deleting file from IDB: ', docType.docTypeName, doc.id, doc);
+				}
+
+			}));
+		}
+
+	}));
+
+
+}
+
+
+
+
+
+
+
+
+
+async function uploadDocument(docType, doc) {
+
+	// Set the document to uploading in the DB
+	doc.uploading = true;
+	await updateDocumentInDB(docType.docTypeName, doc);
+	// console.log('SW - Starting upload for: ', docType.docTypeName, doc.id, doc);
+	
+	// Get the document type ID from the DB
+	var docTypes = await getDocumentTypesFromDB();
+	var docTypeId = docTypes.find(dt => dt.name === docType.docTypeName).id;
+
+	// Create a new FormData object and append the file to it
+	var formData = new FormData();
+	var newFile = new File([doc.file], doc.file.name, { type: doc.file.type })
+	formData.append('file', newFile);
+
+	// Setup the fetch query base, signature and method
+	var method = 'POST';
+	var query = '';
+	var signature = await getSignatureFromDB();
+
+	if(self.location.origin.indexOf('localhost') !== -1)
+	{
+		query = 'http://129.232.180.146/cronus/api/';
+	}
+	else
+	{
+		query = 'https://office.locksecure.co.za/cronus/api/';
+	}
+
+	// Setup the query
+	docTypeId == 19 
+	? 
+	query += 'job_cards/' + doc.jobCardId + '/upload' 
+	: 
+	query += 'customers/store/' + doc.customerStoreId + '/upload?customer_call_id=' + doc.call_id  + '&document_type_id=' + doc.fileTypeId;
+
+
+
+	// Fetch the document to the server
+	return await fetch(query, {
+		method,
+		headers: {
+			"Authorization": "Bearer: " + signature
+		},
+		body: formData
+	})
+	.then(async resp => {
+		if(!resp.ok)
+		{
+			throw `Failed to upload document... ${resp.status}`;
+		}
+	})
+	.catch(e => {
+		throw e;
+	})
+
+
+}
+
+
+
+
+
+
+
+
+
+
+async function deleteDocumentFileFromDB(docTypeName, docId) {
+
+	return new Promise((res, rej) => {
+
+		var docDB = indexedDB.open(docTypeName, 1);
+
+		docDB.onerror = function(e) {
+			rej(false);
+		}
+
+		docDB.onsuccess = function(e) {
+			var db = e.target.result;
+			var transaction = db.transaction(docTypeName, 'readwrite');
+			var store = transaction.objectStore(docTypeName);
+			var request = store.get(docId);
+
+			request.onsuccess = function(e) {
+				var doc = e.target.result;
+				doc.file = 'Uploaded';
+				res(true);
+			}
+
+			request.onerror = function(e) {
+				console.error('SW - Error deleting document: ', e);
+				rej(false);
+			}
+		}
+	});
+}
+
+
+
+
+
+async function updateDocumentInDB(docTypeName, doc) {
+
+	return new Promise((res, rej) => {
+
+		var docDB = indexedDB.open(docTypeName, 1);
+
+		docDB.onerror = function(e) {
+			rej(false);
+		}
+
+		docDB.onsuccess = function(e) {
+			var db = e.target.result;
+			var transaction = db.transaction(docTypeName, 'readwrite');
+			var store = transaction.objectStore(docTypeName);
+			var request = store.put(doc);
+
+			request.onsuccess = function(e) {
+				res(true);
+			}
+
+			request.onerror = function(e) {
+				console.error('SW - Error updating document: ', e);
+				rej(false);
+			}
+		}
+	});
+
+}
+
+
+
+
+
+async function getDocumentByIdFromDB(docTypeName, docId) {
+
+	var databases = await indexedDB.databases();
+	var exists = databases.find(db => db.name === docTypeName && db.version === 1);
+	if(!exists) { return [] }
+	
+	return new Promise((res, rej) => {
+
+		
+		var docDB = indexedDB.open(docTypeName, 1);
+
+		docDB.onerror = function(e) {
+			rej(false);
+		}
+
+		docDB.onsuccess = function(e) {
+
+			var db = e.target.result;
+			var transaction = db.transaction(docTypeName, 'readonly');
+			var store = transaction.objectStore(docTypeName);
+			var request = store.get(docId);
+
+			request.onsuccess = function(e) {
+				res(e.target.result);
+			}
+
+			request.onerror = function(e) {
+				console.error('SW - Error getting document: ', e);
+				rej(false);
+			}
+		}
+	});
+
+
+
+}
+
+
+
+
+async function getDocumentsFromDB(docTypeName) {
+
+	var databases = await indexedDB.databases();
+	var exists = databases.find(db => db.name === docTypeName && db.version === 1);
+	if(!exists) { return [] }
+	
+	return new Promise((res, rej) => {
+
+		
+		var docDB = indexedDB.open(docTypeName, 1);
+
+		docDB.onerror = function(e) {
+			rej(false);
+		}
+
+		docDB.onsuccess = function(e) {
+
+			var db = e.target.result;
+			var transaction = db.transaction(docTypeName, 'readwrite');
+			var store = transaction.objectStore(docTypeName);
+			var request = store.getAll();
+
+			request.onsuccess = function(e) {
+				res(e.target.result);
+			}
+
+			request.onerror = function(e) {
+				console.error('SW - Error getting documents: ', e);
+				rej(false);
+			}
+		}
+	});
+
+}
+
+
+
+
+async function getDocumentTypesFromDB() {
+
+	return new Promise((res, rej) => {
+
+		var docTypesDB = indexedDB.open('document_types', 1);
+
+		docTypesDB.onerror = function(e) {
+			rej(false);
+		}
+
+		docTypesDB.onsuccess = function(e) {
+			var db = e.target.result;
+			var transaction = db.transaction('document_types', 'readwrite');
+			var store = transaction.objectStore('document_types');
+			var request = store.getAll();
+
+			request.onsuccess = function(e) {
+				res(e.target.result);
+			}
+
+			request.onerror = function(e) {
+				console.error('SW - Error getting document types: ', e);
+				rej(false);
+			}
+		}
+	});
+}
+
+
+
+
+
+async function getSignatureFromDB() {
+
+	return new Promise((res, rej) => {
+
+		var signatureDB = indexedDB.open('Signature', 1);
+
+		signatureDB.onerror = function(e) {
+			rej(false);
+		}
+
+		signatureDB.onsuccess = function(e) {
+			var db = e.target.result;
+			var transaction = db.transaction('Signature', 'readwrite');
+			var store = transaction.objectStore('Signature');
+			var request = store.get(1);
+
+			request.onsuccess = function(e) {
+				res(e.target.result.signature);
+			}
+
+			request.onerror = function(e) {
+				console.error('SW - Error getting signature: ', e);
+				rej(false);
+			}
+		}
+	});
+
+}
+
+
+
 
 
 // SW Sync Store for Call update data
@@ -76,11 +537,19 @@ let callSyncStore = [];
 let callJobCardLinkStore = [];
 let callCommentStore = [];
 let CallOrderNumberStore = [];
+let newCallStore = [];
 let backgroundSyncActive = false;
 
 // Listen for messages from the App
 self.addEventListener('message', function (event) {
 	// console.log('Message from app: ', event);
+
+
+
+	if(event.data.type === 'startNewUploads')
+	{
+		registerUploadSync();
+	}
 
 
 
@@ -96,7 +565,6 @@ self.addEventListener('message', function (event) {
 
 		if(callSyncStore.length >= 1)
 		{
-			// console.log('Checking callSyncStore for call updates...');
 			callSyncStore.map(callData => {
 				event.waitUntil(updateCall(callData.call.id));
 			})
@@ -104,7 +572,6 @@ self.addEventListener('message', function (event) {
 
 		if(callJobCardLinkStore.length >= 1)
 		{
-			// console.log('Checking callJobCardLinkStore for job card links...');
 			callJobCardLinkStore.map(jobCardData => {
 				event.waitUntil(linkJobCard(jobCardData.call.id));
 			})
@@ -112,9 +579,22 @@ self.addEventListener('message', function (event) {
 
 		if(callCommentStore.length >= 1)
 		{
-			// console.log('Checking callJobCardLinkStore for job card links...');
 			callCommentStore.map(commentData => {
 				event.waitUntil(addCallComment(commentData.call.id));
+			})
+		}
+
+		if(CallOrderNumberStore.length >= 1)
+		{
+			CallOrderNumberStore.map(orderNumberData => {
+				event.waitUntil(linkOrderNumber(orderNumberData.call.id));
+			})
+		}
+
+		if(newCallStore.length >= 1)
+		{
+			newCallStore.map(callData => {
+				event.waitUntil(addNewCall(callData));
 			})
 		}
 	}
@@ -122,12 +602,36 @@ self.addEventListener('message', function (event) {
 
 
 
-	// if(event.data.type === 'uploadDocuments')
-	// {
 
-	// 	var docData = JSON.parse(event.data.data);
-	// 	console.log('Upload Docs request on SW: ', docData);
-	// }
+
+
+	if(event.data.type === 'addNewCall')
+	{
+		var data = JSON.parse(event.data.data);
+		var existingData = '';
+
+		newCallStore.map(exData => {
+			if(exData.call.customerStoreId === data.call.customerStoreId && exData.call.callDetails === data.call.callDetails)
+			{
+				existingData = exData;
+			}
+		});
+
+
+		if(existingData)
+		{
+			event.waitUntil(addNewCall(existingData))
+		}
+		else
+		{
+			data['sending'] = false;
+			data['sent'] = false;
+			newCallStore.push(data);
+
+			event.waitUntil(addNewCall(data));
+		}
+
+	}
 
 
 
@@ -446,6 +950,48 @@ self.addEventListener('message', function (event) {
 
 
 // })
+
+
+
+
+async function addNewCall(call) {
+	var callData = newCallStore.find(exData => exData.customerStoreId === call.customerStoreId && exData.callDetails === call.callDetails);
+	var flag = false;
+
+	if(callData && !callData.sending)
+	{
+		callData.sending = true;
+
+		var method = 'POST';
+		var query = 'calls';
+		var body = callData.call;
+		var signature = callData.signature;
+		
+		var SQLData = '';
+		// {
+		// 	call, 
+		// 	user: callData.user,
+		// }
+		var SQLQuery = '';
+
+		flag = await doFetch(method, query, body, signature, call, SQLData, SQLQuery);
+	}
+
+	if(!flag)
+	{
+		newCallStore = newCallStore.filter(exData => exData.customerStoreId !== call.customerStoreId && exData.callDetails !== call.callDetails);
+	}
+	
+}
+
+
+
+
+
+
+
+
+
 async function linkOrderNumber(callId) {
 	var orderNumberData = CallOrderNumberStore.filter(exData => exData.call.id.toString() === callId.toString())[0];
 	// console.log('Link Order Number: ', orderNumberData);
@@ -716,7 +1262,7 @@ async function doFetch(method, query, body, signature, sendData, SQLData, SQLQue
 	.then(async resp => {
 
 		// resp.json().then(data => console.log(data));
-		console.log(resp.status + ' - ' + JSON.stringify(sendData));
+		// console.log(resp.status + ' - ' + JSON.stringify(sendData));
 
 		if(resp.status != 200)
 		{
@@ -727,19 +1273,21 @@ async function doFetch(method, query, body, signature, sendData, SQLData, SQLQue
 		}
 		else
 		{
-
-			//Save a log of all tech call updates
-			await fetch(SQLBase + SQLQuery, {
-				body: JSON.stringify(SQLData),
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				}
-			})
-			.catch(function(err) {
-				console.error('SW SQL Fetch Error: ', err);
-				console.error('SW SQL Fetch error response: ', err.response);
-			})
+			if(SQLQuery)
+			{
+				//Save a log of all tech call updates
+				await fetch(SQLBase + SQLQuery, {
+					body: JSON.stringify(SQLData),
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					}
+				})
+				.catch(function(err) {
+					console.error('SW SQL Fetch Error: ', err);
+					console.error('SW SQL Fetch error response: ', err.response);
+				})
+			}
 
 			sendData.sending = false;
 			sendData.sent = true;
@@ -941,6 +1489,15 @@ function getClientAndPostMessage(event, type, notification, title, body, data) {
 
 	}))
 }
+
+
+
+
+
+
+
+
+
 
 
 

@@ -43,12 +43,16 @@ async function catchAndRouteMessage(title, body, data) {
 
 
 	// Do not redirect "Call Update:" notifications...
-	if(title && title.indexOf('Call Update:') !== -1) { return }
+	if(title && title.indexOf('Call Update:') !== -1) 
+	{ 
+		// await store.dispatch('Calls/refreshTechnicianCalls', false, { root: true }); 
+		return 
+	}
 
 
 
 	store.dispatch('Loading/setLoading', true);
-	console.log('Routing app based on message event: ', event.data);
+	// console.log('Routing app based on message event: ', event.data);
 
 	var routePayload = {
 		title,
@@ -56,7 +60,7 @@ async function catchAndRouteMessage(title, body, data) {
 		data
 	}
 	var route = await store.dispatch('RouteFCM/getRoute', routePayload);
-	console.log('We think we want to go to: ', route);
+	// console.log('We think we want to go to: ', route);
 	if(route) 
 	{
 		if(store.getters['Login/isAuth'])
@@ -116,14 +120,14 @@ if (process.env.NODE_ENV === 'production') {
 			
 			if(event.data && event.data.type && event.data.type === 'heartbeat')
 			{
-				console.log('do doof, do doof...');
+				// console.log('do doof, do doof...');
 			}
 
 
 
 			if(event.data && event.data.type && event.data.type === 'checkForUpdates')
 			{
-				console.log('Received checkForUpdates from SW');
+				// console.log('Received checkForUpdates from SW');
 				window.location.reload();
 			}
 
@@ -244,7 +248,10 @@ if (process.env.NODE_ENV === 'production') {
 				}
 
 
-				await catchAndRouteMessage(title, body, data);
+				// if(payload.notification.title.indexOf('Call Update:') == -1) 
+				// { 
+					await catchAndRouteMessage(title, body, data);
+				// }
 
 
 				// Show the Notification using the Service Worker

@@ -114,7 +114,7 @@
             </div>
 
 
-            <!-- <div class="job-type completed">
+            <div class="job-type completed">
                 <div class="job-type-wrap">
                     <font-awesome-icon class="dash-job-icon completed" :icon="['fa', 'clipboard-check']" size="lg" />
                 </div>
@@ -124,11 +124,13 @@
                 <div class="job-amount-circle">
                     <span class="job-amount">{{ completed }}</span>
                 </div>
-            </div> -->
+            </div>
 
         </div>
-
-        <button class="update-location-btn" @click="updateLocation()"><font-awesome-icon :icon="['fa', 'location-dot']" size="lg" /> Update Location</button>
+        <!-- 
+        <button @click="openIDBTestPage()" v-if="user && user.employeeCode == 'VAN027'" >upload test</button>
+        <button @click="testStartDocUploads()" v-if="user && user.employeeCode == 'VAN027'" >Test "Start Doc Uploads"</button> 
+        -->
 
         <button class="switch-user-type-btn" v-if="availableUserRoles.includes(2)" @click="switchProfile()"><font-awesome-icon :icon="['fa', 'retweet']" size="lg" /> Switch to Ops-Admin</button>
 
@@ -154,7 +156,9 @@ export default {
             returning: 0,
             transferred: 0,
             onHold: 0,
-            completed: 0
+            completed: 0,
+
+            user: JSON.parse(localStorage.getItem('user')),
         }
     },
 
@@ -257,6 +261,18 @@ export default {
 
     methods: {
 
+        // testStartDocUploads: function() {
+        //     navigator.serviceWorker.getRegistration()
+        //     .then(reg => {
+		// 		reg.active.postMessage({type: 'startNewUploads'});
+		// 	})
+        // },
+
+
+        // openIDBTestPage: function() {
+        //     this.$router.push('/idb_test');
+        // },
+
 
 
 
@@ -332,7 +348,7 @@ export default {
 
             this.$store.dispatch('UserRole/setUserRole', 2);
             this.$router.push('/ops_dashboard');
-            console.log('Switching to: OPS-ADMIN');
+            // console.log('Switching to: OPS-ADMIN');
         },
 
 

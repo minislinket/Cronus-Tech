@@ -39,8 +39,10 @@
             <font-awesome-icon class="warning remove-technician-icon" :icon="['fa','minus-square']" size="lg" />
         </div>
         
-
-        <button class="close-info-modal-btn" @click="$store.dispatch('AllocateTech/techListActive', false)">Close</button>
+        <div class="tech-list-modal-btn-wrap">
+            <button class="open-transfer-techs-btn" @click="$store.dispatch('AllocateTech/transferTechActive', true)">Transfer</button>
+            <button class="close-tech-list-modal-btn" @click="$store.dispatch('AllocateTech/techListActive', false)">Close</button>
+        </div>
 
     </div>
 </template>
@@ -263,5 +265,32 @@ export default {
     font-size: 16px;
 }
 
+
+
+
+
+
+
+
+.tech-list-modal-btn-wrap {
+    display: flex;
+    justify-content: space-evenly;
+    
+    position: absolute;
+    bottom: 15px;
+	left: 0;
+	right: 0;
+	margin: 0 auto;
+    width: 100%;
+}
+
+
+.open-transfer-techs-btn {
+    color: var(--OkayGreen);
+}
+
+.close-tech-list-modal-btn {
+    color: var(--WarningOrange);
+}
 
 </style>

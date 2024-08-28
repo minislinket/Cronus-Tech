@@ -5,10 +5,8 @@
             <font-awesome-icon class="loading-lightbox-icon" :icon="['fa','circle-notch']" size="lg" spin />
         </div>
 
-
         <p class="app-version-float">v{{ version }}</p>
-
-
+        
         <button :disabled="!online" class="update-static-btn" @click="updateStaticResources()"><font-awesome-icon :icon="['fa', 'sync-alt']" size="lg" /> Sync App Data</button>
         
 
@@ -437,7 +435,7 @@ export default {
 
 
 .settings-wrap {
-    padding-top: 50px;
+    padding-top: 30px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -450,6 +448,32 @@ export default {
     margin: 10px 0;
     width: max-content;
 }
+
+
+
+
+
+.tracking-app-buttons-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;   
+}
+
+
+
+
+
+
+
+
+.tracking-app-buttons-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;   
+}
+
 
 
 
@@ -494,6 +518,10 @@ export default {
     font-size: 26px;
     margin-right: 5px;
 }
+
+
+
+
 
 
 
@@ -574,4 +602,17 @@ export default {
     color: var(--BlueMid);
 }
 
+
+
+
+
+
+.intent-btn {
+
+}
+
+.a-link-for-intent {
+    text-decoration: none;
+    color: var(--BlueMid);
+}
 </style>
