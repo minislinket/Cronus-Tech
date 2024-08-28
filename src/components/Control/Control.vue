@@ -22,7 +22,7 @@
         </div>
 
         <div class="log-out-wrap" v-if="loggingOut">
-            <h2>You are being logged out of your app.</h2>
+            <h2>You are being logged <br>out of your app.</h2>
             <p>Please wait...</p>
         </div>
         
@@ -147,5 +147,8 @@ export default {
 .checking-for-updates-wrap.fade p {
     color: transparent
 }
+
+
+
 
 </style>

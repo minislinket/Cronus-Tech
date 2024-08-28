@@ -23,20 +23,20 @@
 import Menu from './components/Menu/Menu.vue'
 import QuickMenu from './components/QuickMenu/QuickMenu.vue'
 import Loading from './components/Loading/Loading.vue'
-// import Control from './components/Control/Control.vue'
+import Control from './components/Control/Control.vue'
 import Login from './components/Login/Login.vue'
 import Toast from './components/Toast/Toast.vue'
 import Modal from './components/Modal/Modal.vue'
 import Landscape from './components/Landscape/Landscape.vue'
 import { mapGetters } from 'vuex'
 
-// import { socket } from './socket_io'
+import { socket } from './socket_io'
 
 export default {
 
 
 	components: {
-		Menu, Login, Toast, Modal, QuickMenu, Loading, Landscape, // Control
+		Menu, Login, Toast, Modal, QuickMenu, Loading, Landscape, Control
 	},
 
 
@@ -115,7 +115,7 @@ export default {
 		// 	console.log('Error Column Number: ', colno);
 		// }
 
-		navigator.serviceWorker.getRegistration().then(reg => { this.listenForWaitingServiceWorker(reg, this.promptUserToRefresh) }); 
+		navigator.serviceWorker.getRegistration().then(reg => { this.listenForWaitingServiceWorker(reg, this.refreshServiceWorker) }); 
 		navigator.serviceWorker.addEventListener('controllerchange', function() { window.location.reload() });
 
 	},
