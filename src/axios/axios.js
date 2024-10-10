@@ -48,7 +48,9 @@ function logError(error) {
 
     if(user) { error.user = user }
 
-    axiosMySQL.post('/errorLog/errorLog.php', error)
+    axiosMySQL.post('/errorLog/errorLog.php', error);
+
+    
 
 }
 

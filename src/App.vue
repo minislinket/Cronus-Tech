@@ -29,6 +29,7 @@ import Toast from './components/Toast/Toast.vue'
 import Modal from './components/Modal/Modal.vue'
 import Landscape from './components/Landscape/Landscape.vue'
 import { mapGetters } from 'vuex'
+import { axiosMySQL } from './axios/axios'
 
 // import { socket } from './socket_io'
 
@@ -139,7 +140,7 @@ export default {
 		// console.log('Making a change that the app can auto load because of a server message...');
 
 		this.checkCallSyncStoreBackup();
-
+		this.checkBackupErrorlog();
 
 		// console.log('🍱: ' , window.location);
 
@@ -207,6 +208,29 @@ export default {
 
 
 	methods: {
+
+		
+
+		checkBackupErrorlog: function() {
+			var backupLog = localStorage.getItem('backup_error_log');
+
+			if(backupLog && backupLog.length >= 1)
+			{
+				var removeFromBackUpLog = [];
+				backupLog.map((err, index) => {
+					if(user) { err.user = user }
+					axiosMySQL.post('/errorLog/errorLog.php', err)
+					.then(() => {
+						removeFromBackUpLog.push(index);
+					})
+				})
+
+				backupLog = backupLog.filter((err, index) => !removeFromBackUpLog.includes(index));
+				localStorage.setItem('backup_error_log', JSON.stringify(backupLog));
+			}
+		},
+
+
 
 		checkCallSyncStoreBackup: function() {
 
